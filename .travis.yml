@@ -1,0 +1,30 @@
+dist: xenial
+language: php
+
+sudo: required
+
+env:
+  global:
+    - setup=basic
+    - APP_ENV=testing
+
+php:
+  - 7.0
+  - 7.1
+  - 7.2
+  - 7.3
+
+before_install:
+  - travis_retry composer self-update
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+install:
+  - if [[ $setup = 'basic' ]]; then travis_retry composer install --no-interaction --prefer-dist; fi
+  - if [[ $setup = 'stable' ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-stable; fi
+  - if [[ $setup = 'lowest' ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-lowest --prefer-stable; fi
+
+script:
+  - vendor/bin/phpunit

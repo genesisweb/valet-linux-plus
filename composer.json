@@ -1,0 +1,68 @@
+{
+    "name": "genesisweb/valet-linux-plus",
+    "description": "Advanced local development experience for Linux.",
+    "keywords": ["laravel", "zonda", "wwdhhd", "ubuntu", "fedora", "arch", "linux", "valet"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Taylor Otwell",
+            "email": "taylorotwell@gmail.com"
+        },
+        {
+            "name": "Adam Wathan",
+            "email": "adam.wathan@gmail.com"
+        },
+        {
+            "name": "Carlos Priego",
+            "email": "carlos.enrique.priego@gmail.com"
+        },
+        {
+            "name": "Leonardo Nodari",
+            "email": "nodarileonardo@gmail.com"
+        },
+        {
+            "name": "Joaquín Marcher",
+            "email": "joaquin@marcher.com.uy"
+        },
+        {
+            "name": "Gensis Web",
+            "email": "info@genesisweb.co.in"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "cli/includes/compatibility.php",
+            "cli/includes/facades.php",
+            "cli/includes/helpers.php"
+        ],
+        "psr-4": {
+            "Valet\\": "cli/Valet/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Valet\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=7.0",
+        "illuminate/container": "~5.3",
+        "mnapoli/silly": "~1.1",
+        "symfony/process": "~2.7|~3.0|~4.0",
+        "nategood/httpful": "~0.2",
+        "tightenco/collect": "~5.3"
+    },
+    "require-dev": {
+        "mockery/mockery": "~0.9.4",
+        "phpunit/phpunit": "~5.5"
+    },
+    "scripts": {
+        "post-install-cmd": [
+        ],
+        "post-update-cmd": [
+        ]
+    },
+    "bin": [
+        "valet"
+    ]
+}

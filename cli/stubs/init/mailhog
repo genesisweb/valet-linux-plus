@@ -1,0 +1,11 @@
+[Unit]
+Description=Mailhog
+After=network.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/opt/valet-linux/mailhog > /dev/null 2>&1 &
+
+[Install]
+WantedBy=multi-user.target
