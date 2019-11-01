@@ -204,3 +204,29 @@ function str_array_replace($searchAndReplace, $subject)
 {
     return str_replace(array_keys($searchAndReplace), array_values($searchAndReplace), $subject);
 }
+
+/**
+ * Get user input from cli
+ *
+ * @param $question
+ * @param $suggestion
+ * @param $default
+ * @return string
+ */
+function ask($question,$suggestion = null,$default = null)
+{
+    return CliPrompt::prompt($question,false,$suggestion,$default);
+}
+
+/**
+ * Get user hidden input from cli
+ *
+ * @param $question
+ * @param $suggestion
+ * @param $default
+ * @return string
+ */
+function ask_secret($question, $suggestion = null, $default = null)
+{
+    return CliPrompt::prompt($question,true,$suggestion,$default);
+}

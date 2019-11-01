@@ -48,3 +48,5 @@ class Valet extends Facade {}
 class Requirements extends Facade {}
 class Mailhog extends Facade {}
 class Redis extends Facade {}
+class CliPrompt extends Facade {}
+
