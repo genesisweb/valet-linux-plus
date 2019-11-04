@@ -12,15 +12,16 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
 
 use Silly\Application;
 use Illuminate\Container\Container;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * Create the application.
  */
 Container::setInstance(new Container);
 
-$version = 'v2.1.10';
+$version = 'v1.0.0';
 
-$app = new Application('Valet', $version);
+$app = new Application('Valet+', $version);
 
 /**
  * Detect environment
@@ -42,6 +43,8 @@ $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     Valet::symlinkToUsersBin();
     Mailhog::install();
     Redis::install();
+    Mysql::install();
+
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
 })->descriptions('Install the Valet services', [
     '--ignore-selinux' => 'Skip SELinux checks'
@@ -252,31 +255,189 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Start the daemon services.
      */
-    $app->command('start', function () {
-        PhpFpm::restart();
-        Nginx::restart();
+    $app->command('start [services]*', function ($services) {
+        if (empty($services)) {
+            DnsMasq::restart();
+            PhpFpm::restart();
+            Nginx::restart();
+            Mailhog::restart();
+            Mysql::restart();
+            Redis::restart();
+//            Elasticsearch::restart();
+//            RabbitMq::restart();
+//            Varnish::restart();
+            info('Valet services have been started.');
 
-        info('Valet services have been started.');
+            return;
+        }
+        foreach($services as $service) {
+            switch($service) {
+                case 'nginx': {
+                    Nginx::restart();
+                    break;
+                }
+                case 'php': {
+                    PhpFpm::restart();
+                    break;
+                }
+                case 'mailhog': {
+                    Mailhog::restart();
+                    break;
+                }
+                case 'dnsmasq': {
+                    DnsMasq::restart();
+                    break;
+                }
+                case 'mysql': {
+                    Mysql::restart();
+                    break;
+                }
+                case 'redis': {
+                    Redis::restart();
+                    break;
+                }
+//                case 'elasticsearch': {
+//                    Elasticsearch::restart();
+//                    break;
+//                }
+//                case 'rabbitmq': {
+//                    RabbitMq::restart();
+//                    break;
+//                }
+//                case 'varnish': {
+//                    Varnish::restart();
+//                    break;
+//                }
+            }
+        }
+
+        info('Specified Valet services have been started.');
     })->descriptions('Start the Valet services');
 
     /**
      * Restart the daemon services.
      */
-    $app->command('restart', function () {
-        PhpFpm::restart();
-        Nginx::restart();
+    $app->command('restart [services]*', function ($services) {
+        if (empty($services)) {
+            DnsMasq::restart();
+            PhpFpm::restart();
+            Nginx::restart();
+            Mailhog::restart();
+            Mysql::restart();
+            Redis::restart();
+//            Elasticsearch::restart();
+//            RabbitMq::restart();
+//            Varnish::restart();
+            info('Valet services have been restarted.');
 
-        info('Valet services have been restarted.');
+            return;
+        }
+
+        foreach($services as $service) {
+            switch($service) {
+                case 'nginx': {
+                    Nginx::restart();
+                    break;
+                }
+                case 'php': {
+                    PhpFpm::restart();
+                    break;
+                }
+                case 'mailhog': {
+                    Mailhog::restart();
+                    break;
+                }
+                case 'dnsmasq': {
+                    DnsMasq::restart();
+                    break;
+                }
+                case 'mysql': {
+                    Mysql::restart();
+                    break;
+                }
+                case 'redis': {
+                    Redis::restart();
+                    break;
+                }
+//                case 'elasticsearch': {
+//                    Elasticsearch::restart();
+//                    break;
+//                }
+//                case 'rabbitmq': {
+//                    RabbitMq::restart();
+//                    break;
+//                }
+//                case 'varnish': {
+//                    Varnish::restart();
+//                    break;
+//                }
+            }
+        }
+
+        info('Specified Valet services have been restarted.');
     })->descriptions('Restart the Valet services');
 
     /**
      * Stop the daemon services.
      */
-    $app->command('stop', function () {
-        PhpFpm::stop();
-        Nginx::stop();
+    $app->command('stop [services]*', function ($services) {
+        if (empty($services)) {
+            DnsMasq::stop();
+            PhpFpm::stop();
+            Nginx::stop();
+            Mailhog::stop();
+            Mysql::stop();
+            Redis::stop();
+//            Elasticsearch::stop();
+//            RabbitMq::stop();
+//            Varnish::stop();
+            info('Valet services have been stopped.');
 
-        info('Valet services have been stopped.');
+            return;
+        }
+
+        foreach($services as $service) {
+            switch($service) {
+                case 'nginx': {
+                    Nginx::stop();
+                    break;
+                }
+                case 'php': {
+                    PhpFpm::stop();
+                    break;
+                }
+                case 'mailhog': {
+                    Mailhog::stop();
+                    break;
+                }
+                case 'dnsmasq': {
+                    DnsMasq::stop();
+                    break;
+                }
+                case 'mysql': {
+                    Mysql::stop();
+                    break;
+                }
+                case 'redis': {
+                    Redis::stop();
+                    break;
+                }
+//                case 'elasticsearch': {
+//                    Elasticsearch::stop();
+//                    break;
+//                }
+//                case 'rabbitmq': {
+//                    RabbitMq::stop();
+//                    break;
+//                }
+//                case 'varnish': {
+//                    Varnish::stop();
+//                    break;
+//                }
+            }
+        }
+
+        info('Specified Valet services have been stopped.');
     })->descriptions('Stop the Valet services');
 
     /**
@@ -286,6 +447,7 @@ if (is_dir(VALET_HOME_PATH)) {
         Nginx::uninstall();
         PhpFpm::uninstall();
         DnsMasq::uninstall();
+        Mailhog::uninstall();
         Configuration::uninstall();
         Valet::uninstall();
 
@@ -313,7 +475,6 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('use [preferedversion] [--update-cli]', function ($preferedversion = null, $updateCli = null) {
         info('Changing php-fpm version...');
-        info('This does not affect php -v.');
         PhpFpm::changeVersion($preferedversion, $updateCli);
         info('php-fpm version successfully changed! 🎉');
     })->descriptions('Set the PHP-fpm version to use, enter "default" or leave empty to use version: ' . PhpFpm::getVersion(true), [
@@ -330,6 +491,131 @@ if (is_dir(VALET_HOME_PATH)) {
             output('NO');
         }
     })->descriptions('Determine if this is the latest version of Valet');
+
+    /**
+     * Create database
+     */
+    $app->command('db [run] [name] [optional] [-y|--yes]', function ($input, $output, $run, $name, $optional) {
+        $helper = $this->getHelperSet()->get('question');
+        $defaults = $input->getOptions();
+
+        if($run === 'list' || $run === 'ls') {
+            Mysql::listDatabases();
+            return;
+        }
+
+        if($run === 'create') {
+            $databaseName = Mysql::createDatabase($name);
+
+            if(!$databaseName) {
+                warning('Error creating database');
+                return;
+            }
+
+            info('Database "' . $databaseName . '" created successfully');
+            return;
+        }
+
+        if($run === 'drop') {
+            if(!$defaults['yes']) {
+                $question = new ConfirmationQuestion('Are you sure you want to delete the database? [y/N] ', FALSE);
+                if (!$helper->ask($input, $output, $question)) {
+                    warning('Aborted');
+                    return;
+                }
+            }
+            $databaseName = Mysql::dropDatabase($name);
+
+            if(!$databaseName) {
+                warning('Error dropping database');
+                return;
+            }
+
+            info('Database "' . $databaseName . '" dropped successfully');
+            return;
+        }
+
+        if($run === 'reset') {
+            if(!$defaults['yes']) {
+                $question = new ConfirmationQuestion('Are you sure you want to reset the database? [y/N] ', FALSE);
+                if (!$helper->ask($input, $output, $question)) {
+                    warning('Aborted');
+                    return;
+                }
+            }
+
+            $dropped = Mysql::dropDatabase($name);
+
+            if(!$dropped) {
+                warning('Error creating database');
+                return;
+            }
+
+            $databaseName = Mysql::createDatabase($name);
+
+            if(!$databaseName) {
+                warning('Error creating database');
+                return;
+            }
+
+            info('Database "' . $databaseName . '" reset successfully');
+            return;
+        }
+
+        if($run === 'import') {
+            info('Importing database...');
+            if(!$name) {
+                throw new Exception('Please provide a dump file');
+            }
+
+            // check if database already exists.
+            if(Mysql::isDatabaseExists($optional)){
+                $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', FALSE);
+                if (!$helper->ask($input, $output, $question)) {
+                    warning('Aborted');
+                    return;
+                }
+            }
+
+            Mysql::importDatabase($name, $optional);
+            return;
+        }
+
+        if($run === 'reimport') {
+            if(!$defaults['yes']) {
+                $question = new ConfirmationQuestion('Are you sure you want to reimport the database? [y/N] ', FALSE);
+                if (!$helper->ask($input, $output, $question)) {
+                    warning('Aborted');
+                    return;
+                }
+            }
+            info('Resetting database, importing database...');
+            if(!$name) {
+                throw new Exception('Please provide a dump file');
+            }
+            Mysql::reimportDatabase($name, $optional);
+            return;
+        }
+
+        if($run === 'export' || $run === 'dump') {
+            info('Exporting database...');
+            $data = Mysql::exportDatabase($name, $optional);
+            info('Database "' . $data['database'] . '" exported into file "' . $data['filename'] . '"');
+            return;
+        }
+
+        if ($run === 'pwd' || $run === 'password') {
+            if (!$name || !$optional) {
+                throw new Exception('Missing arguments to change root user password. Use: "valet db pwd <old-password> <new-password>"');
+            }
+
+            info('Setting password for root user...');
+            Mysql::setRootPassword($name, $optional);
+            return;
+        }
+
+        throw new Exception('Command not found! Available commands: list/ls, create, drop, reset, open, import, reimport, export/dump, pwd/password');
+    })->descriptions('Database commands (list/ls, create, drop, reset, open, import, reimport, export/dump)');
 }
 
 /**

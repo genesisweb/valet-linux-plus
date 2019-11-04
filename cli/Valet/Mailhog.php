@@ -102,4 +102,45 @@ class Mailhog
         }
     }
 
+    /**
+     * Restart the Mailhog service.
+     *
+     * @return void
+     */
+    public function restart()
+    {
+        $this->sm->restart('mailhog');
+    }
+
+    /**
+     * Stop the Mailhog service.
+     *
+     * @return void
+     */
+    public function stop()
+    {
+        $this->sm->stop('mailhog');
+    }
+
+    /**
+     * Mailhog service status.
+     *
+     * @return void
+     */
+    public function status()
+    {
+        $this->sm->printStatus('nginx');
+    }
+
+    /**
+     * Prepare Mailhog for uninstall.
+     *
+     * @return void
+     */
+    public function uninstall()
+    {
+        $this->stop();
+    }
+
+
 }
