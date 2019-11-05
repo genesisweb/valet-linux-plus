@@ -493,129 +493,123 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Determine if this is the latest version of Valet');
 
     /**
-     * Create database
+     * List MySQL Database
      */
-    $app->command('db [run] [name] [optional] [-y|--yes]', function ($input, $output, $run, $name, $optional) {
+    $app->command('db:list', function() {
+        Mysql::listDatabases();
+    })->descriptions('List all available database in MySQL');
+
+    /**
+     * Create new database in MySQL
+     */
+    $app->command('db:create [database_name]', function($database_name) {
+        $database = Mysql::createDatabase($database_name);
+        if(!$database) {
+            warning('Error creating database');
+            return;
+        }
+
+        info("Database [{$database}] created successfully");
+    })->descriptions('Create new database in MySQL');
+
+    /**
+     * Drop database in MySQL
+     */
+    $app->command('db:drop [database_name] [-y|--yes]', function($input, $output, $database_name) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
-
-        if($run === 'list' || $run === 'ls') {
-            Mysql::listDatabases();
-            return;
-        }
-
-        if($run === 'create') {
-            $databaseName = Mysql::createDatabase($name);
-
-            if(!$databaseName) {
-                warning('Error creating database');
+        if(!$defaults['yes']) {
+            $question = new ConfirmationQuestion('Are you sure you want to delete the database? [y/N] ', FALSE);
+            if (!$helper->ask($input, $output, $question)) {
+                warning('Aborted');
                 return;
             }
+        }
+        $dropDB = Mysql::dropDatabase($database_name);
 
-            info('Database "' . $databaseName . '" created successfully');
+        if(!$dropDB) {
+            warning('Error dropping database');
             return;
         }
 
-        if($run === 'drop') {
-            if(!$defaults['yes']) {
-                $question = new ConfirmationQuestion('Are you sure you want to delete the database? [y/N] ', FALSE);
-                if (!$helper->ask($input, $output, $question)) {
-                    warning('Aborted');
-                    return;
-                }
-            }
-            $databaseName = Mysql::dropDatabase($name);
+        info("Database [{$database_name}] dropped successfully");
+    })->descriptions('Drop given database from MySQL');
 
-            if(!$databaseName) {
-                warning('Error dropping database');
+    /**
+     * Reset database in MySQL
+     */
+    $app->command('db:reset [database_name] [-y|--yes]', function($input, $output, $database_name) {
+        $helper = $this->getHelperSet()->get('question');
+        $defaults = $input->getOptions();
+        if(!$defaults['yes']) {
+            $question = new ConfirmationQuestion('Are you sure you want to reset the database? [y/N] ', FALSE);
+            if (!$helper->ask($input, $output, $question)) {
+                warning('Aborted');
                 return;
             }
+        }
+        $dropDB = Mysql::dropDatabase($database_name);
 
-            info('Database "' . $databaseName . '" dropped successfully');
+        if(!$dropDB) {
+            warning('Error resetting database');
             return;
         }
 
-        if($run === 'reset') {
-            if(!$defaults['yes']) {
-                $question = new ConfirmationQuestion('Are you sure you want to reset the database? [y/N] ', FALSE);
-                if (!$helper->ask($input, $output, $question)) {
-                    warning('Aborted');
-                    return;
-                }
-            }
+        $databaseName = Mysql::createDatabase($database_name);
 
-            $dropped = Mysql::dropDatabase($name);
+        if(!$databaseName) {
+            warning('Error resetting database');
+            return;
+        }
 
-            if(!$dropped) {
-                warning('Error creating database');
+        info("Database [{$database_name}] reset successfully");
+    })->descriptions('Clear all tables for given database in MySQL');
+
+    /**
+     * Import database in MySQL
+     */
+    $app->command('db:import [database_name] [dump_file]', function($input, $output, $database_name, $dump_file) {
+        $helper = $this->getHelperSet()->get('question');
+        info('Importing database...');
+        if(!$dump_file) {
+            throw new Exception('Please provide a dump file');
+        }
+
+        // check if database already exists.
+        if(Mysql::isDatabaseExists($database_name)){
+            $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', FALSE);
+            if (!$helper->ask($input, $output, $question)) {
+                warning('Aborted');
                 return;
             }
-
-            $databaseName = Mysql::createDatabase($name);
-
-            if(!$databaseName) {
-                warning('Error creating database');
-                return;
-            }
-
-            info('Database "' . $databaseName . '" reset successfully');
-            return;
         }
 
-        if($run === 'import') {
-            info('Importing database...');
-            if(!$name) {
-                throw new Exception('Please provide a dump file');
-            }
+        Mysql::importDatabase($dump_file, $database_name);
+        return;
+    })->descriptions('Import dump file for selected database in MySQL');
 
-            // check if database already exists.
-            if(Mysql::isDatabaseExists($optional)){
-                $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', FALSE);
-                if (!$helper->ask($input, $output, $question)) {
-                    warning('Aborted');
-                    return;
-                }
-            }
+    /**
+     * Export database in MySQL
+     */
+    $app->command('db:export [database_name] [--sql]', function($input, $database_name) {
+        info('Exporting database...');
+        $defaults = $input->getOptions();
+        $data = Mysql::exportDatabase($database_name, $defaults['sql']);
+        info("Database [{$data['database']}] exported into file {$data['filename']}");
+        return;
+    })->descriptions('Export selected MySQL database');
 
-            Mysql::importDatabase($name, $optional);
-            return;
+    /**
+     * Change root user password in MySQL
+     */
+    $app->command('db:password [current_password] [new_password]', function($current_password, $new_password) {
+        if (!$current_password || !$new_password) {
+            throw new Exception('Missing arguments to change root user password. Use: "valet db:password [current_password] [new_password]"');
         }
-
-        if($run === 'reimport') {
-            if(!$defaults['yes']) {
-                $question = new ConfirmationQuestion('Are you sure you want to reimport the database? [y/N] ', FALSE);
-                if (!$helper->ask($input, $output, $question)) {
-                    warning('Aborted');
-                    return;
-                }
-            }
-            info('Resetting database, importing database...');
-            if(!$name) {
-                throw new Exception('Please provide a dump file');
-            }
-            Mysql::reimportDatabase($name, $optional);
-            return;
-        }
-
-        if($run === 'export' || $run === 'dump') {
-            info('Exporting database...');
-            $data = Mysql::exportDatabase($name, $optional);
-            info('Database "' . $data['database'] . '" exported into file "' . $data['filename'] . '"');
-            return;
-        }
-
-        if ($run === 'pwd' || $run === 'password') {
-            if (!$name || !$optional) {
-                throw new Exception('Missing arguments to change root user password. Use: "valet db pwd <old-password> <new-password>"');
-            }
-
-            info('Setting password for root user...');
-            Mysql::setRootPassword($name, $optional);
-            return;
-        }
-
-        throw new Exception('Command not found! Available commands: list/ls, create, drop, reset, open, import, reimport, export/dump, pwd/password');
-    })->descriptions('Database commands (list/ls, create, drop, reset, open, import, reimport, export/dump)');
+        info('Setting password for root user...');
+        Mysql::setRootPassword($current_password, $new_password);
+        return;
+    })->descriptions('Change MySQL root user password');
 }
 
 /**

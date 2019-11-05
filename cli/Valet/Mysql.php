@@ -55,8 +55,8 @@ class Mysql
      */
     public function install()
     {
-        if($this->pm->installed('mysql-server')) {
-            if(!extension_loaded('pdo')) {
+        if ($this->pm->installed('mysql-server')) {
+            if (!extension_loaded('pdo')) {
                 $phpVersion = \PhpFpm::getVersion();
                 $this->pm->ensureInstalled("php{$phpVersion}-mysql");
             }
@@ -69,7 +69,7 @@ class Mysql
             $helper = $helper->get('question');
             $rootPassword = $helper->ask($input, $output, $question);
             $connection = $this->getConnection($rootPassword);
-            if(!$connection) {
+            if (!$connection) {
                 goto beginning;
             }
             $config = $this->configuration->read();
@@ -78,9 +78,8 @@ class Mysql
             }
             $config['mysql']['password'] = $rootPassword;
             $this->configuration->write($config);
-        }
-        else {
-            if(!extension_loaded('pdo')) {
+        } else {
+            if (!extension_loaded('pdo')) {
                 $phpVersion = \PhpFpm::getVersion();
                 $this->pm->ensureInstalled("php{$phpVersion}-mysql");
             }
@@ -274,7 +273,7 @@ class Mysql
             $sqlFile = " < {$file}";
         }
         $database = escapeshellarg($database);
-        $this->cli->passthru("{$gzip}mysql -u root -p{$this->getRootPassword()} {$database} {$sqlFile}");
+        $this->cli->run("{$gzip}mysql -u root -p{$this->getRootPassword()} {$database} {$sqlFile}");
     }
 
     /**
@@ -343,36 +342,38 @@ class Mysql
     public function isDatabaseExists($name)
     {
         $name = $this->getDatabaseName($name);
-
-        $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . $this->escape($name) . "'", false);
-
-        return (bool)$query->num_rows;
+        $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$name}'");
+        $query->execute();
+        return (bool)$query->rowCount();
     }
 
     /**
      * Export Mysql database.
      *
-     * @param $filename
      * @param $database
+     * @param $exportSql
      *
      * @return array
      */
-    public function exportDatabase($filename, $database)
+    public function exportDatabase($database, $exportSql = false)
     {
         $database = $this->getDatabaseName($database);
 
-        if (!$filename || $filename === '-') {
-            $filename = $database . '-' . \date('Y-m-d-His', \time());
-        }
+        $filename = $database . '-' . \date('Y-m-d-H-i-s', \time());
 
-        if (!\stristr($filename, '.sql')) {
+        if ($exportSql) {
+            $filename = $filename . '.sql';
+        } else {
             $filename = $filename . '.sql.gz';
         }
-        if (!\stristr($filename, '.gz')) {
-            $filename = $filename . '.gz';
-        }
 
-        $this->cli->passthru('mysqldump ' . \escapeshellarg($database) . ' | gzip > ' . \escapeshellarg($filename ?: $database));
+        $command = "mysqldump -u root -p{$this->getRootPassword()} " . escapeshellarg($database) . " ";
+        if ($exportSql) {
+            $command .= " > ".escapeshellarg($filename);
+        } else {
+            $command .= " |  gzip ".escapeshellarg($filename);
+        }
+        $this->cli->run($command);
 
         return [
             'database' => $database,
