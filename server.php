@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Define the user's "~/.valet" path.
  */
@@ -122,15 +121,24 @@ $valetConfig = json_decode(
 $uri = rawurldecode(
     explode("?", $_SERVER['REQUEST_URI'])[0]
 );
-
 $siteName = basename(
     // Filter host to support xip.io feature
     valet_support_xip_io(explode(':',strtolower($_SERVER['HTTP_HOST']))[0]),
     '.'.$valetConfig['domain']
 );
-
 if (strpos($siteName, 'www.') === 0) {
     $siteName = substr($siteName, 4);
+}
+
+if($_SERVER['SERVER_ADDR'] !== '127.0.0.1') {
+    if(strpos($uri,'/') === 0) {
+        $tempUri = substr($uri,1, strlen($uri));
+        if($tempUri) {
+            $siteName = explode('/',$tempUri)[0];
+            $uri = substr($uri, strlen('/'.$siteName));
+            $_SERVER['REQUEST_URI'] = $uri;
+        }
+    }
 }
 
 /**
@@ -182,7 +190,6 @@ if (isset($_SERVER['HTTP_X_ORIGINAL_HOST'])) {
  * Allow driver to mutate incoming URL.
  */
 $uri = $valetDriver->mutateUri($uri);
-
 /**
  * Determine if the incoming request is for a static file.
  */
@@ -198,11 +205,8 @@ if ($uri !== '/' && ! $isPhpFile && $staticFilePath = $valetDriver->isStaticFile
 $frontControllerPath = $valetDriver->frontControllerPath(
     $valetSitePath, $siteName, $uri
 );
-
 if (! $frontControllerPath) {
     show_valet_404();
 }
-
 chdir(dirname($frontControllerPath));
-
 require $frontControllerPath;
