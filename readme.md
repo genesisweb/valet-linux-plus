@@ -1,11 +1,11 @@
 <p align="center"><img src="https://cdn.rawgit.com/wiki/cpriego/valet-linux/images/valet.svg"></p>
 
 <p align="center">
-<a href="https://travis-ci.org/cpriego/valet-linux"><img src="https://travis-ci.org/cpriego/valet-linux.svg?branch=master" alt="Build Status"></a>
-<a href="https://packagist.org/packages/cpriego/valet-linux"><img src="https://poser.pugx.org/cpriego/valet-linux/downloads.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/cpriego/valet-linux"><img src="https://poser.pugx.org/cpriego/valet-linux/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/cpriego/valet-linux"><img src="https://poser.pugx.org/cpriego/valet-linux/v/unstable.svg" alt="Latest Unstable Version"></a>
-<a href="https://packagist.org/packages/cpriego/valet-linux"><img src="https://poser.pugx.org/cpriego/valet-linux/license.svg" alt="License"></a>
+<a href="https://travis-ci.org/genesisweb/valet-linux-plus"><img src="https://travis-ci.org/genesisweb/valet-linux-plus.svg?branch=master" alt="Build Status"></a>
+<a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/downloads.svg" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/v/stable.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/v/unstable.svg" alt="Latest Unstable Version"></a>
+<a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/license.svg" alt="License"></a>
 </p>
 
 ## Introduction
