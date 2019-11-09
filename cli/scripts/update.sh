@@ -20,7 +20,7 @@ function fix-config() {
 
 if [[ "$1" = "update" ]]
 then
-    composer global update "cpriego/valet-linux"
+    composer global update "genesisweb/valet-linux-plus"
     valet install
 fi
 
