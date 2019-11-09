@@ -327,9 +327,22 @@ class Mysql
      */
     public function createDatabase($name)
     {
-        $name = $this->getDatabaseName($name);
+        if ($this->isDatabaseExists($name))
+        {
+            warning("Database [$name] is already exists!");
+            return;
+        } else {
 
-        return $this->query('CREATE DATABASE IF NOT EXISTS `' . $name . '`') ? $name : false;
+            try {
+
+                $name = $this->getDatabaseName($name);
+                if ($this->query('CREATE DATABASE IF NOT EXISTS `' . $name . '`')) {
+                    info("Database [{$name}] created successfully");
+                }
+            } catch (\Exception $exception) {
+                warning('Error while creating database!');
+            }
+        }
     }
 
     /**

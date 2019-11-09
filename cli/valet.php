@@ -541,13 +541,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Create new database in MySQL
      */
     $app->command('db:create [database_name]', function($database_name) {
-        $database = Mysql::createDatabase($database_name);
-        if(!$database) {
-            warning('Error creating database');
-            return;
-        }
-
-        info("Database [{$database}] created successfully");
+        Mysql::createDatabase($database_name);
     })->descriptions('Create new database in MySQL');
 
     /**
