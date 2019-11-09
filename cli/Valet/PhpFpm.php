@@ -81,10 +81,11 @@ class PhpFpm
         $this->sm->disable($this->fpmServiceName());
 
         if (!isset($version) || strtolower($version) === 'default') {
-            $this->version = $this->getVersion(true);
-        } else {
+            $version = $this->getVersion(true);
             $this->version = $version;
         }
+
+        $this->version = $version;
 
         try {
             $this->install();
@@ -92,6 +93,17 @@ class PhpFpm
             $this->version = $oldVersion;
             $exception = $e;
         }
+//        if($exception === null) {
+//        if($oldVersion != $version) {
+//            $installedModules = $this->cli->run("php{$oldVersion} -m");
+//            $installedModules = str_replace("[PHP Modules]", '', $installedModules);
+//            $installedModules = str_replace("[Zend Modules]", '', $installedModules);
+//            $installedModules = array_filter(explode("\n",$installedModules));
+//            foreach($installedModules as $module) {
+//                $this->pm->ensureInstalled("php{$version}-{$module}");
+//            }
+//        }
+//        }
 
         if ($this->sm->disabled($this->fpmServiceName())) {
             info('Enabling php' . $this->version . '-fpm...');

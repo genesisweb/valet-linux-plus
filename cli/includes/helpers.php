@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Container\Container;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Helper\Table;
 
@@ -97,9 +96,10 @@ if (! function_exists('retry')) {
      * Retry the given function N times.
      *
      * @param  int  $retries
-     * @param  callable  $retries
+     * @param  callable  $fn
      * @param  int  $sleep
      * @return mixed
+     * @throws Exception
      */
     function retry($retries, $fn, $sleep = 0)
     {
@@ -126,6 +126,7 @@ if (! function_exists('retry')) {
  * Verify that the script is currently running as "sudo".
  *
  * @return void
+ * @throws Exception
  */
 function should_be_sudo()
 {

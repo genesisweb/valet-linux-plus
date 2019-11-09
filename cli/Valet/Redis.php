@@ -36,4 +36,43 @@ class Redis
         $this->pm->ensureInstalled('redis-server');
         $this->sm->enable('redis-server');
     }
+    /**
+     * Returns wether redis is installed or not.
+     *
+     * @return bool
+     */
+    function installed()
+    {
+        return $this->pm->installed('redis-server');
+    }
+
+    /**
+     * Restart the service.
+     *
+     * @return void
+     */
+    function restart()
+    {
+        $this->sm->restart('redis-server');
+    }
+
+    /**
+     * Stop the service.
+     *
+     * @return void
+     */
+    function stop()
+    {
+        $this->sm->stop('redis-server');
+    }
+
+    /**
+     * Prepare for uninstall.
+     *
+     * @return void
+     */
+    function uninstall()
+    {
+        $this->stop();
+    }
 }
