@@ -68,7 +68,7 @@ class Mysql
             $question->setHidden(true);
             $helper = $helper->get('question');
             $rootPassword = $helper->ask($input, $output, $question);
-            $connection = $this->getConnection($rootPassword);
+            $connection = $this->getConnection($rootPassword?$rootPassword:"");
             if (!$connection) {
                 goto beginning;
             }
@@ -205,7 +205,7 @@ class Mysql
      *
      * @return bool|PDO
      */
-    public function getConnection($rootPassword = false)
+    public function getConnection($rootPassword = null)
     {
         // if connection already exists return it early.
         if ($this->link) {
@@ -213,7 +213,7 @@ class Mysql
         }
         try {
             // Create connection
-            $this->link = new PDO('mysql:host=localhost', 'root', ($rootPassword ? $rootPassword : $this->getRootPassword()));
+            $this->link = new PDO('mysql:host=localhost', 'root', ($rootPassword !== null? $rootPassword : $this->getRootPassword()));
             $this->link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return $this->link;

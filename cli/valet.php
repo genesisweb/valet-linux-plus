@@ -641,7 +641,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Change root user password in MySQL
      */
     $app->command('db:password [current_password] [new_password]', function($current_password, $new_password) {
-        if (!$current_password || !$new_password) {
+        if ($current_password === null || $new_password === null) {
             throw new Exception('Missing arguments to change root user password. Use: "valet db:password [current_password] [new_password]"');
         }
         info('Setting password for root user...');
