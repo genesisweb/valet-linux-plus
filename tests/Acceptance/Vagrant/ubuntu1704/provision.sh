@@ -48,7 +48,7 @@ else
 fi
 
 # Require Valet
-composer global require "cpriego/valet-linux @dev" --no-interaction --no-ansi
+composer global require "genesisweb/valet-linux-plus @dev" --no-interaction --no-ansi
 
 # Add Composer bin to PATH
 echo "PATH=\"\$HOME/.config/composer/vendor/bin:\$PATH\"" >> ~/.profile
