@@ -202,6 +202,44 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Stop serving the given domain over HTTPS and remove the trusted TLS certificate');
 
     /**
+     * Register a subdomain link.
+     */
+    $app->command('subdomain:create [name] [--secure]', function ($name,$secure) {
+
+        $name = $name ?: "www";
+        Site::link(getcwd(), $name.'.'.basename(getcwd()));
+
+        if ($secure) {
+            $this->runCommand('secure '. $name);
+        }
+        $domain = Configuration::read()['domain'];
+
+        info('Subdomain '.$name.'.'.basename(getcwd()).'.'.$domain.' created');
+    })->descriptions('Create a subdomains');
+
+
+    /**
+     * Unregister a subdomain link.
+     */
+    $app->command('subdomain:remove [name]', function ($name) {
+
+        $name = $name ?: "www";
+        Site::unlink($name.'.'.basename(getcwd()));
+        $domain = Configuration::read()['domain'];
+        info('Subdomain '.$name.'.'.basename(getcwd()).'.'.$domain.' removed');
+    })->descriptions('Remove a subdomains');
+
+    /**
+     * List subdomains.
+     */
+    $app->command('subdomain:list', function () {
+
+        $links = Site::links(basename(getcwd()));
+        table(['Site', 'SSL', 'URL', 'Path'], $links->all());
+    })->descriptions('List all subdomains');
+
+
+    /**
      * Determine which Valet driver the current directory is using.
      */
     $app->command('which', function () {
@@ -503,13 +541,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Create new database in MySQL
      */
     $app->command('db:create [database_name]', function($database_name) {
-        $database = Mysql::createDatabase($database_name);
-        if(!$database) {
-            warning('Error creating database');
-            return;
-        }
-
-        info("Database [{$database}] created successfully");
+        Mysql::createDatabase($database_name);
     })->descriptions('Create new database in MySQL');
 
     /**
@@ -603,7 +635,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Change root user password in MySQL
      */
     $app->command('db:password [current_password] [new_password]', function($current_password, $new_password) {
-        if (!$current_password || !$new_password) {
+        if ($current_password === null || $new_password === null) {
             throw new Exception('Missing arguments to change root user password. Use: "valet db:password [current_password] [new_password]"');
         }
         info('Setting password for root user...');

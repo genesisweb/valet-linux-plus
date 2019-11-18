@@ -108,6 +108,23 @@ class DnsMasq
     }
 
     /**
+     * Stop the DnsMasq service.
+     */
+    public function stop()
+    {
+        $this->sm->stop('dnsmasq');
+    }
+
+    /**
+     * Restart the DnsMasq service.
+     */
+    public function restart()
+    {
+        $this->sm->restart('dnsmasq');
+    }
+
+
+    /**
      * Append the custom DnsMasq configuration file to the main configuration file.
      *
      * @param string $domain Domain TLD to use
