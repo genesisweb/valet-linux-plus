@@ -642,6 +642,34 @@ if (is_dir(VALET_HOME_PATH)) {
         Mysql::setRootPassword($current_password, $new_password);
         return;
     })->descriptions('Change MySQL root user password');
+
+    /**
+     * Get or set the fallback site path used by Valet for uncaught urls.
+     */
+    $app->command('fallback [path]', function ($path = null) {
+        if ($path === '?') {
+            if (($config = Configuration::read()) && isset($config['fallback'])) {
+                info($config['fallback']);
+                return;
+            } else {
+                warning('Fallback path not set.');
+                return;
+            }
+        }
+        if ($path && !is_dir($path)) {
+            warning('The fallback path ['.$path.'] is not a valid directory.');
+            return;
+        }
+        Configuration::updateKey('fallback', $path ?: getcwd());
+        info('Your Valet fallback path has been updated to '.($path === null ? 'the current directory' : "[{$path}]").'.');
+    })->descriptions('Set the current working (or specified) directory as the fallback site path for uncaught urls');
+    /**
+     * Removes the fallback site path used by Valet.
+     */
+    $app->command('unfallback', function () {
+        Configuration::updateKey('fallback', null);
+        info('Your Valet fallback path has been removed.');
+    })->descriptions('Remove the fallback site path for uncaught urls');
 }
 
 /**
