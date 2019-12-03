@@ -381,10 +381,11 @@ class Mysql
         }
 
         $command = "mysqldump -u root -p{$this->getRootPassword()} " . escapeshellarg($database) . " ";
-        if (!$exportSql) {
-            $command .= " |  gzip ";
+        if ($exportSql) {
+            $command .= " > ".escapeshellarg($filename);
+        } else {
+            $command .= " |  gzip ".escapeshellarg($filename);
         }
-        $command .= " > ".escapeshellarg($filename);
         $this->cli->run($command);
 
         return [

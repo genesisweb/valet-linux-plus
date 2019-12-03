@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Define the user's "~/.valet" path.
  */
@@ -109,20 +110,6 @@ function valet_path_to_slug($path) {
 }
 
 /**
- * @param array $config Valet configuration array
- *
- * @return string|null If set, fallback site path for uncaught urls
- * */
-function valet_fallback_site_path($config)
-{
-    if (isset($config['fallback']) && is_string($config['fallback']) && is_dir($config['fallback'])) {
-        return $config['fallback'];
-    }
-    return null;
-}
-
-
-/**
  * Load the Valet configuration.
  */
 $valetConfig = json_decode(
@@ -135,11 +122,13 @@ $valetConfig = json_decode(
 $uri = rawurldecode(
     explode("?", $_SERVER['REQUEST_URI'])[0]
 );
+
 $siteName = basename(
     // Filter host to support xip.io feature
     valet_support_xip_io(explode(':',strtolower($_SERVER['HTTP_HOST']))[0]),
     '.'.$valetConfig['domain']
 );
+
 if (strpos($siteName, 'www.') === 0) {
     $siteName = substr($siteName, 4);
 }
@@ -165,7 +154,7 @@ foreach ($valetConfig['paths'] as $path) {
     }
 }
 
-if (is_null($valetSitePath) && is_null($valetSitePath = valet_fallback_site_path($valetConfig))) {
+if (is_null($valetSitePath)) {
     show_valet_404();
 }
 
@@ -193,6 +182,7 @@ if (isset($_SERVER['HTTP_X_ORIGINAL_HOST'])) {
  * Allow driver to mutate incoming URL.
  */
 $uri = $valetDriver->mutateUri($uri);
+
 /**
  * Determine if the incoming request is for a static file.
  */
@@ -208,8 +198,11 @@ if ($uri !== '/' && ! $isPhpFile && $staticFilePath = $valetDriver->isStaticFile
 $frontControllerPath = $valetDriver->frontControllerPath(
     $valetSitePath, $siteName, $uri
 );
+
 if (! $frontControllerPath) {
     show_valet_404();
 }
+
 chdir(dirname($frontControllerPath));
+
 require $frontControllerPath;
