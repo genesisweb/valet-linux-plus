@@ -11,7 +11,7 @@ namespace Valet;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
-class Redis
+class ValetRedis
 {
     public $pm;
     public $sm;

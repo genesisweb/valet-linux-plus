@@ -42,7 +42,7 @@ $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
-    Redis::install();
+    ValetRedis::install();
     Mysql::install();
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
@@ -300,7 +300,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::restart();
             Mailhog::restart();
             Mysql::restart();
-            Redis::restart();
+            ValetRedis::restart();
 //            Elasticsearch::restart();
 //            RabbitMq::restart();
 //            Varnish::restart();
@@ -331,7 +331,7 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::restart();
+                    ValetRedis::restart();
                     break;
                 }
 //                case 'elasticsearch': {
@@ -362,7 +362,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::restart();
             Mailhog::restart();
             Mysql::restart();
-            Redis::restart();
+            ValetRedis::restart();
 //            Elasticsearch::restart();
 //            RabbitMq::restart();
 //            Varnish::restart();
@@ -394,7 +394,7 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::restart();
+                    ValetRedis::restart();
                     break;
                 }
 //                case 'elasticsearch': {
@@ -425,7 +425,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::stop();
             Mailhog::stop();
             Mysql::stop();
-            Redis::stop();
+            ValetRedis::stop();
 //            Elasticsearch::stop();
 //            RabbitMq::stop();
 //            Varnish::stop();
@@ -457,7 +457,7 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::stop();
+                    ValetRedis::stop();
                     break;
                 }
 //                case 'elasticsearch': {
@@ -581,7 +581,6 @@ if (is_dir(VALET_HOME_PATH)) {
             }
         }
         $dropDB = Mysql::dropDatabase($database_name);
-
         if(!$dropDB) {
             warning('Error resetting database');
             return;
