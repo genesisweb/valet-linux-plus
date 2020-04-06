@@ -56,12 +56,13 @@
     "require": {
         "ext-posix": "*",
         "ext-json": "*",
-        "php": ">=7.0",
+        "php": ">=7.1",
         "illuminate/container": "~5.3",
         "mnapoli/silly": "~1.1",
         "symfony/process": "~2.7|~3.0|~4.0",
         "nategood/httpful": "~0.2",
-        "tightenco/collect": "~5.3"
+        "tightenco/collect": "~5.3",
+        "symfony/console": "~4.4"
     },
     "require-dev": {
         "mockery/mockery": "~0.9.4",
