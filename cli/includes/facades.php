@@ -47,7 +47,7 @@ class Site extends Facade {}
 class Valet extends Facade {}
 class Requirements extends Facade {}
 class Mailhog extends Facade {}
-class Redis extends Facade {}
+class ValetRedis extends Facade {}
 class CliPrompt extends Facade {}
 class Mysql extends Facade {}
 

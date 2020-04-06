@@ -103,6 +103,16 @@ class Mailhog
     }
 
     /**
+     * Start the Mailhog service.
+     *
+     * @return void
+     */
+    public function start()
+    {
+        $this->sm->start('mailhog');
+    }
+
+    /**
      * Restart the Mailhog service.
      *
      * @return void
@@ -129,7 +139,7 @@ class Mailhog
      */
     public function status()
     {
-        $this->sm->printStatus('nginx');
+        $this->sm->printStatus('mailhog');
     }
 
     /**

@@ -1,7 +1,16 @@
 {
     "name": "genesisweb/valet-linux-plus",
     "description": "Advanced local development experience for Linux.",
-    "keywords": ["laravel", "zonda", "wwdhhd", "ubuntu", "fedora", "arch", "linux", "valet"],
+    "keywords": [
+        "laravel",
+        "zonda",
+        "wwdhhd",
+        "ubuntu",
+        "fedora",
+        "arch",
+        "linux",
+        "valet"
+    ],
     "license": "MIT",
     "authors": [
         {
@@ -45,6 +54,8 @@
         }
     },
     "require": {
+        "ext-posix": "*",
+        "ext-json": "*",
         "php": ">=7.1",
         "illuminate/container": "~5.3",
         "mnapoli/silly": "~1.1",

@@ -42,7 +42,7 @@ $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
-    Redis::install();
+    ValetRedis::install();
     Mysql::install();
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
@@ -222,7 +222,6 @@ if (is_dir(VALET_HOME_PATH)) {
      * Unregister a subdomain link.
      */
     $app->command('subdomain:remove [name]', function ($name) {
-
         $name = $name ?: "www";
         Site::unlink($name.'.'.basename(getcwd()));
         $domain = Configuration::read()['domain'];
@@ -233,7 +232,6 @@ if (is_dir(VALET_HOME_PATH)) {
      * List subdomains.
      */
     $app->command('subdomain:list', function () {
-
         $links = Site::links(basename(getcwd()));
         table(['Site', 'SSL', 'URL', 'Path'], $links->all());
     })->descriptions('List all subdomains');
@@ -300,10 +298,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::restart();
             Mailhog::restart();
             Mysql::restart();
-            Redis::restart();
-//            Elasticsearch::restart();
-//            RabbitMq::restart();
-//            Varnish::restart();
+            ValetRedis::restart();
             info('Valet services have been started.');
 
             return;
@@ -331,21 +326,9 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::restart();
+                    ValetRedis::restart();
                     break;
                 }
-//                case 'elasticsearch': {
-//                    Elasticsearch::restart();
-//                    break;
-//                }
-//                case 'rabbitmq': {
-//                    RabbitMq::restart();
-//                    break;
-//                }
-//                case 'varnish': {
-//                    Varnish::restart();
-//                    break;
-//                }
             }
         }
 
@@ -362,10 +345,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::restart();
             Mailhog::restart();
             Mysql::restart();
-            Redis::restart();
-//            Elasticsearch::restart();
-//            RabbitMq::restart();
-//            Varnish::restart();
+            ValetRedis::restart();
             info('Valet services have been restarted.');
 
             return;
@@ -394,7 +374,7 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::restart();
+                    ValetRedis::restart();
                     break;
                 }
 //                case 'elasticsearch': {
@@ -425,7 +405,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Nginx::stop();
             Mailhog::stop();
             Mysql::stop();
-            Redis::stop();
+            ValetRedis::stop();
 //            Elasticsearch::stop();
 //            RabbitMq::stop();
 //            Varnish::stop();
@@ -457,7 +437,7 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 }
                 case 'redis': {
-                    Redis::stop();
+                    ValetRedis::stop();
                     break;
                 }
 //                case 'elasticsearch': {
@@ -557,14 +537,7 @@ if (is_dir(VALET_HOME_PATH)) {
                 return;
             }
         }
-        $dropDB = Mysql::dropDatabase($database_name);
-
-        if(!$dropDB) {
-            warning('Error dropping database');
-            return;
-        }
-
-        info("Database [{$database_name}] dropped successfully");
+        Mysql::dropDatabase($database_name);
     })->descriptions('Drop given database from MySQL');
 
     /**
@@ -581,7 +554,6 @@ if (is_dir(VALET_HOME_PATH)) {
             }
         }
         $dropDB = Mysql::dropDatabase($database_name);
-
         if(!$dropDB) {
             warning('Error resetting database');
             return;
@@ -603,10 +575,16 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('db:import [database_name] [dump_file]', function($input, $output, $database_name, $dump_file) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
+        if(!$database_name) {
+            throw new Exception('Please provide database name');
+        }
         if(!$dump_file) {
             throw new Exception('Please provide a dump file');
         }
-
+        if(!file_exists($dump_file)) {
+            throw new Exception("Unable to locate [$dump_file]");
+        }
+        $isExistsDatabase = false;
         // check if database already exists.
         if(Mysql::isDatabaseExists($database_name)){
             $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', FALSE);
@@ -614,9 +592,10 @@ if (is_dir(VALET_HOME_PATH)) {
                 warning('Aborted');
                 return;
             }
+            $isExistsDatabase = true;
         }
 
-        Mysql::importDatabase($dump_file, $database_name);
+        Mysql::importDatabase($dump_file, $database_name, $isExistsDatabase);
         return;
     })->descriptions('Import dump file for selected database in MySQL');
 
