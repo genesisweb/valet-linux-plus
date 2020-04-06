@@ -13,10 +13,6 @@ use \PDO;
 
 class Mysql
 {
-    const MYSQL_CONF_DIR = '/usr/local/etc';
-    const MYSQL_CONF = '/usr/local/etc/my.cnf';
-    const MAX_FILES_CONF = '/Library/LaunchDaemons/limit.maxfiles.plist';
-    const MYSQL_DIR = '/usr/local/var/mysql';
     const MYSQL_ROOT_PASSWORD = 'root';
 
     public $cli;
@@ -39,8 +35,14 @@ class Mysql
      * @param Configuration $configuration
      * @param Site $site
      */
-    public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files, Configuration $configuration, Site $site)
-    {
+    public function __construct(
+        PackageManager $pm,
+        ServiceManager $sm,
+        CommandLine $cli,
+        Filesystem $files,
+        Configuration $configuration,
+        Site $site
+    ) {
         $this->cli = $cli;
         $this->pm = $pm;
         $this->sm = $sm;
@@ -68,7 +70,7 @@ class Mysql
             $question->setHidden(true);
             $helper = $helper->get('question');
             $rootPassword = $helper->ask($input, $output, $question);
-            $connection = $this->getConnection($rootPassword?$rootPassword:"");
+            $connection = $this->getConnection($rootPassword ? $rootPassword : "");
             if (!$connection) {
                 goto beginning;
             }
@@ -124,10 +126,11 @@ class Mysql
     public function setRootPassword($oldPwd = '', $newPwd = self::MYSQL_ROOT_PASSWORD)
     {
         $success = true;
-        $this->cli->runAsUser("mysqladmin -u root --password='" . $oldPwd . "' password " . $newPwd, function () use (&$success) {
-            warning('Setting password for root user failed.');
-            $success = false;
-        });
+        $this->cli->runAsUser("mysqladmin -u root --password='" . $oldPwd . "' password " . $newPwd,
+            function () use (&$success) {
+                warning('Setting password for root user failed.');
+                $success = false;
+            });
 
         if ($success !== false) {
             $config = $this->configuration->read();
@@ -205,7 +208,7 @@ class Mysql
      *
      * @return bool|PDO
      */
-    public function getConnection($rootPassword = null)
+    protected function getConnection($rootPassword = null)
     {
         // if connection already exists return it early.
         if ($this->link) {
@@ -213,7 +216,8 @@ class Mysql
         }
         try {
             // Create connection
-            $this->link = new PDO('mysql:host=localhost', 'root', ($rootPassword !== null? $rootPassword : $this->getRootPassword()));
+            $this->link = new PDO('mysql:host=localhost', 'root',
+                ($rootPassword !== null ? $rootPassword : $this->getRootPassword()));
             $this->link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return $this->link;
@@ -235,34 +239,19 @@ class Mysql
     }
 
     /**
-     * Drop current Mysql database & re-import it from file.
-     *
-     * @param $file
-     * @param $database
-     */
-    public function reimportDatabase($file, $database)
-    {
-        $this->importDatabase($file, $database, true);
-    }
-
-    /**
      * Import Mysql database from file.
      *
      * @param string $file
      * @param string $database
-     * @param bool $dropDatabase
+     * @param boolean $isDatabaseExists
      */
-    public function importDatabase($file, $database, $dropDatabase = false)
+    public function importDatabase($file, $database, $isDatabaseExists)
     {
         $database = $this->getDatabaseName($database);
 
-        // drop database first
-        if ($dropDatabase) {
-            $this->dropDatabase($database);
+        if(!$isDatabaseExists) {
+            $this->createDatabase($database);
         }
-
-        $this->createDatabase($database);
-
         $gzip = "";
         $sqlFile = "";
         if (\stristr($file, '.gz')) {
@@ -309,13 +298,26 @@ class Mysql
      *
      * @param string $name
      *
-     * @return bool|string
+     * @return bool
      */
     public function dropDatabase($name)
     {
         $name = $this->getDatabaseName($name);
 
-        return $this->query('DROP DATABASE `' . $name . '`') ? $name : false;
+        if (!$this->isDatabaseExists($name)) {
+            warning("Database [$name] does not exists!");
+            return false;
+        }
+
+        $dbDropped = $this->query('DROP DATABASE `' . $name . '`') ? true : false;
+
+        if (!$dbDropped) {
+            warning('Error dropping database');
+            return false;
+        }
+
+        info("Database [{$name}] dropped successfully");
+        return true;
     }
 
     /**
@@ -327,21 +329,17 @@ class Mysql
      */
     public function createDatabase($name)
     {
-        if ($this->isDatabaseExists($name))
-        {
+        if ($this->isDatabaseExists($name)) {
             warning("Database [$name] is already exists!");
             return;
-        } else {
-
-            try {
-
-                $name = $this->getDatabaseName($name);
-                if ($this->query('CREATE DATABASE IF NOT EXISTS `' . $name . '`')) {
-                    info("Database [{$name}] created successfully");
-                }
-            } catch (\Exception $exception) {
-                warning('Error while creating database!');
+        }
+        try {
+            $name = $this->getDatabaseName($name);
+            if ($this->query('CREATE DATABASE IF NOT EXISTS `' . $name . '`')) {
+                info("Database [{$name}] created successfully");
             }
+        } catch (\Exception $exception) {
+            warning('Error while creating database!');
         }
     }
 
@@ -382,9 +380,9 @@ class Mysql
 
         $command = "mysqldump -u root -p{$this->getRootPassword()} " . escapeshellarg($database) . " ";
         if ($exportSql) {
-            $command .= " > ".escapeshellarg($filename);
+            $command .= " > " . escapeshellarg($filename);
         } else {
-            $command .= " |  gzip ".escapeshellarg($filename);
+            $command .= " | gzip > " . escapeshellarg($filename);
         }
         $this->cli->run($command);
 

@@ -1,4 +1,4 @@
-<p align="center"><img width="500" src="https://info.localhost/logo.png"></p>
+<p align="center"><img width="500" src="https://genesisweb.co.in/images/brand/valet-logo.png"></p>
 
 <p align="center">
 <a href="https://travis-ci.org/genesisweb/valet-linux-plus"><img src="https://travis-ci.org/genesisweb/valet-linux-plus.svg?branch=master" alt="Build Status"></a>
@@ -35,24 +35,21 @@ Here are a few key differences compared to the original Valet:
   - [Serving sites](#serving-sites)
 - [Switching PHP version](#switching-php-version)
 - [Database](#database)
-  - [Creating databases](#creating-databases)
-  - [Importing databases](#importing-databases)
 - [Redis](#redis)
 - [Securing Sites With TLS](#securing-sites-with-tls)
-- [Valet Documentation](#valet-documentation)
-- [Credits](#credits)
+- [Sharing Sites on LAN](#sharing-sites-on-lan)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Requirements
 
-### Ubuntu (and derivates)
+### Ubuntu
 
 | Requirement       | Description                                                               |
 | ----------------- | ------------------------------------------------------------------------- |
 | Ubuntu version    | 14.04+                                                                    |
 | OS packages       | `sudo apt-get install network-manager libnss3-tools jq xsel`              |
-| PHP version       | 5.6+                                                                      |
+| PHP version       | 7.1+                                                                      |
 | PHP extensions    | php*-cli php*-curl php*-mbstring php*-mcrypt php*-xml php*-zip            |
 
 *Replace the star * with your php version.*
@@ -66,50 +63,23 @@ sudo add-apt-repository -y ppa:nginx/stable
 sudo apt-get update
 ```
 
-#### Supported Ubuntu versions
-* LTS: Will get 4 year support (meaning only the latest 2 releases).
-* Non-LTS: Only get 9 months. You should update anyway.
-* Development: Only if I have the time. Development version are extremely unstable and prone to change. It is very difficult to isolate any issue.
-
-### Fedora (and derivates)
-
-| Requirement       | Description                                                               |
-| ----------------- | ------------------------------------------------------------------------- |
-| Fedora version    | 24+                                                                    |
-| OS packages       | `dnf install nss-tools jq xsel`              |
-| PHP version       | 5.6+                                                                      |
-| PHP extensions    | dnf install php-{cli,process,mbstring,mcrypt,xml}            |
-
-*Replace the star * with your php version.*
-
-#### Regarding SELinux
-
-Fedora users are expected to have knowledge of SELinux and how to configure or disable it while Valet makes changes to the system files, otherwise you will receive errors about changes that could not be made.
-The easiest way is to set SELinux in Permissive mode.
-
-
-
-
 
 ## Installation
 
-1. Install or update [Homebrew](https://brew.sh/) to the latest version using `brew update`.
-3. Add the Homebrew PHP tap for Valet+ via `brew tap henkrehorst/php`.
-3. Install PHP 7.2 using Homebrew via `brew install valet-php@7.2`.
-4. Install Composer using Homebrew via `brew install composer`.
-5. Install Valet+ with Composer via `composer global require weprovide/valet-plus`.
-6. Add `export PATH="$PATH:$HOME/.composer/vendor/bin"` to `.bash_profile` (for bash) or `.zshrc` (for zsh) depending on your shell (`echo $SHELL`)
-7. Run the `valet fix` command. This will check for common issues preventing Valet+ from installing.
-8. Run the `valet install` command. Optionally add `--with-mariadb` to use MariaDB instead of MySQL This will configure and install Valet+ and DnsMasq, and register Valet's daemon to launch when your system starts.
-9. Once Valet+ is installed, try pinging any `*.test` domain on your terminal using a command such as `ping -c1 foobar.test`. If Valet+ is installed correctly you should see this domain responding on `127.0.0.1`. If not you might have to restart your system. Especially when coming from the Dinghy (docker) solution.
+1. Install or update PHP to 7.1+ version.
+2. Install [Composer](http://getcomposer.org) from official website.
+3. Install Valet Linux+ with Composer via `composer global require genesisweb/valet-linux-plus`.
+4. Add `export PATH="$PATH:$HOME/.composer/vendor/bin"` to `.bash_profile`.
+8. Run the `valet install` command. This will configure and install Valet Linux+ and DnsMasq, and register Valet's daemon to launch when your system starts.
+9. Once Valet Linux+ is installed, try pinging any `*.test` domain on your terminal using a command such as `ping -c1 foobar.test`. If Valet Linux+ is installed correctly you should see this domain responding on `127.0.0.1`. If not you might have to restart your system.
 
-> :information_source: Valet+ will automatically start its daemon each time your machine boots. There is no need to run `valet start` or `valet install` ever again once the initial Valet+ installation is complete.
+> :information_source: Valet Linux+ will automatically start its daemon each time your machine boots. There is no need to run `valet start` or `valet install` ever again once the initial Valet Linux+ installation is complete.
 
-> :information_source: To update Valet+ to the latest version use the `composer global require weprovide/valet-plus` command in your terminal. After upgrading, it is good practice to run the `valet install` command so Valet+ can make additional upgrades to your configuration files if necessary.
+> :information_source: To update Valet Linux+ to the latest version use the `composer global require genesisweb/valet-linux-plus` command in your terminal. After upgrading, it is good practice to run the `valet install` command so Valet Linux+ can make additional upgrades to your configuration files if necessary.
 
 ### Serving sites
 
-Once Valet+ is installed, you're ready to start serving sites. Valet+ provides a command to help you serve your sites: `valet park`. Which will register the current working directory as projects root. Generally this directory is `~/sites`.
+Once Valet Linux+ is installed, you're ready to start serving sites. Valet Linux+ provides a command to help you serve your sites: `valet park`. Which will register the current working directory as projects root. Generally this directory is `~/sites`.
 
 1. Create a `sites` directory: `mkdir ~/sites`
 2. `cd ~/sites`
@@ -121,20 +91,12 @@ For example:
 
 1. `mkdir ~/sites/example`
 2. `cd ~/sites/example`
-3. `echo "<?php echo 'Valet+ at your service';" > index.php`
-4. Go to `http://example.test`, you should see `Valet+ at your service`
+3. `echo "<?php echo 'Valet Linux+ at your service';" > index.php`
+4. Go to `http://example.test`, you should see `Valet Linux+ at your service`
 
 ## Switching PHP version
 
 Switch PHP version using one of five commands:
-
-```
-valet use 5.6
-```
-
-```
-valet use 7.0
-```
 
 ```
 valet use 7.1
@@ -148,56 +110,14 @@ valet use 7.2
 valet use 7.3
 ```
 
-## Xdebug
-
-Xdebug support is built-in. It works on port `9000` after you enable it.
-
-The `[--remote_autostart=]` option can be used by typing: `valet xdebug --remote_autostart=0` or changing both settings: `valet xdebug on --remote_autostart=1`
-
-Enable Xdebug:
-
 ```
-valet xdebug on [--remote_autostart=]
+valet use 7.4
 ```
 
-Disable Xdebug:
-
-```
-valet xdebug off [--remote_autostart=]
-```
-
-Enable/disable xdebug.remote_autostart:
-
-```
-valet xdebug --remote_autostart=[true/false]
-```
-
-> :warning: Xdebug makes your environment slower. That's why we allow to fully enable / disable it. When not debugging it's best to disable it by running `valet xdebug off`.
-
-### PhpStorm
-
-To use Xdebug with PhpStorm you don't have to configure anything. Just run `valet xdebug on` and click the Xdebug button on the top right:
-
-![xdebug-phpstorm](images/xdebug-phpstorm.png)
-
-Then install [Xdebug helper](https://chrome.google.com/webstore/detail/xdebug-helper/eadndfjplgieldjbigjakmdgkmoaaaoc) for Chrome and enable it when viewing the page you want to use Xdebug on.
-
-## Ioncube
-
-Enable Ioncube:
-
-```
-valet ioncube on
-```
-
-Disable Ioncube:
-
-```
-valet ioncube off
-```
+Use `--update-cli` flag to update PHP cli version as well.
 
 ## Database
-Valet+ automatically installs MySQL 5.7 with 5.6 compatibility mode included. It includes a tweaked `my.cnf` which is aimed at improving speed.
+Valet Linux+ automatically installs MySQL 5.7 with 5.6 compatibility mode included. It includes a tweaked `my.cnf` which is aimed at improving speed.
 
 Username: `root`
 
@@ -206,121 +126,102 @@ Password: `root`
 ## Change password
 
 ```
-valet db pwd <old> <new>
+valet db:password <old> <new>
 ```
 
 
 ## List databases
 
 ```
-valet db ls
+valet db:list
 ```
 
-### Creating databases
+### Creating database
 
-Create databases using:
+Create database using:
 
 ```
-valet db create <name>
+valet db:create <name>
 ```
 
 When no name is given it'll try to find the closest git repository directory name. When it can't find one it'll use the current working directory name.
 
 ```
-valet db create
+valet db:create
 ```
 
-### Dropping databases
+### Dropping database
 
 Drop a database using:
 
 ```
-valet db drop <name>
+valet db:drop <name>
 ```
 
 When no name is given it'll try to find the closest git repository directory name. When it can't find one it'll use the current working directory name.
 
 ```
-valet db drop
+valet db:drop
 ```
 
-### Resetting databases
+### Resetting database
 
 Drop and create a database using:
 
 ```
-valet db reset <name>
+valet db:reset <name>
 ```
 
 When no name is given it'll try to find the closest git repository directory name. When it can't find one it'll use the current working directory name.
 
 ```
-valet db reset
+valet db:reset
 ```
 
-### Exporting databases
+### Exporting database
 
 Export a database:
 
 ```
-valet db export <filename> <database>
+valet db:export <database>
 ```
 
-When no database name is given it'll try to find the closest git repository directory name. When it can't find one it'll use the current working directory name.
+When no database name is given it'll use the current working directory name.
 
-When no filename is given it will use `<database>-<date>.sql.gz`. Optionally you can use `valet db export - <database>` to automatically generate the filename for a custom database.
+All database exports are gzipped. You can still export SQL file using `--sql` flag as shown below
 
-All database exports are gzipped.
+```
+valet db:export <database> --sql
+```
 
-### Importing databases
+### Importing database
 
 Import a database with progress bar
 
 ```
-valet db import <filename>.sql(.gz) <name>
+valet db:import <database_name> <filename>.sql
 ```
 
 When no name is given it'll try to find the closest git repository directory name. When it can't find one it'll use the current working directory name.
 
 You can import `.sql` directly as well as gzipped `.sql.gz` database exports.
 
-### Open database in Sequel Pro
-
-Valet+ has first class support for opening databases in [Sequel Pro](https://www.sequelpro.com/), a popular MySQL client for Mac.
-
-```
-valet db open <name>
-```
-
-When no name is given it'll try to find the closest git repository directory name. When it can't find one it'll open Sequel Pro without pre-selected database.
-
-```
-valet db open
-```
-
-## Logging
-
-To easily read the log file of php, php-fpm, nginx, mysql, mailhog or redis you can use command below.
-```
-valet logs <logname>
-```
-
 ## Subdomains
 
 You can manage subdomains for the current working directory using:
 
 ```
-valet subdomain list
+valet subdomain:list
 ```
 
 ```
-valet subdomain add <subdomain>
+valet subdomain:add <subdomain>
 ```
 
 For example:
 
 ```
-valet subdomain add welcome
+valet subdomain:add welcome
 ```
 
 Will create `welcome.yourproject.test`.
@@ -361,16 +262,16 @@ valet unlink yourproject2
 
 Mailhog is used to catch emails send from PHP. You can access the panel at [http://mailhog.test](http://mailhog.test).
 
-Enable Mailhog:
+**Enable Mailhog:
 
-```
-valet mailhog on
+```**
+valet start mailhog
 ```
 
 Disable Mailhog:
 
 ```
-valet mailhog off
+valet stop mailhog
 ```
 
 ## Redis
@@ -380,125 +281,14 @@ Redis is automatically installed and listens on the default port `6379`. The red
 Enable Redis:
 
 ```
-valet redis on
+valet start redis
 ```
 
 Disable Redis:
 
 ```
-valet redis off
+valet stop redis
 ```
-
-## Elasticsearch
-
-Elasticsearch 2.4 can be installed using:
-
-```
-valet elasticsearch install
-```
-
-To uninstall:
-
-```
-brew uninstall elasticsearch@2.4
-```
-
-The most recent version of Elasticsearch – 5.6 at the time of writing – can be installed using:
-
-```
-brew install elasticsearch
-```
-
-It will run on the default port `9200`, and is accessible at [http://elasticsearch.test/](http://elasticsearch.test/).
-
-Elasticsearch 2.4 is installed by default because [Magento 2.1 does not support Elasticsearch 5](http://devdocs.magento.com/guides/v2.1/config-guide/elasticsearch/es-overview.html).
-
-
-### Switching Elasticsearch version
-
-Switch Elasticsearch version using one of these commands:
-
-```
-valet use elasticsearch|es 2.4
-```
-```
-valet use elasticsearch|es 5.6
-```
-
-
-
-## Framework specific development tools
-
-Valet+ will automatically install framework specific development tools for you:
-
-- [wp-cli](http://wp-cli.org/) available as `wp`
-- [n98-magerun](https://github.com/netz98/n98-magerun) available as `magerun`
-- [n98-magerun2](https://github.com/netz98/n98-magerun2) available as `magerun2` for you.
-
-## Git Tower
-
-Open current git project in [Tower](https://www.git-tower.com/mac/)
-
-```
-valet tower
-```
-
-## PhpStorm
-
-Open current git project in [PhpStorm](https://www.jetbrains.com/phpstorm/)
-
-```
-valet phpstorm
-```
-
-## SourceTree
-
-Open current git project in [SourceTree](https://www.sourcetreeapp.com/)
-
-```
-valet sourcetree
-```
-
-## VScode
-
-Open current git project in [Visual Studio Code](https://code.visualstudio.com/)
-
-```
-valet vscode
-```
-
-## Open project in browser
-
-To open the current project in your default browser:
-
-```
-valet open
-```
-
-## Copy ssh key
-
-```
-valet ssh-key
-```
-
-## Automatic configuration [beta]
-
-Automatically configure environment for the project you're in.
-
-```
-valet configure
-```
-
-### Supported systems
-
-#### Magento 2
-
-Automatically configure the `env.php`, `config.php` base url, seo url rewrites and elastic search configuration in the database for Magento 2.
-
-#### Magento 1
-
-Automatically configure the `local.xml` and base url in the database for Magento 1.
-
 
 ## Securing Sites With TLS
 
@@ -514,6 +304,17 @@ To "unsecure" a site and revert back to serving its traffic over plain HTTP, use
 valet unsecure example
 ```
 
+## Sharing Sites on LAN
+
+By default, Valet Linux+ sites provide support to access your valet site on LAN access, it can be helpful to access site on different devices with your lan IP address, you don't have to do any additional changes. just open your LAN IP address instead of localhost and you will be able to see your available site lists. you may can find your LAN IP address via `ifconfig` command.
+
+```
+http://192.168.0.2/valet-sites
+```
+
+**Note:** As we can see the domain is changed to your remote IP address, so it won't be possible to run the site on SSL same as we run it with dedicated domain.
+
+
 ## Log locations
 
 The `nginx-error.log`, `php.log` and `mysql.log` are located at `~/.valet/Log`.
@@ -526,9 +327,6 @@ The PHP.ini location is `/usr/local/etc/valet-php/VERSION/php.ini`.
 
 ## Valet drivers
 Valet uses drivers to handle requests. You can read more about those [here](https://laravel.com/docs/5.4/valet#custom-valet-drivers).
-
-~~When using Valet+ drivers are automatically cached using APCu to avoid doing a driver lookup every time there is a request. You can reset the cache for a specific site by running `valet which`.~~
-APCu is temporarily turned off due to a compatibility issue with PHP-FPM, see https://github.com/weprovide/valet-plus/issues/49.
 
 By default these are included:
 
@@ -555,13 +353,13 @@ A full list can be found [here](cli/drivers).
 
 ## Custom Valet Drivers
 
-You can write your own Valet "driver" to serve PHP applications running on another framework or CMS that is not natively supported by Valet. When you install Valet+, a `~/.valet/Drivers` directory is created which contains a `SampleValetDriver.php` file. This file contains a sample driver implementation to demonstrate how to write a custom driver. Writing a driver only requires you to implement three methods: `serves`, `isStaticFile`, and `frontControllerPath`.
+You can write your own Valet "driver" to serve PHP applications running on another framework or CMS that is not natively supported by Valet. When you install Valet Linux+, a `~/.valet/Drivers` directory is created which contains a `SampleValetDriver.php` file. This file contains a sample driver implementation to demonstrate how to write a custom driver. Writing a driver only requires you to implement three methods: `serves`, `isStaticFile`, and `frontControllerPath`.
 
 All three methods receive the `$sitePath`, `$siteName`, and `$uri` values as their arguments. The `$sitePath` is the fully qualified path to the site being served on your machine, such as `/Users/Lisa/Sites/my-project`. The `$siteName` is the "host" / "site name" portion of the domain (`my-project`). The `$uri` is the incoming request URI (`/foo/bar`).
 
-Once you have completed your custom Valet+ driver, place it in the `~/.valet/Drivers` directory using the `FrameworkValetDriver.php` naming convention. For example, if you are writing a custom valet driver for WordPress, your file name should be `WordPressValetDriver.php`.
+Once you have completed your custom Valet Linux+ driver, place it in the `~/.valet/Drivers` directory using the `FrameworkValetDriver.php` naming convention. For example, if you are writing a custom valet driver for WordPress, your file name should be `WordPressValetDriver.php`.
 
-Let's take a look at a sample implementation of each method your custom Valet+ driver should implement.
+Let's take a look at a sample implementation of each method your custom Valet Linux+ driver should implement.
 
 #### The `serves` Method
 
@@ -665,27 +463,3 @@ class LocalValetDriver extends LaravelValetDriver
     }
 }
 ```
-
-## Valet Documentation
-
-Documentation for Valet can be found on the [Laravel website](https://laravel.com/docs/valet).
-
-## Credits
-
-This project is a fork of [laravel/valet](https://github.com/laravel/valet). Thanks to all of the contributors, especially the original authors:
-
-- Taylor Otwell ([@taylorotwell](https://github.com/taylorotwell))
-- Adam Wathan ([@adamwathan](https://github.com/adamwathan))
-
-## Valet+ Authors
-
-- Tim Neutkens ([@timneutkens](https://github.com/timneutkens))
-- Lou van der Laarse ([@Neodork](https://github.com/Neodork))
-- Sam Granger ([@samgranger](https://github.com/samgranger))
-
-
-## Get in touch
-
-[![slack](https://p9.zdassets.com/hc/theme_assets/138842/200037786/logo.png)](https://join.slack.com/t/valet-plus/shared_invite/enQtNDE2MjU2NzgyNjQwLWFiYWNjOWFhOWQ2ZDcyOTEyZTA2MzAzOWYyYzYwMTYzODVlMGE3ZDg3ZWQ1M2JmN2M0OGY3OGUwMDI3NDM1NDU)
-
-We have a slack workspace available [which you can join](https://join.slack.com/t/valet-plus/shared_invite/enQtNDE2MjU2NzgyNjQwLWFiYWNjOWFhOWQ2ZDcyOTEyZTA2MzAzOWYyYzYwMTYzODVlMGE3ZDg3ZWQ1M2JmN2M0OGY3OGUwMDI3NDM1NDU).

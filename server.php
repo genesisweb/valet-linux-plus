@@ -19,6 +19,10 @@ function show_valet_404()
 
 /**
  * Show the Valet 404 "Not Found" page.
+ * @param string $directory
+ * @param string $siteName
+ * @param string $uri
+ * @param array $ignoredPaths
  */
 function show_project_directory($directory, $siteName, $uri, $ignoredPaths = ['.'])
 {
@@ -31,6 +35,7 @@ function show_project_directory($directory, $siteName, $uri, $ignoredPaths = ['.
 
 /**
  * Show available sites.
+ * @param array $valetConfig
  */
 function show_available_sites($valetConfig)
 {
@@ -257,10 +262,13 @@ if ($uri !== '/' && !$isPhpFile && $staticFilePath = $valetDriver->isStaticFile(
 $frontControllerPath = $valetDriver->frontControllerPath(
     $valetSitePath, $siteName, $uri
 );
-
 if (!$frontControllerPath) {
-
-    show_project_directory($valetSitePath, $siteName, $uri);
+    if(is_dir($valetSitePath.$uri)) {
+        show_project_directory($valetSitePath, $siteName, $uri);
+    }
+    else {
+        show_valet_404();
+    }
 }
 
 chdir(dirname($frontControllerPath));
