@@ -458,6 +458,23 @@ if (is_dir(VALET_HOME_PATH)) {
         info('Specified Valet services have been stopped.');
     })->descriptions('Stop the Valet services');
 
+
+
+    $app->command('dev-tools:phpstorm [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runPhpStorm($folder);
+    })->descriptions('Open project in PHPstorm');
+
+    $app->command('dev-tools:atom [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runAtom($folder);
+    })->descriptions('Open project in Atom');
+
+    $app->command('dev-tools:sublime [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runSublime($folder);
+    })->descriptions('Open project in Sublime');
+
     /**
      * Uninstall Valet entirely.
      */

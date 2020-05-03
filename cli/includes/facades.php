@@ -50,4 +50,5 @@ class Mailhog extends Facade {}
 class ValetRedis extends Facade {}
 class CliPrompt extends Facade {}
 class Mysql extends Facade {}
+class DevTools extends Facade{}
 
