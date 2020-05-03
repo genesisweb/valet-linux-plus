@@ -462,17 +462,17 @@ if (is_dir(VALET_HOME_PATH)) {
 
     $app->command('dev-tools:phpstorm [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runPhpStorm($folder);
+        DevTools::runApp($folder,\Valet\DevTools::SUBLIME);
     })->descriptions('Open project in PHPstorm');
 
     $app->command('dev-tools:atom [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runAtom($folder);
+        DevTools::runApp($folder,\Valet\DevTools::ATOM);
     })->descriptions('Open project in Atom');
 
     $app->command('dev-tools:sublime [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runSublime($folder);
+        DevTools::runApp($folder,\Valet\DevTools::SUBLIME);
     })->descriptions('Open project in Sublime');
 
     /**

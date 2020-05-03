@@ -76,28 +76,11 @@ class DevTools
         }
     }
 
-    public function runPhpStorm($folder) {
+    public function runApp($folder,$service) {
 
-        if ($this->ensureInstalled(self::PHP_STORM)) {
+        if ($this->ensureInstalled($service)) {
 
-            $this->runService(self::PHP_STORM,$folder);
-        } else warning("PHPStorm not available");
-    }
-
-    public function runAtom($folder) {
-
-        if ($this->ensureInstalled(self::ATOM)) {
-
-            $this->runService(self::ATOM,$folder);
-        } else warning("Atom not available");
-
-    }
-
-    public function runSublime($folder) {
-
-        if ($this->ensureInstalled(self::SUBLIME)) {
-
-            $this->runService(self::SUBLIME,$folder);
-        } else warning("Sublime not available");
+            $this->runService($service,$folder);
+        } else warning("$service not available");
     }
 }
