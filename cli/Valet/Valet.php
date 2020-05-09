@@ -22,7 +22,7 @@ class Valet
 
     public $valetBin = '/usr/local/bin/valet';
     public $sudoers  = '/etc/sudoers.d/valet';
-    public $github   = 'https://api.github.com/repos/GenesisWeb/valet-linux/releases/latest';
+    public $github   = 'https://api.github.com/repos/genesisweb/valet-linux-plus/releases/latest';
 
     /**
      * Create a new Valet instance.
@@ -84,12 +84,23 @@ class Valet
      *
      * @param  string  $currentVersion
      * @return bool
+     * @throws \Exception
      */
     public function onLatestVersion($currentVersion)
     {
         $response = \Httpful\Request::get($this->github)->send();
-
         return version_compare($currentVersion, (isset($response->body->tag_name) ? trim($response->body->tag_name) : 'v1.0.0'), '>=');
+    }
+
+    /**
+     * Retrieve the latest version of Valet Linux Plus.
+     * @throws \Exception
+     * @return string
+     */
+    public function getLatestVersion()
+    {
+        $response = \Httpful\Request::get($this->github)->send();
+        return isset($response->body->tag_name) ? trim($response->body->tag_name) : false;
     }
 
     /**

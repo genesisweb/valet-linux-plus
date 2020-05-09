@@ -19,7 +19,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container);
 
-$version = 'v1.0.0';
+$version = 'v1.5.3';
 
 $app = new Application('Valet+', $version);
 
@@ -475,7 +475,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('update', function () use ($version) {
+        $app->command('update', function () use ($version) {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
         if (Valet::onLatestVersion($version)) {
@@ -484,7 +484,13 @@ if (is_dir(VALET_HOME_PATH)) {
         } else {
             warning('There is a new release of Valet Linux');
             warning('Updating now...');
-            passthru($script.' update');
+            $latestVersion = Valet::getLatestVersion();
+            if($latestVersion) {
+                passthru($script." update $latestVersion");
+            }
+            else {
+                passthru($script.' update');
+            }
         }
     })->descriptions('Update Valet Linux and clean up cruft');
 
