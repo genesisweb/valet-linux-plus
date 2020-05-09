@@ -8,6 +8,7 @@ interface ServiceManager
      * Start the given services.
      *
      * @param
+     *
      * @return void
      */
     public function start($services);
@@ -16,6 +17,7 @@ interface ServiceManager
      * Stop the given services.
      *
      * @param
+     *
      * @return void
      */
     public function stop($services);
@@ -24,6 +26,7 @@ interface ServiceManager
      * Restart the given services.
      *
      * @param
+     *
      * @return void
      */
     public function restart($services);
@@ -32,6 +35,7 @@ interface ServiceManager
      * Enable the given services.
      *
      * @param
+     *
      * @return bool
      */
     public function enable($services);
@@ -40,6 +44,7 @@ interface ServiceManager
      * Disable the given services.
      *
      * @param
+     *
      * @return bool
      */
     public function disable($services);
@@ -48,6 +53,7 @@ interface ServiceManager
      * Status the given services.
      *
      * @param
+     *
      * @return void
      */
     public function status($services);

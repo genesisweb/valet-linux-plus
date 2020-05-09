@@ -5,9 +5,10 @@ class StatamicValetDriver extends ValetDriver
     /**
      * Determine if the driver serves the request.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return bool
      */
     public function serves($sitePath, $siteName, $uri)
@@ -18,9 +19,10 @@ class StatamicValetDriver extends ValetDriver
     /**
      * Determine if the incoming request is for a static file.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string|false
      */
     public function isStaticFile($sitePath, $siteName, $uri)
@@ -41,9 +43,10 @@ class StatamicValetDriver extends ValetDriver
     /**
      * Get the fully resolved path to the application's front controller.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string
      */
     public function frontControllerPath($sitePath, $siteName, $uri)
@@ -69,28 +72,29 @@ class StatamicValetDriver extends ValetDriver
         $sitePathPrefix = ($isAboveWebroot) ? $sitePath.'/public' : $sitePath;
 
         if ($locale = $this->getUriLocale($uri)) {
-            if ($this->isActualFile($localeIndexPath = $sitePathPrefix . '/' . $locale . '/index.php')) {
+            if ($this->isActualFile($localeIndexPath = $sitePathPrefix.'/'.$locale.'/index.php')) {
                 // Force trailing slashes on locale roots.
-                if ($uri === '/' . $locale) {
-                    header('Location: ' . $uri . '/');
+                if ($uri === '/'.$locale) {
+                    header('Location: '.$uri.'/');
                     die;
                 }
 
                 $indexPath = $localeIndexPath;
-                $scriptName = '/' . $locale . '/index.php';
+                $scriptName = '/'.$locale.'/index.php';
             }
         }
 
         $_SERVER['SCRIPT_NAME'] = $scriptName;
-        $_SERVER['SCRIPT_FILENAME'] = $sitePathPrefix . $scriptName;
+        $_SERVER['SCRIPT_FILENAME'] = $sitePathPrefix.$scriptName;
 
         return $indexPath;
     }
 
     /**
-     * Get the locale from this URI
+     * Get the locale from this URI.
      *
-     * @param  string  $uri
+     * @param string $uri
+     *
      * @return string|null
      */
     public function getUriLocale($uri)
@@ -98,7 +102,7 @@ class StatamicValetDriver extends ValetDriver
         $parts = explode('/', $uri);
         $locale = $parts[1];
 
-        if (count($parts) < 2 || ! in_array($locale, $this->getLocales())) {
+        if (count($parts) < 2 || !in_array($locale, $this->getLocales())) {
             return;
         }
 
@@ -106,7 +110,7 @@ class StatamicValetDriver extends ValetDriver
     }
 
     /**
-     * Get the list of possible locales used in the first segment of a URI
+     * Get the list of possible locales used in the first segment of a URI.
      *
      * @return array
      */
@@ -131,9 +135,10 @@ class StatamicValetDriver extends ValetDriver
     }
 
     /**
-     * Get the path to a statically cached page
+     * Get the path to a statically cached page.
      *
-     * @param  string $sitePath
+     * @param string $sitePath
+     *
      * @return string
      */
     protected function getStaticPath($sitePath)
@@ -141,6 +146,6 @@ class StatamicValetDriver extends ValetDriver
         $parts = parse_url($_SERVER['REQUEST_URI']);
         $query = isset($parts['query']) ? $parts['query'] : '';
 
-        return $sitePath . '/static' . $parts['path'] . '_' . $query . '.html';
+        return $sitePath.'/static'.$parts['path'].'_'.$query.'.html';
     }
 }

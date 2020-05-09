@@ -5,9 +5,10 @@ class SculpinValetDriver extends BasicValetDriver
     /**
      * Determine if the driver serves the request.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return bool
      */
     public function serves($sitePath, $siteName, $uri)
@@ -30,7 +31,7 @@ class SculpinValetDriver extends BasicValetDriver
 
     private function composerRequiresSculpin($sitePath)
     {
-        if (! file_exists($sitePath.'/composer.json')) {
+        if (!file_exists($sitePath.'/composer.json')) {
             return false;
         }
 
@@ -47,7 +48,8 @@ class SculpinValetDriver extends BasicValetDriver
     /**
      * Mutate the incoming URI.
      *
-     * @param  string  $uri
+     * @param string $uri
+     *
      * @return string
      */
     public function mutateUri($uri)

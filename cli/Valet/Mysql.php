@@ -2,14 +2,14 @@
 
 namespace Valet;
 
+use PDO;
 use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Question\Question;
-use Valet\Contracts\ServiceManager;
 use Valet\Contracts\PackageManager;
-use \PDO;
+use Valet\Contracts\ServiceManager;
 
 class Mysql
 {
@@ -30,10 +30,10 @@ class Mysql
      *
      * @param PackageManager $pm
      * @param ServiceManager $sm
-     * @param CommandLine $cli
-     * @param Filesystem $files
-     * @param Configuration $configuration
-     * @param Site $site
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     * @param Configuration  $configuration
+     * @param Site           $site
      */
     public function __construct(
         PackageManager $pm,
@@ -53,7 +53,6 @@ class Mysql
 
     /**
      * Install the service.
-     *
      */
     public function install()
     {
@@ -70,7 +69,7 @@ class Mysql
             $question->setHidden(true);
             $helper = $helper->get('question');
             $rootPassword = $helper->ask($input, $output, $question);
-            $connection = $this->getConnection($rootPassword ? $rootPassword : "");
+            $connection = $this->getConnection($rootPassword ? $rootPassword : '');
             if (!$connection) {
                 goto beginning;
             }
@@ -91,7 +90,6 @@ class Mysql
             $this->restart();
             $this->setRootPassword();
         }
-
     }
 
     /**
@@ -120,17 +118,20 @@ class Mysql
 
     /**
      * Set root password of Mysql.
+     *
      * @param string $oldPwd
      * @param string $newPwd
      */
     public function setRootPassword($oldPwd = '', $newPwd = self::MYSQL_ROOT_PASSWORD)
     {
         $success = true;
-        $this->cli->runAsUser("mysqladmin -u root --password='" . $oldPwd . "' password " . $newPwd,
+        $this->cli->runAsUser(
+            "mysqladmin -u root --password='".$oldPwd."' password ".$newPwd,
             function () use (&$success) {
                 warning('Setting password for root user failed.');
                 $success = false;
-            });
+            }
+        );
 
         if ($success !== false) {
             $config = $this->configuration->read();
@@ -204,6 +205,7 @@ class Mysql
 
     /**
      * Return Mysql connection.
+     *
      * @param $rootPassword bool|String
      *
      * @return bool|PDO
@@ -214,10 +216,14 @@ class Mysql
         if ($this->link) {
             return $this->link;
         }
+
         try {
             // Create connection
-            $this->link = new PDO('mysql:host=localhost', 'root',
-                ($rootPassword !== null ? $rootPassword : $this->getRootPassword()));
+            $this->link = new PDO(
+                'mysql:host=localhost',
+                'root',
+                ($rootPassword !== null ? $rootPassword : $this->getRootPassword())
+            );
             $this->link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return $this->link;
@@ -243,17 +249,17 @@ class Mysql
      *
      * @param string $file
      * @param string $database
-     * @param boolean $isDatabaseExists
+     * @param bool   $isDatabaseExists
      */
     public function importDatabase($file, $database, $isDatabaseExists)
     {
         $database = $this->getDatabaseName($database);
 
-        if(!$isDatabaseExists) {
+        if (!$isDatabaseExists) {
             $this->createDatabase($database);
         }
-        $gzip = "";
-        $sqlFile = "";
+        $gzip = '';
+        $sqlFile = '';
         if (\stristr($file, '.gz')) {
             $file = escapeshellarg($file);
             $gzip = "zcat {$file} | ";
@@ -306,17 +312,20 @@ class Mysql
 
         if (!$this->isDatabaseExists($name)) {
             warning("Database [$name] does not exists!");
+
             return false;
         }
 
-        $dbDropped = $this->query('DROP DATABASE `' . $name . '`') ? true : false;
+        $dbDropped = $this->query('DROP DATABASE `'.$name.'`') ? true : false;
 
         if (!$dbDropped) {
             warning('Error dropping database');
+
             return false;
         }
 
         info("Database [{$name}] dropped successfully");
+
         return true;
     }
 
@@ -331,11 +340,13 @@ class Mysql
     {
         if ($this->isDatabaseExists($name)) {
             warning("Database [$name] is already exists!");
+
             return;
         }
+
         try {
             $name = $this->getDatabaseName($name);
-            if ($this->query('CREATE DATABASE IF NOT EXISTS `' . $name . '`')) {
+            if ($this->query('CREATE DATABASE IF NOT EXISTS `'.$name.'`')) {
                 info("Database [{$name}] created successfully");
             }
         } catch (\Exception $exception) {
@@ -355,7 +366,8 @@ class Mysql
         $name = $this->getDatabaseName($name);
         $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$name}'");
         $query->execute();
-        return (bool)$query->rowCount();
+
+        return (bool) $query->rowCount();
     }
 
     /**
@@ -370,19 +382,19 @@ class Mysql
     {
         $database = $this->getDatabaseName($database);
 
-        $filename = $database . '-' . \date('Y-m-d-H-i-s', \time());
+        $filename = $database.'-'.\date('Y-m-d-H-i-s', \time());
 
         if ($exportSql) {
-            $filename = $filename . '.sql';
+            $filename = $filename.'.sql';
         } else {
-            $filename = $filename . '.sql.gz';
+            $filename = $filename.'.sql.gz';
         }
 
-        $command = "mysqldump -u root -p{$this->getRootPassword()} " . escapeshellarg($database) . " ";
+        $command = "mysqldump -u root -p{$this->getRootPassword()} ".escapeshellarg($database).' ';
         if ($exportSql) {
-            $command .= " > " . escapeshellarg($filename);
+            $command .= ' > '.escapeshellarg($filename);
         } else {
-            $command .= " | gzip > " . escapeshellarg($filename);
+            $command .= ' | gzip > '.escapeshellarg($filename);
         }
         $this->cli->run($command);
 

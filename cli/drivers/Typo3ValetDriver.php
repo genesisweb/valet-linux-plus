@@ -41,14 +41,16 @@ class Typo3ValetDriver extends ValetDriver
      * Determine if the driver serves the request. For TYPO3, this is the
      * case, if a folder called "typo3" is present in the document root.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return bool
      */
     public function serves($sitePath, $siteName, $uri)
     {
-        $typo3Dir = $sitePath . $this->documentRoot . '/typo3';
+        $typo3Dir = $sitePath.$this->documentRoot.'/typo3';
+
         return file_exists($typo3Dir) && is_dir($typo3Dir);
     }
 
@@ -57,9 +59,10 @@ class Typo3ValetDriver extends ValetDriver
      * no PHP script file and the URI points to a valid file (no folder) on
      * the disk. Access to those static files will be authorized.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string|false
      */
     public function isStaticFile($sitePath, $siteName, $uri)
@@ -67,14 +70,14 @@ class Typo3ValetDriver extends ValetDriver
         // May the file contains a cache busting version string like filename.12345678.css
         // If that is the case, the file cannot be found on disk, so remove the version
         // identifier before retrying below.
-        if (!$this->isActualFile($filePath = $sitePath . $this->documentRoot . $uri)) {
-            $uri = preg_replace("@^(.+)\.(\d+)\.(js|css|png|jpg|gif|gzip)$@", "$1.$3", $uri);
+        if (!$this->isActualFile($filePath = $sitePath.$this->documentRoot.$uri)) {
+            $uri = preg_replace("@^(.+)\.(\d+)\.(js|css|png|jpg|gif|gzip)$@", '$1.$3', $uri);
         }
 
         // Now that any possible version string is cleared from the filename, the resulting
         // URI should be a valid file on disc. So assemble the absolut file name with the
         // same schema as above and if it exists, authorize access and return its path.
-        if ($this->isActualFile($filePath = $sitePath . $this->documentRoot . $uri)) {
+        if ($this->isActualFile($filePath = $sitePath.$this->documentRoot.$uri)) {
             return $this->isAccessAuthorized($uri) ? $filePath : false;
         }
 
@@ -86,7 +89,8 @@ class Typo3ValetDriver extends ValetDriver
      * Determines if the given URI is blacklisted so that access is prevented.
      *
      * @param string $uri
-     * @return boolean
+     *
+     * @return bool
      */
     private function isAccessAuthorized($uri)
     {
@@ -95,6 +99,7 @@ class Typo3ValetDriver extends ValetDriver
                 return false;
             }
         }
+
         return true;
     }
 
@@ -103,9 +108,10 @@ class Typo3ValetDriver extends ValetDriver
      * This can be the currently requested PHP script, a folder that
      * contains an index.php or the global index.php otherwise.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string
      */
     public function frontControllerPath($sitePath, $siteName, $uri)
@@ -117,16 +123,16 @@ class Typo3ValetDriver extends ValetDriver
         $uri = rtrim($uri, '/');
 
         // try to find the responsible script file for the requested folder / script URI
-        if (file_exists($absoluteFilePath = $sitePath . $this->documentRoot . $uri)) {
+        if (file_exists($absoluteFilePath = $sitePath.$this->documentRoot.$uri)) {
             if (is_dir($absoluteFilePath)) {
-                if (file_exists($absoluteFilePath . '/index.php')) {
+                if (file_exists($absoluteFilePath.'/index.php')) {
                     // this folder can be served by index.php
-                    return $this->serveScript($sitePath, $siteName, $uri . '/index.php');
+                    return $this->serveScript($sitePath, $siteName, $uri.'/index.php');
                 }
 
-                if (file_exists($absoluteFilePath . '/index.html')) {
+                if (file_exists($absoluteFilePath.'/index.html')) {
                     // this folder can be served by index.html
-                    return $absoluteFilePath . '/index.html';
+                    return $absoluteFilePath.'/index.html';
                 }
             } elseif (pathinfo($absoluteFilePath, PATHINFO_EXTENSION) === 'php') {
                 // this file can be served directly
@@ -162,18 +168,19 @@ class Typo3ValetDriver extends ValetDriver
      * Configures the $_SERVER globals for serving the script at
      * the specified URI and returns it absolute file path.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
-     * @param  string  $script
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     * @param string $script
+     *
      * @return string
      */
     private function serveScript($sitePath, $siteName, $uri)
     {
-        $docroot = $sitePath . $this->documentRoot;
-        $abspath = $docroot . $uri;
+        $docroot = $sitePath.$this->documentRoot;
+        $abspath = $docroot.$uri;
 
-        $_SERVER['SERVER_NAME'] = $siteName . '.test';
+        $_SERVER['SERVER_NAME'] = $siteName.'.test';
         $_SERVER['DOCUMENT_ROOT'] = $docroot;
         $_SERVER['DOCUMENT_URI'] = $uri;
         $_SERVER['SCRIPT_FILENAME'] = $abspath;

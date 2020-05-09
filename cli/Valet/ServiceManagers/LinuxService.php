@@ -33,7 +33,7 @@ class LinuxService implements ServiceManager
 
         foreach ($services as $service) {
             info("Starting $service...");
-            $this->cli->quietly('sudo service ' . $this->getRealService($service) . ' start');
+            $this->cli->quietly('sudo service '.$this->getRealService($service).' start');
         }
     }
 
@@ -50,7 +50,7 @@ class LinuxService implements ServiceManager
 
         foreach ($services as $service) {
             info("Stopping $service...");
-            $this->cli->quietly('sudo service ' . $this->getRealService($service) . ' stop');
+            $this->cli->quietly('sudo service '.$this->getRealService($service).' stop');
         }
     }
 
@@ -67,7 +67,7 @@ class LinuxService implements ServiceManager
 
         foreach ($services as $service) {
             info("Restarting $service...");
-            $this->cli->quietly('sudo service ' . $this->getRealService($service) . ' restart');
+            $this->cli->quietly('sudo service '.$this->getRealService($service).' restart');
         }
     }
 
@@ -118,7 +118,7 @@ class LinuxService implements ServiceManager
      *
      * @param mixed $service Service name
      *
-     * @return boolean
+     * @return bool
      */
     public function disabled($service)
     {
@@ -143,11 +143,11 @@ class LinuxService implements ServiceManager
                 try {
                     $service = $this->getRealService($service);
 
-                    if (! $this->disabled($service)) {
-                        $this->cli->quietly('sudo systemctl disable ' . $service);
+                    if (!$this->disabled($service)) {
+                        $this->cli->quietly('sudo systemctl disable '.$service);
                         info(ucfirst($service).' has been disabled');
                     }
-                    
+
                     info(ucfirst($service).' was already disabled');
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
@@ -155,7 +155,7 @@ class LinuxService implements ServiceManager
             }
         } else {
             $services = is_array($services) ? $services : func_get_args();
-            
+
             foreach ($services as $service) {
                 try {
                     $service = $this->getRealService($service);
@@ -185,8 +185,9 @@ class LinuxService implements ServiceManager
                     $service = $this->getRealService($service);
 
                     if ($this->disabled($service)) {
-                        $this->cli->quietly('sudo systemctl enable ' . $service);
+                        $this->cli->quietly('sudo systemctl enable '.$service);
                         info(ucfirst($service).' has been enabled');
+
                         return true;
                     }
 
@@ -195,6 +196,7 @@ class LinuxService implements ServiceManager
                     return true;
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
+
                     return false;
                 }
             }
@@ -206,11 +208,11 @@ class LinuxService implements ServiceManager
                     $service = $this->getRealService($service);
                     $this->cli->quietly("sudo update-rc.d $service defaults");
                     info(ucfirst($service).' has been enabled');
-                    
+
                     return true;
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
-                    
+
                     return false;
                 }
             }
@@ -239,7 +241,7 @@ class LinuxService implements ServiceManager
     }
 
     /**
-     * Determine real service name
+     * Determine real service name.
      *
      * @param mixed $service Service name
      *
@@ -249,13 +251,13 @@ class LinuxService implements ServiceManager
     {
         return collect($service)->first(
             function ($service) {
-                return ! strpos(
+                return !strpos(
                     $this->cli->run('service '.$service.' status'),
                     'not-found'
                 );
-            }, 
+            },
             function () {
-                throw new DomainException("Unable to determine service name.");
+                throw new DomainException('Unable to determine service name.');
             }
         );
     }
@@ -290,11 +292,11 @@ class LinuxService implements ServiceManager
      */
     public function installValetDns($files)
     {
-        info("Installing Valet DNS service...");
+        info('Installing Valet DNS service...');
 
         $servicePath = '/etc/init.d/valet-dns';
         $serviceFile = __DIR__.'/../../stubs/init/sysvinit';
-        $hasSystemd  = $this->_hasSystemd();
+        $hasSystemd = $this->_hasSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/valet-dns.service';
@@ -302,11 +304,11 @@ class LinuxService implements ServiceManager
         }
 
         $files->put(
-            $servicePath, 
+            $servicePath,
             $files->get($serviceFile)
         );
 
-        if (! $hasSystemd) {
+        if (!$hasSystemd) {
             $this->cli->run("chmod +x $servicePath");
         }
 

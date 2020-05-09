@@ -17,10 +17,11 @@ class PhpFpm
     /**
      * Create a new PHP FPM class instance.
      *
-     * @param  PackageManager $pm
-     * @param  ServiceManager $sm
-     * @param  CommandLine  $cli
-     * @param  Filesystem  $files
+     * @param PackageManager $pm
+     * @param ServiceManager $sm
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
@@ -39,7 +40,7 @@ class PhpFpm
      */
     public function install()
     {
-        if (! $this->pm->installed("php{$this->version}-fpm")) {
+        if (!$this->pm->installed("php{$this->version}-fpm")) {
             $this->pm->ensureInstalled("php{$this->version}-fpm");
             $this->sm->enable($this->fpmServiceName());
         }
@@ -68,16 +69,17 @@ class PhpFpm
      * Change the php-fpm version.
      *
      * @param string|float|int $version
-     * @param bool|null $updateCli
+     * @param bool|null        $updateCli
      *
      * @return void
      */
-    public function changeVersion($version = null, $updateCli = null) {
+    public function changeVersion($version = null, $updateCli = null)
+    {
         $oldVersion = $this->version;
         $exception = null;
 
         $this->stop();
-        info('Disabling php' . $this->version . '-fpm...');
+        info('Disabling php'.$this->version.'-fpm...');
         $this->sm->disable($this->fpmServiceName());
 
         if (!isset($version) || strtolower($version) === 'default') {
@@ -106,21 +108,22 @@ class PhpFpm
 //        }
 
         if ($this->sm->disabled($this->fpmServiceName())) {
-            info('Enabling php' . $this->version . '-fpm...');
+            info('Enabling php'.$this->version.'-fpm...');
             $this->sm->enable($this->fpmServiceName());
         }
 
         if ($this->version !== $this->getVersion(true)) {
-            $this->files->putAsUser(VALET_HOME_PATH . '/use_php_version', $this->version);
+            $this->files->putAsUser(VALET_HOME_PATH.'/use_php_version', $this->version);
         } else {
-            $this->files->unlink(VALET_HOME_PATH . '/use_php_version');
+            $this->files->unlink(VALET_HOME_PATH.'/use_php_version');
         }
-        if($updateCli) {
+        if ($updateCli) {
             $this->cli->run("update-alternatives --set php /usr/bin/php{$this->version}");
         }
 
         if ($exception) {
             info('Changing version failed');
+
             throw $exception;
         }
     }
@@ -137,8 +140,8 @@ class PhpFpm
         $this->files->putAsUser(
             $this->fpmConfigPath().'/valet.conf',
             str_array_replace([
-                'VALET_USER' => user(),
-                'VALET_GROUP' => group(),
+                'VALET_USER'      => user(),
+                'VALET_GROUP'     => group(),
                 'VALET_HOME_PATH' => VALET_HOME_PATH,
             ], $contents)
         );
@@ -183,8 +186,8 @@ class PhpFpm
      */
     public function getVersion($real = false)
     {
-        if (!$real && $this->files->exists(VALET_HOME_PATH . '/use_php_version')) {
-            $version = $this->files->get(VALET_HOME_PATH . '/use_php_version');
+        if (!$real && $this->files->exists(VALET_HOME_PATH.'/use_php_version')) {
+            $version = $this->files->get(VALET_HOME_PATH.'/use_php_version');
         } else {
             $version = explode('php', basename($this->files->readLink('/usr/bin/php')))[1];
         }
@@ -193,7 +196,7 @@ class PhpFpm
     }
 
     /**
-     * Determine php service name
+     * Determine php service name.
      *
      * @return string
      */
@@ -203,7 +206,7 @@ class PhpFpm
         $status = $this->sm->status($service);
 
         if (strpos($status, 'not-found') || strpos($status, 'not be found')) {
-            return new DomainException("Unable to determine PHP service name.");
+            return new DomainException('Unable to determine PHP service name.');
         }
 
         return $service;
