@@ -1,9 +1,9 @@
 <?php
 
-use Valet\CommandLine;
-use Valet\PackageManagers\Apt;
 use Illuminate\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Valet\CommandLine;
+use Valet\PackageManagers\Apt;
 
 class AptTest extends TestCase
 {
@@ -11,21 +11,18 @@ class AptTest extends TestCase
     {
         $_SERVER['SUDO_USER'] = user();
 
-        Container::setInstance(new Container);
+        Container::setInstance(new Container());
     }
-
 
     public function tearDown()
     {
         Mockery::close();
     }
 
-
     public function test_apt_can_be_resolved_from_container()
     {
         $this->assertInstanceOf(Apt::class, resolve(Apt::class));
     }
-
 
     public function test_installed_returns_true_when_given_formula_is_installed()
     {
@@ -36,7 +33,6 @@ class AptTest extends TestCase
         swap(CommandLine::class, $cli);
         $this->assertTrue(resolve(Apt::class)->installed('php7.0-cli'));
     }
-
 
     public function test_installed_returns_false_when_given_formula_is_not_installed()
     {
@@ -55,7 +51,6 @@ class AptTest extends TestCase
         $this->assertFalse(resolve(Apt::class)->installed('php7.0-cli'));
     }
 
-
     public function test_install_or_fail_will_install_packages()
     {
         $cli = Mockery::mock(CommandLine::class);
@@ -63,7 +58,6 @@ class AptTest extends TestCase
         swap(CommandLine::class, $cli);
         resolve(Apt::class)->installOrFail('dnsmasq');
     }
-
 
     /**
      * @expectedException DomainException

@@ -5,9 +5,10 @@ abstract class ValetDriver
     /**
      * Determine if the driver serves the request.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return bool
      */
     abstract public function serves($sitePath, $siteName, $uri);
@@ -15,9 +16,10 @@ abstract class ValetDriver
     /**
      * Determine if the incoming request is for a static file.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string|false
      */
     abstract public function isStaticFile($sitePath, $siteName, $uri);
@@ -25,9 +27,10 @@ abstract class ValetDriver
     /**
      * Get the fully resolved path to the application's front controller.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return string
      */
     abstract public function frontControllerPath($sitePath, $siteName, $uri);
@@ -35,9 +38,10 @@ abstract class ValetDriver
     /**
      * Find a driver that can serve the incoming request.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return ValetDriver|null
      */
     public static function assign($sitePath, $siteName, $uri)
@@ -75,7 +79,7 @@ abstract class ValetDriver
         $drivers[] = 'BasicValetDriver';
 
         foreach ($drivers as $driver) {
-            $driver = new $driver;
+            $driver = new $driver();
 
             if ($driver->serves($sitePath, $siteName, $driver->mutateUri($uri))) {
                 return $driver;
@@ -86,12 +90,13 @@ abstract class ValetDriver
     /**
      * Get the custom driver class from the site path, if one exists.
      *
-     * @param  string  $sitePath
+     * @param string $sitePath
+     *
      * @return string
      */
     public static function customSiteDriver($sitePath)
     {
-        if (! file_exists($sitePath.'/LocalValetDriver.php')) {
+        if (!file_exists($sitePath.'/LocalValetDriver.php')) {
             return;
         }
 
@@ -103,12 +108,13 @@ abstract class ValetDriver
     /**
      * Get all of the driver classes in a given path.
      *
-     * @param  string  $path
+     * @param string $path
+     *
      * @return array
      */
     public static function driversIn($path)
     {
-        if (! is_dir($path)) {
+        if (!is_dir($path)) {
             return [];
         }
 
@@ -128,7 +134,8 @@ abstract class ValetDriver
     /**
      * Mutate the incoming URI.
      *
-     * @param  string  $uri
+     * @param string $uri
+     *
      * @return string
      */
     public function mutateUri($uri)
@@ -139,10 +146,11 @@ abstract class ValetDriver
     /**
      * Serve the static file at the given path.
      *
-     * @param  string  $staticFilePath
-     * @param  string  $sitePath
-     * @param  string  $siteName
-     * @param  string  $uri
+     * @param string $staticFilePath
+     * @param string $sitePath
+     * @param string $siteName
+     * @param string $uri
+     *
      * @return void
      */
     public function serveStaticFile($staticFilePath, $sitePath, $siteName, $uri)
@@ -165,32 +173,34 @@ abstract class ValetDriver
         header('Content-Type: text/html');
         header_remove('Content-Type');
 
-        header('X-Accel-Redirect: /' . VALET_STATIC_PREFIX . $staticFilePath);
+        header('X-Accel-Redirect: /'.VALET_STATIC_PREFIX.$staticFilePath);
     }
 
     /**
      * Determine if the path is a file and not a directory.
      *
-     * @param  string  $path
+     * @param string $path
+     *
      * @return bool
      */
     protected function isActualFile($path)
     {
-        return ! is_dir($path) && file_exists($path);
+        return !is_dir($path) && file_exists($path);
     }
 
     /**
      * Load server environment variables if available.
-     * Processes any '*' entries first, and then adds site-specific entries
+     * Processes any '*' entries first, and then adds site-specific entries.
      *
-     * @param  string  $sitePath
-     * @param  string  $siteName
+     * @param string $sitePath
+     * @param string $siteName
+     *
      * @return void
      */
     public function loadServerEnvironmentVariables($sitePath, $siteName)
     {
-        $varFilePath = $sitePath . '/.valet-env.php';
-        if (! file_exists($varFilePath)) {
+        $varFilePath = $sitePath.'/.valet-env.php';
+        if (!file_exists($varFilePath)) {
             return;
         }
 
@@ -203,10 +213,12 @@ abstract class ValetDriver
         }
 
         foreach ($variablesToSet as $key => $value) {
-            if (! is_string($key)) continue;
+            if (!is_string($key)) {
+                continue;
+            }
             $_SERVER[$key] = $value;
             $_ENV[$key] = $value;
-            putenv($key . '=' . $value);
+            putenv($key.'='.$value);
         }
     }
 }

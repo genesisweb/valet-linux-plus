@@ -3,7 +3,7 @@
  * Created by PhpStorm.
  * User: uttam
  * Date: 31/10/19
- * Time: 5:16 PM
+ * Time: 5:16 PM.
  */
 
 namespace Valet;
@@ -16,12 +16,14 @@ class ValetRedis
     public $pm;
     public $sm;
     public $cli;
+
     /**
      * Create a new PHP FPM class instance.
      *
-     * @param  PackageManager $pm
-     * @param  ServiceManager $sm
-     * @param  CommandLine  $cli
+     * @param PackageManager $pm
+     * @param ServiceManager $sm
+     * @param CommandLine    $cli
+     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli)
@@ -36,12 +38,13 @@ class ValetRedis
         $this->pm->ensureInstalled('redis-server');
         $this->sm->enable('redis-server');
     }
+
     /**
      * Returns wether redis is installed or not.
      *
      * @return bool
      */
-    function installed()
+    public function installed()
     {
         return $this->pm->installed('redis-server');
     }
@@ -51,7 +54,7 @@ class ValetRedis
      *
      * @return void
      */
-    function restart()
+    public function restart()
     {
         $this->sm->restart('redis-server');
     }
@@ -61,7 +64,7 @@ class ValetRedis
      *
      * @return void
      */
-    function stop()
+    public function stop()
     {
         $this->sm->stop('redis-server');
     }
@@ -71,7 +74,7 @@ class ValetRedis
      *
      * @return void
      */
-    function uninstall()
+    public function uninstall()
     {
         $this->stop();
     }

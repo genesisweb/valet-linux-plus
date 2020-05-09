@@ -33,7 +33,7 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Starting $service...");
-            $this->cli->quietly('sudo systemctl start ' . $this->getRealService($service));
+            $this->cli->quietly('sudo systemctl start '.$this->getRealService($service));
         }
     }
 
@@ -50,7 +50,7 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Stopping $service...");
-            $this->cli->quietly('sudo systemctl stop ' . $this->getRealService($service));
+            $this->cli->quietly('sudo systemctl stop '.$this->getRealService($service));
         }
     }
 
@@ -67,10 +67,10 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Restarting $service...");
-            $this->cli->quietly('sudo systemctl restart ' . $this->getRealService($service));
+            $this->cli->quietly('sudo systemctl restart '.$this->getRealService($service));
         }
     }
-    
+
     /**
      * Status of the given services.
      *
@@ -81,11 +81,11 @@ class Systemd implements ServiceManager
     public function printStatus($services)
     {
         $services = is_array($services) ? $services : func_get_args();
-        
+
         foreach ($services as $service) {
             $status = $this->cli->run('systemctl status '.$this->getRealService($service).' | grep "Active:"');
             $running = strpos(trim($status), 'running');
-            
+
             if ($running) {
                 info(ucfirst($service).' is running...');
             } else {
@@ -93,7 +93,7 @@ class Systemd implements ServiceManager
             }
         }
     }
-    
+
     /**
      * Status of the given services.
      *
@@ -105,7 +105,7 @@ class Systemd implements ServiceManager
     {
         return $this->cli->run('systemctl status '.$this->getRealService($service));
     }
-    
+
     /**
      * Check if service is disabled.
      *
@@ -116,10 +116,10 @@ class Systemd implements ServiceManager
     public function disabled($service)
     {
         $service = $this->getRealService($service);
-        
+
         return (strpos(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled')) === false;
     }
-    
+
     /**
      * Enable services.
      *
@@ -130,27 +130,29 @@ class Systemd implements ServiceManager
     public function enable($services)
     {
         $services = is_array($services) ? $services : func_get_args();
-        
+
         foreach ($services as $service) {
             try {
                 $service = $this->getRealService($service);
-                
+
                 if ($this->disabled($service)) {
-                    $this->cli->quietly('sudo systemctl enable ' . $service);
+                    $this->cli->quietly('sudo systemctl enable '.$service);
                     info(ucfirst($service).' has been enabled');
+
                     return true;
                 }
-                
+
                 info(ucfirst($service).' was already enabled');
-                
+
                 return true;
             } catch (DomainException $e) {
                 warning(ucfirst($service).' unavailable.');
+
                 return false;
             }
         }
     }
-    
+
     /**
      * Disable services.
      *
@@ -161,32 +163,34 @@ class Systemd implements ServiceManager
     public function disable($services)
     {
         $services = is_array($services) ? $services : func_get_args();
-        
+
         foreach ($services as $service) {
             try {
                 $service = $this->getRealService($service);
-                
-                if (! $this->disabled($service)) {
-                    $this->cli->quietly('sudo systemctl disable ' . $service);
+
+                if (!$this->disabled($service)) {
+                    $this->cli->quietly('sudo systemctl disable '.$service);
                     info(ucfirst($service).' has been disabled');
+
                     return true;
                 }
-                
+
                 info(ucfirst($service).' was already disabled');
-                
+
                 return true;
             } catch (DomainException $e) {
                 warning(ucfirst($service).' unavailable.');
+
                 return false;
             }
         }
     }
-    
+
     /**
-    * Determine if service manager is available on the system.
-    *
-    * @return bool
-    */
+     * Determine if service manager is available on the system.
+     *
+     * @return bool
+     */
     public function isAvailable()
     {
         try {
@@ -202,9 +206,9 @@ class Systemd implements ServiceManager
             return false;
         }
     }
-    
+
     /**
-     * Determine real service name
+     * Determine real service name.
      *
      * @param mixed $service Service name
      *
@@ -217,7 +221,7 @@ class Systemd implements ServiceManager
                 return strpos($this->cli->run("systemctl status {$service} | grep Loaded"), 'Loaded: loaded');
             },
             function () {
-                throw new DomainException("Unable to determine service name.");
+                throw new DomainException('Unable to determine service name.');
             }
         );
     }
@@ -231,10 +235,10 @@ class Systemd implements ServiceManager
      */
     public function installValetDns($files)
     {
-        info("Installing Valet DNS service...");
-        
+        info('Installing Valet DNS service...');
+
         $files->put(
-            '/etc/systemd/system/valet-dns.service', 
+            '/etc/systemd/system/valet-dns.service',
             $files->get(__DIR__.'/../../stubs/init/systemd')
         );
 

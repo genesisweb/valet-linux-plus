@@ -1,14 +1,14 @@
 <?php
 
-use Valet\Site;
-use Valet\Nginx;
-use Valet\Filesystem;
-use Valet\Configuration;
-use Valet\CommandLine;
-use Valet\Contracts\PackageManager;
-use Valet\Contracts\ServiceManager;
 use Illuminate\Container\Container;
 use PHPUnit\Framework\TestCase;
+use Valet\CommandLine;
+use Valet\Configuration;
+use Valet\Contracts\PackageManager;
+use Valet\Contracts\ServiceManager;
+use Valet\Filesystem;
+use Valet\Nginx;
+use Valet\Site;
 
 class NginxTest extends TestCase
 {
@@ -16,15 +16,13 @@ class NginxTest extends TestCase
     {
         $_SERVER['SUDO_USER'] = user();
 
-        Container::setInstance(new Container);
+        Container::setInstance(new Container());
     }
-
 
     public function tearDown()
     {
         Mockery::close();
     }
-
 
     public function test_install_calls_the_right_methods()
     {
@@ -52,7 +50,6 @@ class NginxTest extends TestCase
         $nginx->install();
     }
 
-
     public function test_install_nginx_configuration_places_nginx_base_configuration_in_proper_location()
     {
         $files = Mockery::mock(Filesystem::class.'[putAsUser,backup]');
@@ -73,10 +70,8 @@ class NginxTest extends TestCase
         $nginx->installConfiguration();
     }
 
-
     public function test_install_nginx_server_places_nginx_base_configuration_in_proper_location()
     {
-
         $files = Mockery::mock(Filesystem::class.'[putAsUser,exists,backup,unlink]');
         $cli = Mockery::mock(CommandLine::class.'[run]');
 
@@ -110,7 +105,6 @@ class NginxTest extends TestCase
         $nginx->installServer();
     }
 
-
     public function test_install_nginx_directories_creates_location_for_site_specific_configuration()
     {
         $files = Mockery::mock(Filesystem::class);
@@ -128,7 +122,6 @@ class NginxTest extends TestCase
         $nginx->installNginxDirectory();
     }
 
-
     public function test_nginx_directory_is_never_created_if_it_already_exists()
     {
         $files = Mockery::mock(Filesystem::class);
@@ -145,7 +138,6 @@ class NginxTest extends TestCase
         $nginx = resolve(Nginx::class);
         $nginx->installNginxDirectory();
     }
-
 
     public function test_install_nginx_directories_rewrites_secure_nginx_files()
     {
