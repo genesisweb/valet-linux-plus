@@ -78,12 +78,12 @@ class CommandLine
      */
     protected function runCommand($command, callable $onError = null)
     {
-        $onError = $onError ?: function () {};
+        $onError = $onError ?: function() {};
 
         $process = new Process($command);
 
         $processOutput = '';
-        $process->setTimeout(null)->run(function ($type, $line) use (&$processOutput) {
+        $process->setTimeout(null)->run(function($type, $line) use (&$processOutput) {
             $processOutput .= $line;
         });
 

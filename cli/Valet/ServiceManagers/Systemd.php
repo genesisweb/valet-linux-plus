@@ -196,7 +196,7 @@ class Systemd implements ServiceManager
         try {
             $output = $this->cli->run(
                 'which systemctl',
-                function ($exitCode, $output) {
+                function($exitCode, $output) {
                     throw new DomainException('Systemd not available');
                 }
             );
@@ -217,10 +217,10 @@ class Systemd implements ServiceManager
     public function getRealService($service)
     {
         return collect($service)->first(
-            function ($service) {
+            function($service) {
                 return strpos($this->cli->run("systemctl status {$service} | grep Loaded"), 'Loaded: loaded');
             },
-            function () {
+            function() {
                 throw new DomainException('Unable to determine service name.');
             }
         );
@@ -255,7 +255,7 @@ class Systemd implements ServiceManager
         try {
             $this->cli->run(
                 'which systemctl',
-                function ($exitCode, $output) {
+                function($exitCode, $output) {
                     throw new DomainException('Systemd not available');
                 }
             );

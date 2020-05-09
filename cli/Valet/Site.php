@@ -87,9 +87,9 @@ class Site
      */
     public function getCertificates($path)
     {
-        return collect($this->files->scanDir($path))->filter(function ($value, $key) {
+        return collect($this->files->scanDir($path))->filter(function($value, $key) {
             return ends_with($value, '.crt');
-        })->map(function ($cert) {
+        })->map(function($cert) {
             return substr($cert, 0, -9);
         })->flip();
     }
@@ -109,9 +109,9 @@ class Site
         $httpPort = $this->httpSuffix();
         $httpsPort = $this->httpsSuffix();
 
-        return collect($this->files->scanDir($path))->mapWithKeys(function ($site) use ($path) {
+        return collect($this->files->scanDir($path))->mapWithKeys(function($site) use ($path) {
             return [$site => $this->files->readLink($path.'/'.$site)];
-        })->map(function ($path, $site) use ($certs, $config, $httpPort, $httpsPort) {
+        })->map(function($path, $site) use ($certs, $config, $httpPort, $httpsPort) {
             $secured = $certs->has($site);
 
             $url = ($secured ? 'https' : 'http').'://'.$site.'.'.$config['domain'].($secured ? $httpsPort : $httpPort);
@@ -203,7 +203,7 @@ class Site
     public function secured()
     {
         return collect($this->files->scandir($this->certificatesPath()))
-            ->map(function ($file) {
+            ->map(function($file) {
                 return str_replace(['.key', '.csr', '.crt', '.conf'], '', $file);
             })->unique()->values();
     }
@@ -388,7 +388,7 @@ class Site
      */
     public function regenerateSecuredSitesConfig()
     {
-        $this->secured()->each(function ($url) {
+        $this->secured()->each(function($url) {
             $this->createSecureNginxServer($url);
         });
     }

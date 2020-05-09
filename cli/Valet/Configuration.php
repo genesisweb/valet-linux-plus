@@ -137,7 +137,7 @@ class Configuration
      */
     public function addPath($path, $prepend = false)
     {
-        $this->write(tap($this->read(), function (&$config) use ($path, $prepend) {
+        $this->write(tap($this->read(), function(&$config) use ($path, $prepend) {
             $method = $prepend ? 'prepend' : 'push';
 
             $config['paths'] = collect($config['paths'])->{$method}($path)->unique()->all();
@@ -165,8 +165,8 @@ class Configuration
      */
     public function removePath($path)
     {
-        $this->write(tap($this->read(), function (&$config) use ($path) {
-            $config['paths'] = collect($config['paths'])->reject(function ($value) use ($path) {
+        $this->write(tap($this->read(), function(&$config) use ($path) {
+            $config['paths'] = collect($config['paths'])->reject(function($value) use ($path) {
                 return $value === $path;
             })->values()->all();
         }));
@@ -183,8 +183,8 @@ class Configuration
             return;
         }
 
-        $this->write(tap($this->read(), function (&$config) {
-            $config['paths'] = collect($config['paths'])->filter(function ($path) {
+        $this->write(tap($this->read(), function(&$config) {
+            $config['paths'] = collect($config['paths'])->filter(function($path) {
                 return $this->files->isDir($path);
             })->values()->all();
         }));
@@ -225,7 +225,7 @@ class Configuration
      */
     public function updateKey($key, $value)
     {
-        return tap($this->read(), function (&$config) use ($key, $value) {
+        return tap($this->read(), function(&$config) use ($key, $value) {
             $config[$key] = $value;
             $this->write($config);
         });

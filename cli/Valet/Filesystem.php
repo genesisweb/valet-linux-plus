@@ -458,10 +458,10 @@ class Filesystem
     public function removeBrokenLinksAt($path)
     {
         collect($this->scandir($path))
-                ->filter(function ($file) use ($path) {
+                ->filter(function($file) use ($path) {
                     return $this->isBrokenLink($path.'/'.$file);
                 })
-                ->each(function ($file) use ($path) {
+                ->each(function($file) use ($path) {
                     $this->unlink($path.'/'.$file);
                 });
     }
@@ -488,7 +488,7 @@ class Filesystem
     public function scandir($path)
     {
         return collect(scandir($path))
-            ->reject(function ($file) {
+            ->reject(function($file) {
                 return in_array($file, ['.', '..']);
             })->values()->all();
     }

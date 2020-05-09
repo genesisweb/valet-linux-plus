@@ -55,7 +55,7 @@ class DnsMasq
         if (!$this->files->isLink($this->resolvconf)) {
             $this->cli->run(
                 "chattr {$arg} {$this->resolvconf}",
-                function ($code, $msg) {
+                function($code, $msg) {
                     warning($msg);
                 }
             );

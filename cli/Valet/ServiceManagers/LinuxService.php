@@ -229,7 +229,7 @@ class LinuxService implements ServiceManager
         try {
             $output = $this->cli->run(
                 'which service',
-                function ($exitCode, $output) {
+                function($exitCode, $output) {
                     throw new DomainException('Service not available');
                 }
             );
@@ -250,13 +250,13 @@ class LinuxService implements ServiceManager
     public function getRealService($service)
     {
         return collect($service)->first(
-            function ($service) {
+            function($service) {
                 return !strpos(
                     $this->cli->run('service '.$service.' status'),
                     'not-found'
                 );
             },
-            function () {
+            function() {
                 throw new DomainException('Unable to determine service name.');
             }
         );
@@ -272,7 +272,7 @@ class LinuxService implements ServiceManager
         try {
             $this->cli->run(
                 'which systemctl',
-                function ($exitCode, $output) {
+                function($exitCode, $output) {
                     throw new DomainException('Systemd not available');
                 }
             );

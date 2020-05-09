@@ -127,7 +127,7 @@ class Mysql
         $success = true;
         $this->cli->runAsUser(
             "mysqladmin -u root --password='".$oldPwd."' password ".$newPwd,
-            function () use (&$success) {
+            function() use (&$success) {
                 warning('Setting password for root user failed.');
                 $success = false;
             }
@@ -178,9 +178,9 @@ class Mysql
         }
 
         return collect($result->fetchAll(PDO::FETCH_ASSOC))
-            ->reject(function ($row) {
+            ->reject(function($row) {
                 return \in_array($row['Database'], $this->getSystemDatabase());
-            })->map(function ($row) {
+            })->map(function($row) {
                 return [$row['Database']];
             })->toArray();
     }

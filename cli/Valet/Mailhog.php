@@ -93,7 +93,7 @@ class Mailhog
         try {
             $output = $this->cli->run(
                 'which mailhog',
-                function ($exitCode, $output) {
+                function($exitCode, $output) {
                     throw new DomainException('Service not available');
                 }
             );

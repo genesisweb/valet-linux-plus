@@ -87,11 +87,11 @@ class DrupalValetDriver extends ValetDriver
      */
     public function addSubdirectory($sitePath)
     {
-        $paths = array_map(function ($subDir) use ($sitePath) {
+        $paths = array_map(function($subDir) use ($sitePath) {
             return "$sitePath/$subDir";
         }, $this->possibleSubdirectories());
 
-        $foundPaths = array_filter($paths, function ($path) {
+        $foundPaths = array_filter($paths, function($path) {
             return file_exists($path);
         });
 

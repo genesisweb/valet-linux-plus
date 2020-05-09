@@ -70,10 +70,10 @@ class Valet
         }
 
         return collect($this->files->scandir(VALET_HOME_PATH.'/Extensions'))
-                    ->reject(function ($file) {
+                    ->reject(function($file) {
                         return is_dir($file);
                     })
-                    ->map(function ($file) {
+                    ->map(function($file) {
                         return VALET_HOME_PATH.'/Extensions/'.$file;
                     })
                     ->values()->all();
@@ -144,9 +144,9 @@ class Valet
             Yum::class,
             PackageKit::class,
             Eopkg::class,
-        ])->first(function ($pm) {
+        ])->first(function($pm) {
             return resolve($pm)->isAvailable();
-        }, function () {
+        }, function() {
             throw new DomainException('No compatible package manager found.');
         });
     }
@@ -171,9 +171,9 @@ class Valet
         return collect([
             LinuxService::class,
             Systemd::class,
-        ])->first(function ($pm) {
+        ])->first(function($pm) {
             return resolve($pm)->isAvailable();
-        }, function () {
+        }, function() {
             throw new DomainException('No compatible service manager found.');
         });
     }

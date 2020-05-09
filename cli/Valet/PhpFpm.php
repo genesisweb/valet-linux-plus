@@ -225,9 +225,9 @@ class PhpFpm
             '/etc/php-fpm.d', // Fedora
             '/etc/php/php-fpm.d', // Arch
             '/etc/php7/fpm/php-fpm.d', // openSUSE
-        ])->first(function ($path) {
+        ])->first(function($path) {
             return is_dir($path);
-        }, function () {
+        }, function() {
             throw new DomainException('Unable to determine PHP-FPM configuration folder.');
         });
     }
