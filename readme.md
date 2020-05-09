@@ -2,6 +2,8 @@
 
 <p align="center">
 <a href="https://travis-ci.org/genesisweb/valet-linux-plus"><img src="https://travis-ci.org/genesisweb/valet-linux-plus.svg?branch=master" alt="Build Status"></a>
+<a href="https://github.styleci.io/repos/218757845"><img src="https://github.styleci.io/repos/218757845/shield?branch=master" alt="StyleCI"></a>
+<a href="https://scrutinizer-ci.com/g/genesisweb/valet-linux-plus/?branch=master"><img src="https://scrutinizer-ci.com/g/genesisweb/valet-linux-plus/badges/quality-score.png?b=master" alt="Scrutinizer"></a>
 <a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/downloads.svg" alt="Total Downloads"></a>
 <a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/v/stable.svg" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/genesisweb/valet-linux-plus"><img src="https://poser.pugx.org/genesisweb/valet-linux-plus/v/unstable.svg" alt="Latest Unstable Version"></a>
