@@ -69,10 +69,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        DnsMasq::updateDomain(
-            $oldDomain = Configuration::read()['domain'],
-            $domain = trim($domain, '.')
-        );
+        DnsMasq::updateDomain($domain = trim($domain, '.'));
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);

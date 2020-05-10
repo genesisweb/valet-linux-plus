@@ -256,7 +256,8 @@ $uri = $valetDriver->mutateUri($uri);
 $isPhpFile = pathinfo($uri, PATHINFO_EXTENSION) === 'php';
 
 if ($uri !== '/' && !$isPhpFile && $staticFilePath = $valetDriver->isStaticFile($valetSitePath, $siteName, $uri)) {
-    return $valetDriver->serveStaticFile($staticFilePath, $valetSitePath, $siteName, $uri);
+    $valetDriver->serveStaticFile($staticFilePath, $valetSitePath, $siteName, $uri);
+    return;
 }
 
 /**

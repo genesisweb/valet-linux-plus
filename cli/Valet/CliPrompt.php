@@ -9,15 +9,15 @@ class CliPrompt
      *
      * @param $question
      * @param bool $hidden
-     * @param null $suggestion
-     * @param null $default
+     * @param $suggestion
+     * @param $default
      *
      * @return string
      */
     public function prompt($question, $hidden = false, $suggestion = null, $default = null)
     {
-        $question = $suggestion ? "$question [$suggestion]" : $question;
-        $question = $default ? "$question ($default)" : $question;
+        $question = !is_null($suggestion) ? "$question [$suggestion]" : $question;
+        $question = !is_null($default) ? "$question ($default)" : $question;
         $question .= PHP_EOL;
 
         print_r($question);

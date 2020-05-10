@@ -17,6 +17,8 @@ class Mysql
 
     public $cli;
     public $files;
+    public $pm;
+    public $sm;
     public $configuration;
     public $site;
     public $systemDatabase = ['sys', 'performance_schema', 'information_schema', 'mysql'];
@@ -163,14 +165,14 @@ class Mysql
     /**
      * Get exists databases.
      *
-     * @return array|bool
+     * @return array
      */
     protected function getDatabases()
     {
         $result = $this->query('SHOW DATABASES');
 
         if (!$result) {
-            return false;
+            return ['Failed to get databases'];
         }
 
         return collect($result->fetchAll(PDO::FETCH_ASSOC))
