@@ -47,6 +47,7 @@ class Mailhog
 
     /**
      * Validate if system already has MailHog installed in it.
+     *
      * @return void
      */
     public function ensureInstalled()
@@ -90,6 +91,7 @@ class Mailhog
 
     /**
      * Update domain for HTTP access.
+     *
      * @return void
      */
     public function updateDomain()

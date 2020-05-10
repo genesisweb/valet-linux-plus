@@ -2,20 +2,20 @@
 
 namespace Valet;
 
-use Exception;
 use ArrayObject;
 use CommandLine as CommandLineFacade;
+use Exception;
 use FilesystemIterator;
 use Traversable;
 
 /**
- * Class Filesystem
- * @package Valet
+ * Class Filesystem.
  */
 class Filesystem
 {
     /**
      * @param $files
+     *
      * @return ArrayObject
      */
     private function toIterator($files)
@@ -31,8 +31,10 @@ class Filesystem
      * Delete the specified file or directory with files.
      *
      * @param string $files
-     * @return void
+     *
      * @throws Exception
+     *
+     * @return void
      */
     public function remove($files)
     {
@@ -46,7 +48,9 @@ class Filesystem
             if (is_dir($file) && !is_link($file)) {
                 $this->remove(new FilesystemIterator($file));
 
-                if (true !== @rmdir($file)) throw new Exception(sprintf('Failed to remove directory "%s".', $file));
+                if (true !== @rmdir($file)) {
+                    throw new Exception(sprintf('Failed to remove directory "%s".', $file));
+                }
             } else {
                 // https://bugs.php.net/bug.php?id=52176
                 if ('\\' === DIRECTORY_SEPARATOR && is_dir($file)) {
@@ -399,6 +403,7 @@ class Filesystem
      *
      * @param string $path
      * @param string $user
+     *
      * @return void
      */
     public function chown($path, $user)
@@ -411,6 +416,7 @@ class Filesystem
      *
      * @param string $path
      * @param string $group
+     *
      * @return void
      */
     public function chgrp($path, $group)

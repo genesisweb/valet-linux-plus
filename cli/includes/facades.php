@@ -4,7 +4,7 @@ use Illuminate\Container\Container;
 use Tightenco\Collect\Support\Collection;
 
 /**
- * Class Facade
+ * Class Facade.
  */
 class Facade
 {
@@ -15,14 +15,14 @@ class Facade
      */
     public static function containerKey()
     {
-        return 'Valet\\' . basename(str_replace('\\', '/', get_called_class()));
+        return 'Valet\\'.basename(str_replace('\\', '/', get_called_class()));
     }
 
     /**
      * Call a non-static method on the facade.
      *
      * @param string $method
-     * @param array $parameters
+     * @param array  $parameters
      *
      * @return mixed
      */
@@ -35,7 +35,8 @@ class Facade
 }
 
 /**
- * Class Nginx
+ * Class Nginx.
+ *
  * @method static void install()
  * @method static void installConfiguration()
  * @method static void installServer()
@@ -52,7 +53,8 @@ class Nginx extends Facade
 }
 
 /**
- * Class CommandLine
+ * Class CommandLine.
+ *
  * @method static void quietly($command)
  * @method static void quietlyAsUser($command)
  * @method static void passthru($command)
@@ -65,7 +67,8 @@ class CommandLine extends Facade
 }
 
 /**
- * Class Configuration
+ * Class Configuration.
+ *
  * @method static void install()
  * @method static void uninstall()
  * @method static void createConfigurationDirectory()
@@ -90,7 +93,8 @@ class Configuration extends Facade
 }
 
 /**
- * Class DnsMasq
+ * Class DnsMasq.
+ *
  * @method static void install(string $domain)
  * @method static void stop()
  * @method static void restart()
@@ -105,7 +109,8 @@ class DnsMasq extends Facade
 }
 
 /**
- * Class Filesystem
+ * Class Filesystem.
+ *
  * @method static ArrayObject toIterator($files)
  * @method static void remove(string $files)
  * @method static bool isDir(string $path)
@@ -143,7 +148,8 @@ class Filesystem extends Facade
 }
 
 /**
- * Class Ngrok
+ * Class Ngrok.
+ *
  * @method static string currentTunnelUrl()
  * @method static string|null findHttpTunnelUrl(array $tunnels)
  */
@@ -152,7 +158,8 @@ class Ngrok extends Facade
 }
 
 /**
- * Class PhpFpm
+ * Class PhpFpm.
+ *
  * @method static void install()
  * @method static void uninstall()
  * @method static void changeVersion(string $version = null, bool $updateCli = null)
@@ -169,7 +176,8 @@ class PhpFpm extends Facade
 }
 
 /**
- * Class Site
+ * Class Site.
+ *
  * @method static string|null host(string $path)
  * @method static string link(string $target, string $link)
  * @method static Collection links()
@@ -199,7 +207,8 @@ class Site extends Facade
 }
 
 /**
- * Class Valet
+ * Class Valet.
+ *
  * @method static void symlinkToUsersBin()
  * @method static void uninstall()
  * @method static array extensions()
@@ -216,7 +225,8 @@ class Valet extends Facade
 }
 
 /**
- * Class Requirements
+ * Class Requirements.
+ *
  * @method static self setIgnoreSELinux(bool $ignore = true)
  * @method static void check()
  * @method static void homePathIsInsideRoot()
@@ -227,7 +237,8 @@ class Requirements extends Facade
 }
 
 /**
- * Class MailHog
+ * Class MailHog.
+ *
  * @method static void install()
  * @method static void ensureInstalled()
  * @method static void createService()
@@ -244,7 +255,8 @@ class Mailhog extends Facade
 }
 
 /**
- * Class ValetRedis
+ * Class ValetRedis.
+ *
  * @method static void install()
  * @method static bool installed()
  * @method static void uninstall()
@@ -256,7 +268,8 @@ class ValetRedis extends Facade
 }
 
 /**
- * Class CliPrompt
+ * Class CliPrompt.
+ *
  * @method static string prompt($question, $hidden = false, $suggestion = null, $default = null)
  */
 class CliPrompt extends Facade
@@ -264,7 +277,8 @@ class CliPrompt extends Facade
 }
 
 /**
- * Class Mysql
+ * Class Mysql.
+ *
  * @method static void install()
  * @method static void stop()
  * @method static void restart()

@@ -39,8 +39,9 @@ class Configuration
     /**
      * Uninstall the Valet configuration folder.
      *
-     * @return void
      * @throws Exception
+     *
+     * @return void
      */
     public function uninstall()
     {

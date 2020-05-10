@@ -87,6 +87,7 @@ interface ServiceManager
      * Determine if service manager is systemctl/service.
      *
      * @param Filesystem $files Filesystem object
+     *
      * @return void
      */
     public function installValetDns($files);

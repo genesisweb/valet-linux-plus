@@ -69,8 +69,9 @@ class DnsMasq
     /**
      * Enable nameserver merging.
      *
-     * @return void
      * @throws Exception
+     *
+     * @return void
      */
     private function _mergeDns()
     {
@@ -98,8 +99,9 @@ class DnsMasq
      *
      * @param string $domain Domain TLD to use
      *
-     * @return void
      * @throws Exception
+     *
+     * @return void
      */
     public function install($domain = 'test')
     {
@@ -113,6 +115,7 @@ class DnsMasq
 
     /**
      * Stop the DnsMasq service.
+     *
      * @return void
      */
     public function stop()
@@ -122,6 +125,7 @@ class DnsMasq
 
     /**
      * Restart the DnsMasq service.
+     *
      * @return void
      */
     public function restart()
@@ -155,8 +159,9 @@ class DnsMasq
     /**
      * Setup dnsmasq with Network Manager.
      *
-     * @return void
      * @throws Exception
+     *
+     * @return void
      */
     public function dnsmasqSetup()
     {

@@ -15,7 +15,7 @@ class CommandLine
      */
     public function quietly($command)
     {
-        $this->runCommand($command . ' > /dev/null 2>&1');
+        $this->runCommand($command.' > /dev/null 2>&1');
     }
 
     /**
@@ -27,7 +27,7 @@ class CommandLine
      */
     public function quietlyAsUser($command)
     {
-        $this->quietly('sudo -u ' . user() . ' ' . $command . ' > /dev/null 2>&1');
+        $this->quietly('sudo -u '.user().' '.$command.' > /dev/null 2>&1');
     }
 
     /**
@@ -45,7 +45,7 @@ class CommandLine
     /**
      * Run the given command as the non-root user.
      *
-     * @param string $command
+     * @param string   $command
      * @param callable $onError
      *
      * @return string
@@ -58,20 +58,20 @@ class CommandLine
     /**
      * Run the given command.
      *
-     * @param string $command
+     * @param string   $command
      * @param callable $onError
      *
      * @return string
      */
     public function runAsUser(string $command, callable $onError = null)
     {
-        return $this->runCommand('sudo -u ' . user() . ' ' . $command, $onError);
+        return $this->runCommand('sudo -u '.user().' '.$command, $onError);
     }
 
     /**
      * Run the given command.
      *
-     * @param string $command
+     * @param string   $command
      * @param callable $onError
      *
      * @return string

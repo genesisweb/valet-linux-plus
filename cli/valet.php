@@ -12,8 +12,8 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
 
 use Illuminate\Container\Container;
 use Silly\Application;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Input\Input;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
  * Create the application.
@@ -66,6 +66,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
             info(Configuration::read()['domain']);
+
             return;
         }
 

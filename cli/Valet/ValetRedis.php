@@ -12,8 +12,7 @@ use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
 /**
- * Class ValetRedis
- * @package Valet
+ * Class ValetRedis.
  */
 class ValetRedis
 {
@@ -48,6 +47,7 @@ class ValetRedis
 
     /**
      * Install Redis Server.
+     *
      * @return void
      */
     public function install()

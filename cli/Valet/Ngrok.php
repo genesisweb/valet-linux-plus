@@ -13,8 +13,9 @@ class Ngrok
     /**
      * Get the current tunnel URL from the Ngrok API.
      *
-     * @return string
      * @throws Exception
+     *
+     * @return string
      */
     public function currentTunnelUrl()
     {
@@ -46,6 +47,7 @@ class Ngrok
                 return $tunnel->public_url;
             }
         }
+
         return null;
     }
 }

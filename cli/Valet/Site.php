@@ -331,6 +331,7 @@ class Site
     /**
      * @param string $url
      * @param string $stub = null
+     *
      * @return void
      */
     public function createSecureNginxServer($url, $stub = null)

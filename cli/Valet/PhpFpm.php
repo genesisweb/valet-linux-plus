@@ -72,8 +72,9 @@ class PhpFpm
      * @param string|float|int $version
      * @param bool|null        $updateCli
      *
-     * @return void
      * @throws Exception
+     *
+     * @return void
      */
     public function changeVersion($version = null, $updateCli = null)
     {
