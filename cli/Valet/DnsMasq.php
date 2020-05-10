@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
@@ -66,6 +67,7 @@ class DnsMasq
      * Enable nameserver merging.
      *
      * @return void
+     * @throws Exception
      */
     private function _mergeDns()
     {
@@ -86,8 +88,6 @@ class DnsMasq
         $this->files->backup($this->resolvconf);
         $this->files->unlink($this->resolvconf);
         $this->files->symlink($script, $this->resolvconf);
-
-        return true;
     }
 
     /**
@@ -96,6 +96,7 @@ class DnsMasq
      * @param string $domain Domain TLD to use
      *
      * @return void
+     * @throws Exception
      */
     public function install($domain = 'test')
     {
@@ -109,6 +110,7 @@ class DnsMasq
 
     /**
      * Stop the DnsMasq service.
+     * @return void
      */
     public function stop()
     {
@@ -117,6 +119,7 @@ class DnsMasq
 
     /**
      * Restart the DnsMasq service.
+     * @return void
      */
     public function restart()
     {
@@ -142,11 +145,6 @@ class DnsMasq
      */
     public function fixResolved()
     {
-        // $resolved = $this->resolvedConfigPath;
-
-        // $this->files->backup($resolved);
-        // $this->files->putAsUser($resolved, $this->files->get(__DIR__.'/../stubs/resolved.conf'));
-
         $this->sm->disable('systemd-resolved');
         $this->sm->stop('systemd-resolved');
     }
@@ -155,6 +153,7 @@ class DnsMasq
      * Setup dnsmasq with Network Manager.
      *
      * @return void
+     * @throws Exception
      */
     public function dnsmasqSetup()
     {

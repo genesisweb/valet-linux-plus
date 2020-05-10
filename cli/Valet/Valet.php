@@ -3,6 +3,7 @@
 namespace Valet;
 
 use DomainException;
+use Exception;
 use Illuminate\Container\Container;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -84,7 +85,7 @@ class Valet
      *
      * @param string $currentVersion
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return bool
      */
@@ -98,7 +99,7 @@ class Valet
     /**
      * Retrieve the latest version of Valet Linux Plus.
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return string
      */

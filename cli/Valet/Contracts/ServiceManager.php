@@ -54,7 +54,7 @@ interface ServiceManager
      *
      * @param
      *
-     * @return void
+     * @return string
      */
     public function status($services);
 

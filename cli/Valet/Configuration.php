@@ -2,6 +2,8 @@
 
 namespace Valet;
 
+use Exception;
+
 class Configuration
 {
     public $files;
@@ -38,10 +40,11 @@ class Configuration
      * Uninstall the Valet configuration folder.
      *
      * @return void
+     * @throws Exception
      */
     public function uninstall()
     {
-        if ($this->files->isDir(VALET_HOME_PATH, user())) {
+        if ($this->files->isDir(VALET_HOME_PATH)) {
             $this->files->remove(VALET_HOME_PATH);
         }
     }
