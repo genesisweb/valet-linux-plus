@@ -13,9 +13,12 @@ class DnsMasq
     public $cli;
     public $files;
     public $rclocal;
+    public $resolvconf;
+    public $dnsmasqconf;
+    public $dnsmasqOpts;
+    public $resolvedConfigPath;
     public $configPath;
     public $nmConfigPath;
-    public $resolvedConfig;
 
     /**
      * Create a new DnsMasq instance.
@@ -179,12 +182,11 @@ class DnsMasq
     /**
      * Update the domain used by DnsMasq.
      *
-     * @param string $oldDomain Old TLD
      * @param string $newDomain New TLD
      *
      * @return void
      */
-    public function updateDomain($oldDomain, $newDomain)
+    public function updateDomain($newDomain)
     {
         $this->createCustomConfigFile($newDomain);
         $this->sm->restart('dnsmasq');

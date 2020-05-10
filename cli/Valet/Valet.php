@@ -101,7 +101,7 @@ class Valet
      *
      * @throws Exception
      *
-     * @return string
+     * @return string|bool
      */
     public function getLatestVersion()
     {

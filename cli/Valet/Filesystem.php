@@ -390,7 +390,7 @@ class Filesystem
     public function unlink($path)
     {
         if (file_exists($path) || is_link($path)) {
-            @unlink($path);
+            unlink($path);
         }
     }
 

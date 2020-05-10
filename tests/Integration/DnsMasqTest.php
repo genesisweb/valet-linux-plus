@@ -52,7 +52,7 @@ class DnsMasqTest extends TestCase
 
         $dnsMasq->shouldReceive('createCustomConfigFile')->once()->with('new');
         $sm->shouldReceive('restart')->once()->with('dnsmasq');
-        $dnsMasq->updateDomain('old', 'new');
+        $dnsMasq->updateDomain('new');
     }
 }
 
