@@ -66,7 +66,7 @@
     },
     "require-dev": {
         "mockery/mockery": "~0.9.4",
-        "phpunit/phpunit": "~5.5"
+        "phpunit/phpunit": "~7.5"
     },
     "scripts": {
         "post-install-cmd": [
