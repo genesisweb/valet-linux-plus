@@ -98,6 +98,7 @@ class Magento2ValetDriver extends ValetDriver
         }
         if (!file_exists($sitePath.'/index.php')) {
             $this->mageMode = 'production'; // Can't use developer mode without index.php in project root
+
             return;
         }
         $mageConfig = [];

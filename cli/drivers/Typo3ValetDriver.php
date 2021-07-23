@@ -155,12 +155,12 @@ class Typo3ValetDriver extends ValetDriver
     {
         if (rtrim($uri, '/') === '/typo3/install') {
             header('Location: /typo3/sysext/install/Start/Install.php');
-            die();
+            exit();
         }
 
         if ($uri === '/typo3') {
             header('Location: /typo3/');
-            die();
+            exit();
         }
     }
 

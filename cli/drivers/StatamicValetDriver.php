@@ -76,7 +76,7 @@ class StatamicValetDriver extends ValetDriver
                 // Force trailing slashes on locale roots.
                 if ($uri === '/'.$locale) {
                     header('Location: '.$uri.'/');
-                    die;
+                    exit;
                 }
 
                 $indexPath = $localeIndexPath;
