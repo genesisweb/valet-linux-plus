@@ -59,7 +59,7 @@
         "php": ">=7.1",
         "illuminate/container": "~5.3",
         "mnapoli/silly": "~1.1",
-        "symfony/process": "~2.7|~3.0|~4.0",
+        "symfony/process": "^5.3.4",
         "nategood/httpful": "~0.2",
         "tightenco/collect": "~8.19",
         "symfony/console": "~5.2"
