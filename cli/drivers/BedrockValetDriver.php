@@ -73,7 +73,7 @@ class BedrockValetDriver extends BasicValetDriver
     {
         if (substr($uri, -1 * strlen('/wp/wp-admin')) == '/wp/wp-admin') {
             header('Location: '.$uri.'/');
-            die;
+            exit;
         }
 
         return $uri;

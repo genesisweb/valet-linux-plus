@@ -49,7 +49,7 @@ class WordPressValetDriver extends BasicValetDriver
     {
         if (substr($uri, -1 * strlen('/wp-admin')) == '/wp-admin') {
             header('Location: '.$uri.'/');
-            die;
+            exit;
         }
 
         return $uri;
