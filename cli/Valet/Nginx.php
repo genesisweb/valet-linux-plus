@@ -2,8 +2,8 @@
 
 namespace Valet;
 
-use Valet\Contracts\ServiceManager;
 use Valet\Contracts\PackageManager;
+use Valet\Contracts\ServiceManager;
 
 class Nginx
 {
@@ -20,12 +20,13 @@ class Nginx
     /**
      * Create a new Nginx instance.
      *
-     * @param  PackageManager  $pm
-     * @param  ServiceManager  $sm
-     * @param  CommandLine  $cli
-     * @param  Filesystem  $files
-     * @param  Configuration  $configuration
-     * @param  Site  $site
+     * @param PackageManager $pm
+     * @param ServiceManager $sm
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     * @param Configuration  $configuration
+     * @param Site           $site
+     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files, Configuration $configuration, Site $site)
@@ -81,10 +82,10 @@ class Nginx
         $this->files->putAsUser(
             $nginx,
             str_array_replace([
-                'VALET_USER' => user(),
-                'VALET_GROUP' => group(),
+                'VALET_USER'      => user(),
+                'VALET_GROUP'     => group(),
                 'VALET_HOME_PATH' => VALET_HOME_PATH,
-                'VALET_PID' => $pid_string,
+                'VALET_PID'       => $pid_string,
             ], $contents)
         );
     }
@@ -127,7 +128,7 @@ class Nginx
      */
     public function installNginxDirectory()
     {
-        if (! $this->files->isDir($nginxDirectory = VALET_HOME_PATH.'/Nginx')) {
+        if (!$this->files->isDir($nginxDirectory = VALET_HOME_PATH.'/Nginx')) {
             $this->files->mkdirAsUser($nginxDirectory);
         }
 
@@ -139,7 +140,8 @@ class Nginx
     /**
      * Update the port used by Nginx.
      *
-     * @param  string  $newPort
+     * @param string $newPort
+     *
      * @return void
      */
     public function updatePort($newPort)

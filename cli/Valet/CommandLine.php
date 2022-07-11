@@ -9,7 +9,8 @@ class CommandLine
     /**
      * Simple global function to run commands.
      *
-     * @param  string  $command
+     * @param string $command
+     *
      * @return void
      */
     public function quietly($command)
@@ -20,7 +21,8 @@ class CommandLine
     /**
      * Simple global function to run commands.
      *
-     * @param  string  $command
+     * @param string $command
+     *
      * @return void
      */
     public function quietlyAsUser($command)
@@ -31,7 +33,8 @@ class CommandLine
     /**
      * Pass the command to the command line and display the output.
      *
-     * @param  string  $command
+     * @param string $command
+     *
      * @return void
      */
     public function passthru($command)
@@ -42,8 +45,9 @@ class CommandLine
     /**
      * Run the given command as the non-root user.
      *
-     * @param  string  $command
-     * @param  callable $onError
+     * @param string   $command
+     * @param callable $onError
+     *
      * @return string
      */
     public function run($command, callable $onError = null)
@@ -54,8 +58,9 @@ class CommandLine
     /**
      * Run the given command.
      *
-     * @param  string  $command
-     * @param  callable $onError
+     * @param string   $command
+     * @param callable $onError
+     *
      * @return string
      */
     public function runAsUser($command, callable $onError = null)
@@ -66,15 +71,24 @@ class CommandLine
     /**
      * Run the given command.
      *
-     * @param  string  $command
-     * @param  callable $onError
+     * @param string   $command
+     * @param callable $onError
+     *
      * @return string
      */
     protected function runCommand($command, callable $onError = null)
     {
         $onError = $onError ?: function () {};
 
-        $process = new Process($command);
+        // Symfony's 4.x Process component has deprecated passing a command string
+        // to the constructor, but older versions (which Valet's Composer
+        // constraints allow) don't have the fromShellCommandLine method.
+        // For more information, see: https://github.com/laravel/valet/pull/761
+        if (method_exists(Process::class, 'fromShellCommandline')) {
+            $process = Process::fromShellCommandline($command);
+        } else {
+            $process = new Process($command);
+        }
 
         $processOutput = '';
         $process->setTimeout(null)->run(function ($type, $line) use (&$processOutput) {

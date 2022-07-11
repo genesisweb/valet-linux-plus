@@ -28,15 +28,15 @@ class DnsMasq
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, Filesystem $files, CommandLine $cli)
     {
-        $this->pm    = $pm;
-        $this->sm    = $sm;
-        $this->cli   = $cli;
+        $this->pm = $pm;
+        $this->sm = $sm;
+        $this->cli = $cli;
         $this->files = $files;
         $this->rclocal = '/etc/rc.local';
-        $this->resolvconf   = '/etc/resolv.conf';
-        $this->dnsmasqconf  = '/etc/dnsmasq.conf';
-        $this->configPath   = '/etc/dnsmasq.d/valet';
-        $this->dnsmasqOpts  = '/etc/dnsmasq.d/options';
+        $this->resolvconf = '/etc/resolv.conf';
+        $this->dnsmasqconf = '/etc/dnsmasq.conf';
+        $this->configPath = '/etc/dnsmasq.d/valet';
+        $this->dnsmasqOpts = '/etc/dnsmasq.d/options';
         $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
         $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
@@ -52,7 +52,7 @@ class DnsMasq
     {
         $arg = $lock ? '+i' : '-i';
 
-        if (! $this->files->isLink($this->resolvconf)) {
+        if (!$this->files->isLink($this->resolvconf)) {
             $this->cli->run(
                 "chattr {$arg} {$this->resolvconf}",
                 function ($code, $msg) {
@@ -63,14 +63,14 @@ class DnsMasq
     }
 
     /**
-     * Enable nameserver merging
+     * Enable nameserver merging.
      *
      * @return void
      */
     private function _mergeDns()
     {
-        $optDir  = '/opt/valet-linux';
-        $script  = $optDir.'/valet-dns';
+        $optDir = '/opt/valet-linux';
+        $script = $optDir.'/valet-dns';
 
         $this->pm->ensureInstalled('inotify-tools');
         $this->files->remove($optDir);
@@ -78,11 +78,10 @@ class DnsMasq
         $this->files->put($script, $this->files->get(__DIR__.'/../stubs/valet-dns'));
         $this->cli->run("chmod +x $script");
         $this->sm->installValetDns($this->files);
-        
+
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
         }
-        
         $this->files->backup($this->resolvconf);
         $this->files->unlink($this->resolvconf);
         $this->files->symlink($script, $this->resolvconf);
@@ -104,7 +103,7 @@ class DnsMasq
         $this->createCustomConfigFile($domain);
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
-        $this->sm->start('valet-dns');
+        $this->sm->restart('valet-dns');
     }
 
     /**
@@ -122,7 +121,6 @@ class DnsMasq
     {
         $this->sm->restart('dnsmasq');
     }
-
 
     /**
      * Append the custom DnsMasq configuration file to the main configuration file.
@@ -143,11 +141,6 @@ class DnsMasq
      */
     public function fixResolved()
     {
-        // $resolved = $this->resolvedConfigPath;
-
-        // $this->files->backup($resolved);
-        // $this->files->putAsUser($resolved, $this->files->get(__DIR__.'/../stubs/resolved.conf'));
-
         $this->sm->disable('systemd-resolved');
         $this->sm->stop('systemd-resolved');
     }
@@ -207,7 +200,7 @@ class DnsMasq
         $this->files->unlink($this->dnsmasqOpts);
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
-        
+
         $this->_lockResolvConf(false);
         $this->files->restore($this->rclocal);
         $this->files->restore($this->resolvconf);

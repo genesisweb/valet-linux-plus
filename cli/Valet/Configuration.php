@@ -122,7 +122,7 @@ class Configuration
      */
     public function writeBaseConfiguration()
     {
-        if (! $this->files->exists($this->path())) {
+        if (!$this->files->exists($this->path())) {
             $this->write(['domain' => 'test', 'paths' => [], 'port' => '80']);
         }
     }
@@ -130,8 +130,9 @@ class Configuration
     /**
      * Add the given path to the configuration.
      *
-     * @param  string  $path
-     * @param  bool  $prepend
+     * @param string $path
+     * @param bool   $prepend
+     *
      * @return void
      */
     public function addPath($path, $prepend = false)
@@ -146,7 +147,8 @@ class Configuration
     /**
      * Prepend the given path to the configuration.
      *
-     * @param  string  $path
+     * @param string $path
+     *
      * @return void
      */
     public function prependPath($path)
@@ -157,7 +159,8 @@ class Configuration
     /**
      * Add the given path to the configuration.
      *
-     * @param  string  $path
+     * @param string $path
+     *
      * @return void
      */
     public function removePath($path)
@@ -176,7 +179,7 @@ class Configuration
      */
     public function prune()
     {
-        if (! $this->files->exists($this->path())) {
+        if (!$this->files->exists($this->path())) {
             return;
         }
 
@@ -201,7 +204,8 @@ class Configuration
      * Get a configuration value.
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
+     *
      * @return mixed
      */
     public function get($key, $default = null)
@@ -214,8 +218,9 @@ class Configuration
     /**
      * Update a specific key in the configuration file.
      *
-     * @param  string  $key
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed  $value
+     *
      * @return array
      */
     public function updateKey($key, $value)
@@ -229,7 +234,8 @@ class Configuration
     /**
      * Write the given configuration to disk.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return void
      */
     public function write(array $config)

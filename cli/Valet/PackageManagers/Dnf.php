@@ -13,7 +13,8 @@ class Dnf implements PackageManager
     /**
      * Create a new Apt instance.
      *
-     * @param  CommandLine $cli
+     * @param CommandLine $cli
+     *
      * @return void
      */
     public function __construct(CommandLine $cli)
@@ -24,7 +25,8 @@ class Dnf implements PackageManager
     /**
      * Determine if the given package is installed.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return bool
      */
     public function installed($package)
@@ -39,7 +41,8 @@ class Dnf implements PackageManager
     /**
      * Ensure that the given package is installed.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return void
      */
     public function ensureInstalled($package)
@@ -52,17 +55,18 @@ class Dnf implements PackageManager
     /**
      * Install the given package and throw an exception on failure.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return void
      */
     public function installOrFail($package)
     {
-        output('<info>[' . $package . '] is not installed, installing it now via Dnf...</info> 🍻');
+        output('<info>['.$package.'] is not installed, installing it now via Dnf...</info> 🍻');
 
-        $this->cli->run(trim('dnf install -y ' . $package), function ($exitCode, $errorOutput) use ($package) {
+        $this->cli->run(trim('dnf install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
             output($errorOutput);
 
-            throw new DomainException('Dnf was unable to install [' . $package . '].');
+            throw new DomainException('Dnf was unable to install ['.$package.'].');
         });
     }
 

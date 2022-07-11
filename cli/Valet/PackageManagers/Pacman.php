@@ -13,7 +13,8 @@ class Pacman implements PackageManager
     /**
      * Create a new Pacman instance.
      *
-     * @param  CommandLine  $cli
+     * @param CommandLine $cli
+     *
      * @return void
      */
     public function __construct(CommandLine $cli)
@@ -22,9 +23,10 @@ class Pacman implements PackageManager
     }
 
     /**
-     * Get array of installed packages
+     * Get array of installed packages.
      *
-     * @param  string  $package
+     * @param string $package
+     *
      * @return array
      */
     public function packages($package)
@@ -37,7 +39,8 @@ class Pacman implements PackageManager
     /**
      * Determine if the given package is installed.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return bool
      */
     public function installed($package)
@@ -48,12 +51,13 @@ class Pacman implements PackageManager
     /**
      * Ensure that the given package is installed.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return void
      */
     public function ensureInstalled($package)
     {
-        if (! $this->installed($package)) {
+        if (!$this->installed($package)) {
             $this->installOrFail($package);
         }
     }
@@ -61,7 +65,8 @@ class Pacman implements PackageManager
     /**
      * Install the given package and throw an exception on failure.
      *
-     * @param  string $package
+     * @param string $package
+     *
      * @return void
      */
     public function installOrFail($package)

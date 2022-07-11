@@ -3,8 +3,8 @@
 namespace Valet;
 
 use DomainException;
-use Valet\Contracts\ServiceManager;
 use Valet\Contracts\PackageManager;
+use Valet\Contracts\ServiceManager;
 
 class Mailhog
 {
@@ -16,10 +16,11 @@ class Mailhog
     /**
      * Create a new Mailhog instance.
      *
-     * @param  PackageManager $pm
-     * @param  ServiceManager $sm
-     * @param  CommandLine $cli
-     * @param  Filesystem $files
+     * @param PackageManager $pm
+     * @param ServiceManager $sm
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
@@ -47,17 +48,17 @@ class Mailhog
     public function ensureInstalled()
     {
         if (!$this->isAvailable()) {
-            $this->cli->run("ln -s ".VALET_BIN_PATH."/mailhog /opt/valet-linux/mailhog");
+            $this->cli->run('ln -s '.VALET_BIN_PATH.'/mailhog /opt/valet-linux/mailhog');
         }
     }
 
     public function createService()
     {
-        info("Installing Mailhog service...");
+        info('Installing Mailhog service...');
 
         $servicePath = '/etc/init.d/mailhog';
         $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailhog.sh';
-        $hasSystemd  = $this->sm->_hasSystemd();
+        $hasSystemd = $this->sm->_hasSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/mailhog.service';
@@ -69,7 +70,7 @@ class Mailhog
             $this->files->get($serviceFile)
         );
 
-        if (! $hasSystemd) {
+        if (!$hasSystemd) {
             $this->cli->run("chmod +x $servicePath");
         }
 
@@ -84,7 +85,7 @@ class Mailhog
     {
         $domain = \Configuration::read()['domain'];
 
-        \Site::secure("mailhog.{$domain}", __DIR__ . '/../stubs/mailhog.conf');
+        \Site::secure("mailhog.{$domain}", __DIR__.'/../stubs/mailhog.conf');
     }
 
     public function isAvailable()
@@ -96,6 +97,7 @@ class Mailhog
                     throw new DomainException('Service not available');
                 }
             );
+
             return $output != '';
         } catch (DomainException $e) {
             return false;
@@ -151,6 +153,4 @@ class Mailhog
     {
         $this->stop();
     }
-
-
 }

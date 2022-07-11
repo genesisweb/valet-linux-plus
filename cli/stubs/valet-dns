@@ -64,6 +64,8 @@ function updateNameservers() {
 
     cat "${FILES[@]}" | grep -v '^nameserver' | grep -v '^#' | unique | tee "$VRESOLV" &>/dev/null
     echo 'nameserver 127.0.0.1' >> "$VRESOLV"
+    echo 'nameserver 1.1.1.1' >> "$VRESOLV"
+    echo 'nameserver 8.8.8.8' >> "$VRESOLV"
 
     # Add "search" and "domain" directives to /etc/resolv.conf
     # chattr -i "$RESOLV" && \

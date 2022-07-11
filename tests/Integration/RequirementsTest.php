@@ -1,21 +1,20 @@
 <?php
 
 use Illuminate\Container\Container;
+use PHPUnit\Framework\TestCase;
 use Valet\CommandLine;
 use Valet\Requirements;
-use PHPUnit\Framework\TestCase;
 
 class RequirementsTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
-        Container::setInstance(new Container);
+        Container::setInstance(new Container());
     }
 
-
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
@@ -73,7 +72,7 @@ Max kernel policy version:      30
     public function test_selinux_is_disabled()
     {
         $cli = Mockery::mock(CommandLine::class);
-        $cli->shouldReceive('run')->once()->with('sestatus')->andReturn('SELinux status:                 disabled' . PHP_EOL);
+        $cli->shouldReceive('run')->once()->with('sestatus')->andReturn('SELinux status:                 disabled'.PHP_EOL);
         swap(CommandLine::class, $cli);
 
         $requirements = resolve(Requirements::class);

@@ -96,21 +96,21 @@
         if ($_SERVER['SERVER_ADDR'] !== '127.0.0.1' && !substr($uri, 0, -1)) {
             echo '<li class="folder"><a href="/valet-sites">Valet Sites</a></li>';
         }
-        if(substr($uri, -1) !== '/') {
+        if (substr($uri, -1) !== '/') {
             $uri .= '/';
         }
         while ($file = readdir($handle)) {
             if (!in_array($file, $ignoredPaths)) {
-                if(is_dir($directory.$uri.$file)) {
-                    echo '<li class="folder"><a href="' . $uri . $file . '/">' . $file . '</a></li>';
+                if (is_dir($directory.$uri.$file)) {
+                    echo '<li class="folder"><a href="'.$uri.$file.'/">'.$file.'</a></li>';
                 }
             }
         }
         $handle = opendir($directory.$uri);
         while ($file = readdir($handle)) {
             if (!in_array($file, $ignoredPaths)) {
-                if(!is_dir($directory.$uri.$file)) {
-                    echo '<li class="file"><a href="' . $uri . $file . '">' . $file . '</a></li>';
+                if (!is_dir($directory.$uri.$file)) {
+                    echo '<li class="file"><a href="'.$uri.$file.'">'.$file.'</a></li>';
                 }
             }
         }

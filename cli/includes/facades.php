@@ -17,8 +17,9 @@ class Facade
     /**
      * Call a non-static method on the facade.
      *
-     * @param  string  $method
-     * @param  array  $parameters
+     * @param string $method
+     * @param array  $parameters
+     *
      * @return mixed
      */
     public static function __callStatic($method, $parameters)

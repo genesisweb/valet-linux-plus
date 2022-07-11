@@ -12,13 +12,14 @@ class FunctionalTestCase extends TestCase
      * Execute valet command.
      * Fail if exit code is different from 0.
      *
-     * @param string $command
+     * @param string      $command
      * @param null|string $workingDir
+     *
      * @return string
      */
     protected function valetCommand($command, $workingDir = null)
     {
-        return $this->exec($this->valet() . ' ' . $command, $workingDir);
+        return $this->exec($this->valet().' '.$command, $workingDir);
     }
 
     /**
@@ -29,7 +30,7 @@ class FunctionalTestCase extends TestCase
     protected function valet()
     {
         if (isset($_SERVER['REPOSITORY'])) {
-            return $_SERVER['REPOSITORY'] . '/valet';
+            return $_SERVER['REPOSITORY'].'/valet';
         }
 
         return 'valet';
@@ -39,14 +40,15 @@ class FunctionalTestCase extends TestCase
      * Pass the command to the command line and display the output.
      * Fail if exit code is different from 0.
      *
-     * @param string $command
+     * @param string      $command
      * @param null|string $workingDir
+     *
      * @return string
      */
     protected function exec($command, $workingDir = null)
     {
         $process = new Process($command);
-        $process->setWorkingDirectory(is_null($workingDir) ? realpath(__DIR__ . '/../..') : $workingDir);
+        $process->setWorkingDirectory(is_null($workingDir) ? realpath(__DIR__.'/../..') : $workingDir);
 
         $processOutput = '';
         $process->setTimeout(null)->run(function ($type, $line) use (&$processOutput) {
@@ -55,7 +57,7 @@ class FunctionalTestCase extends TestCase
 
         if ($process->getExitCode() > 0) {
             throw new RuntimeException(
-                'Command "' . $command . '" exited with exit code ' . $process->getExitCode() . PHP_EOL .
+                'Command "'.$command.'" exited with exit code '.$process->getExitCode().PHP_EOL.
                 $processOutput
             );
         }
@@ -66,8 +68,9 @@ class FunctionalTestCase extends TestCase
     /**
      * Run a command in the background.
      *
-     * @param string $command
+     * @param string      $command
      * @param null|string $workingDir
+     *
      * @return Process
      */
     protected function background($command, $workingDir = null)
@@ -76,7 +79,7 @@ class FunctionalTestCase extends TestCase
 
         $process
             ->setWorkingDirectory(
-                is_null($workingDir) ? realpath(__DIR__ . '/../..') : $workingDir
+                is_null($workingDir) ? realpath(__DIR__.'/../..') : $workingDir
             )
             ->setTimeout(null)
             ->start();

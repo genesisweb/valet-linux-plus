@@ -20,14 +20,16 @@ class Requirements
     }
 
     /**
-     * Determine if SELinux check should be skipped
+     * Determine if SELinux check should be skipped.
      *
      * @param bool $ignore
+     *
      * @return $this
      */
     public function setIgnoreSELinux($ignore = true)
     {
         $this->ignoreSELinux = $ignore;
+
         return $this;
     }
 
@@ -49,7 +51,7 @@ class Requirements
     public function homePathIsInsideRoot()
     {
         if (strpos(VALET_HOME_PATH, '/root/') === 0) {
-            throw new RuntimeException("Valet home directory is inside /root");
+            throw new RuntimeException('Valet home directory is inside /root');
         }
     }
 
@@ -67,7 +69,7 @@ class Requirements
         if (preg_match('@SELinux status:(\s+)enabled@', $output)
             && preg_match('@Current mode:(\s+)enforcing@', $output)
         ) {
-            throw new RuntimeException("SELinux is in enforcing mode");
+            throw new RuntimeException('SELinux is in enforcing mode');
         }
     }
 }
