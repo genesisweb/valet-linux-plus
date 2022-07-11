@@ -71,10 +71,10 @@ class PhpFpm
     public function installExtensions()
     {
         $extArray = [];
-        foreach($this->commonExt as $ext) {
+        foreach ($this->commonExt as $ext) {
             $extArray[] = "php{$this->version}-{$ext}";
         }
-        $this->pm->ensureInstalled(implode(" ", $extArray));
+        $this->pm->ensureInstalled(implode(' ', $extArray));
     }
 
     /**
