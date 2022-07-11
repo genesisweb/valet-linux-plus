@@ -7,14 +7,14 @@ use Valet\PackageManagers\PackageKit;
 
 class PackageKitTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
         Container::setInstance(new Container());
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
@@ -60,7 +60,7 @@ class PackageKitTest extends TestCase
     }
 
     /**
-     * @expectedException DomainException
+     * @throws DomainException
      */
     public function test_install_or_fail_throws_exception_on_failure()
     {

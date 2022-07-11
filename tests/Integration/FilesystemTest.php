@@ -5,7 +5,7 @@ use Valet\Filesystem;
 
 class FilesystemTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         exec('rm -rf '.__DIR__.'/output');
         mkdir(__DIR__.'/output');
@@ -20,6 +20,6 @@ class FilesystemTest extends TestCase
         $this->assertFileExists(__DIR__.'/output/file.link');
         unlink(__DIR__.'/output/file.out');
         $files->removeBrokenLinksAt(__DIR__.'/output');
-        $this->assertFileNotExists(__DIR__.'/output/file.link');
+        $this->assertFileDoesNotExist(__DIR__.'/output/file.link');
     }
 }

@@ -8,14 +8,14 @@ use Valet\Site;
 
 class SiteTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
         Container::setInstance(new Container());
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         exec('rm -rf '.__DIR__.'/output');
         mkdir(__DIR__.'/output');
@@ -45,11 +45,11 @@ class SiteTest extends TestCase
         symlink(__DIR__.'/output/file.out', __DIR__.'/output/link');
         $site = resolve(StubForRemovingLinks::class);
         $site->unlink('link');
-        $this->assertFileNotExists(__DIR__.'/output/link');
+        $this->assertFileDoesNotExist(__DIR__.'/output/link');
 
         $site = resolve(StubForRemovingLinks::class);
         $site->unlink('link');
-        $this->assertFileNotExists(__DIR__.'/output/link');
+        $this->assertFileDoesNotExist(__DIR__.'/output/link');
     }
 
     public function test_prune_links_removes_broken_symlinks_in_sites_path()
@@ -59,7 +59,7 @@ class SiteTest extends TestCase
         unlink(__DIR__.'/output/file.out');
         $site = resolve(StubForRemovingLinks::class);
         $site->pruneLinks();
-        $this->assertFileNotExists(__DIR__.'/output/link');
+        $this->assertFileDoesNotExist(__DIR__.'/output/link');
     }
 }
 
