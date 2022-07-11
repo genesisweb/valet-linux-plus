@@ -459,6 +459,30 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Stop the Valet services');
 
     /**
+     * PHPStorm IDE Helper Command.
+     */
+    $app->command('ps [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runApp($folder,\Valet\DevTools::PHP_STORM);
+    })->descriptions('Open project in PHPStorm');
+
+    /**
+     * Atom IDE Helper Command.
+     */
+    $app->command('atom [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runApp($folder,\Valet\DevTools::ATOM);
+    })->descriptions('Open project in Atom');
+
+    /**
+     * Sublime IDE Helper Command.
+     */
+    $app->command('subl [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::runApp($folder,\Valet\DevTools::SUBLIME);
+    })->descriptions('Open project in Sublime');
+
+    /**
      * Uninstall Valet entirely.
      */
     $app->command('uninstall', function () {
