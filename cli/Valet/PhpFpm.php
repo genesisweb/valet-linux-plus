@@ -89,7 +89,7 @@ class PhpFpm
      *
      * @return void
      */
-    public function changeVersion($version = null, $updateCli = null, $installExt = null)
+    public function changeVersion($version = null, bool $updateCli = null, bool $installExt = null)
     {
         $oldVersion = $this->version;
         $exception = null;

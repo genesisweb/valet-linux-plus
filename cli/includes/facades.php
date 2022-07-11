@@ -162,7 +162,7 @@ class Ngrok extends Facade
  *
  * @method static void install()
  * @method static void uninstall()
- * @method static void changeVersion(string $version = null, bool $updateCli = null)
+ * @method static void changeVersion(string $version = null, bool $updateCli = null, bool $installExt = null)
  * @method static void installConfiguration()
  * @method static void restart()
  * @method static void stop()
@@ -294,4 +294,13 @@ class CliPrompt extends Facade
  */
 class Mysql extends Facade
 {
+}
+
+/**
+ * Class DevTools.
+ *
+ * @method static void run(string $folder,string $service)
+ */
+class DevTools extends Facade{
+
 }

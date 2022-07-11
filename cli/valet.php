@@ -126,7 +126,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Determine if the site is secured or not');
 
     /**
-     * Add the current working directory to the paths configuration.
+     * Add the current working directory to paths configuration.
      */
     $app->command('park [path]', function ($path = null) {
         Configuration::addPath($path ?: getcwd());
@@ -135,7 +135,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Register the current working (or specified) directory with Valet');
 
     /**
-     * Remove the current working directory from the paths configuration.
+     * Remove the current working directory from paths configuration.
      */
     $app->command('forget [path]', function ($path = null) {
         Configuration::removePath($path ?: getcwd());
@@ -144,7 +144,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Remove the current working (or specified) directory from Valet\'s list of paths');
 
     /**
-     * Remove the current working directory to the paths configuration.
+     * Remove the current working directory to paths configuration.
      */
     $app->command('status', function () {
         PhpFpm::status();
@@ -161,7 +161,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Link the current working directory to Valet');
 
     /**
-     * Display all of the registered symbolic links.
+     * Display all the registered symbolic links.
      */
     $app->command('links', function () {
         $links = Site::links();
@@ -253,7 +253,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Determine which Valet driver serves the current working directory');
 
     /**
-     * Display all of the registered paths.
+     * Display all the registered paths.
      */
     $app->command('paths', function () {
         $paths = Configuration::read()['paths'];
@@ -463,7 +463,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('ps [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runApp($folder,\Valet\DevTools::PHP_STORM);
+        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
     })->descriptions('Open project in PHPStorm');
 
     /**
@@ -471,7 +471,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('atom [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runApp($folder,\Valet\DevTools::ATOM);
+        DevTools::run($folder,\Valet\DevTools::ATOM);
     })->descriptions('Open project in Atom');
 
     /**
@@ -479,7 +479,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('subl [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::runApp($folder,\Valet\DevTools::SUBLIME);
+        DevTools::run($folder,\Valet\DevTools::SUBLIME);
     })->descriptions('Open project in Sublime');
 
     /**
@@ -604,6 +604,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
     /**
      * Import database in MySQL.
+     * @throws Exception
      */
     $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
         $helper = $this->getHelperSet()->get('question');
@@ -655,7 +656,7 @@ if (is_dir(VALET_HOME_PATH)) {
 }
 
 /**
- * Load all of the Valet extensions.
+ * Load all Valet extensions.
  */
 foreach (Valet::extensions() as $extension) {
     include $extension;

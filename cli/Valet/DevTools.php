@@ -8,19 +8,45 @@ use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
+/**
+ *
+ */
 class DevTools
 {
+    /**
+     * Sublime binary selector
+     */
     const SUBLIME = 'subl';
+
+    /**
+     * PHPStorm binary selector
+     */
     const PHP_STORM = 'phpstorm.sh';
+
+    /**
+     * Atom binary selector
+     */
     const ATOM = 'atom';
 
+    /**
+     * @var PackageManager
+     */
     public $pm;
+    /**
+     * @var ServiceManager
+     */
     public $sm;
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var Filesystem
+     */
     public $files;
 
     /**
-     * Create a new Mailhog instance.
+     * Create a new DevTools instance.
      *
      * @param  PackageManager $pm
      * @param  ServiceManager $sm
@@ -36,11 +62,19 @@ class DevTools
         $this->files = $files;
     }
 
+    /**
+     * @param $service
+     * @return false|string
+     */
     public function ensureInstalled($service) {
 
         return $this->getBin($service);
     }
 
+    /**
+     * @param $service
+     * @return false|string
+     */
     public function getBin($service) {
 
         if (!($bin = $this->getService($service))) {
@@ -60,23 +94,32 @@ class DevTools
         return false;
     }
 
-    public function getService($service,$locate = false) {
+    /**
+     * @param string $service
+     * @param bool $locate
+     * @return false|string
+     */
+    public function getService(string $service, bool $locate = false) {
 
         try {
-            $locator = $locate?"locate":"which";
-            $output = $this->cli->run(
+            $locator = $locate ? "locate" : "which";
+            return $this->cli->run(
                 "$locator $service",
-                function ($exitCode, $output) {
+                function () {
                     throw new DomainException('Service not available');
                 }
             );
-            return $output;
         } catch (DomainException $e) {
             return false;
         }
     }
 
-    public function runService($service,$folder = null) {
+    /**
+     * @param $service
+     * @param $folder
+     * @return void
+     */
+    public function runService($service, $folder = null) {
 
         $bin = $this->getBin($service);
 
@@ -87,7 +130,12 @@ class DevTools
         }
     }
 
-    public function runApp($folder,$service) {
+    /**
+     * @param string $folder
+     * @param string $service
+     * @return void
+     */
+    public function run(string $folder,string  $service) {
         if ($this->ensureInstalled($service)) {
             $this->runService($service,$folder);
         } else {
