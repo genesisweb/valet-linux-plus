@@ -82,7 +82,6 @@ class DnsMasq
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
         }
-
         $this->files->backup($this->resolvconf);
         $this->files->unlink($this->resolvconf);
         $this->files->symlink($script, $this->resolvconf);
@@ -104,7 +103,7 @@ class DnsMasq
         $this->createCustomConfigFile($domain);
         $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
-        $this->sm->start('valet-dns');
+        $this->sm->restart('valet-dns');
     }
 
     /**
@@ -142,11 +141,6 @@ class DnsMasq
      */
     public function fixResolved()
     {
-        // $resolved = $this->resolvedConfigPath;
-
-        // $this->files->backup($resolved);
-        // $this->files->putAsUser($resolved, $this->files->get(__DIR__.'/../stubs/resolved.conf'));
-
         $this->sm->disable('systemd-resolved');
         $this->sm->stop('systemd-resolved');
     }

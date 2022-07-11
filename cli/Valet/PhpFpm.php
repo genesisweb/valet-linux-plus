@@ -14,6 +14,8 @@ class PhpFpm
     public $files;
     public $version;
 
+    protected $commonExt = ['common', 'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'mongodb', 'intl'];
+
     /**
      * Create a new PHP FPM class instance.
      *
@@ -42,6 +44,7 @@ class PhpFpm
     {
         if (!$this->pm->installed("php{$this->version}-fpm")) {
             $this->pm->ensureInstalled("php{$this->version}-fpm");
+            $this->installExtensions();
             $this->sm->enable($this->fpmServiceName());
         }
 
@@ -65,15 +68,25 @@ class PhpFpm
         }
     }
 
+    public function installExtensions()
+    {
+        $extArray = [];
+        foreach($this->commonExt as $ext) {
+            $extArray[] = "php{$this->version}-{$ext}";
+        }
+        $this->pm->ensureInstalled(implode(" ", $extArray));
+    }
+
     /**
      * Change the php-fpm version.
      *
      * @param string|float|int $version
      * @param bool|null        $updateCli
+     * @param bool|null        $installExt
      *
      * @return void
      */
-    public function changeVersion($version = null, $updateCli = null)
+    public function changeVersion($version = null, $updateCli = null, $installExt = null)
     {
         $oldVersion = $this->version;
         $exception = null;
@@ -95,17 +108,6 @@ class PhpFpm
             $this->version = $oldVersion;
             $exception = $e;
         }
-//        if($exception === null) {
-//        if($oldVersion != $version) {
-//            $installedModules = $this->cli->run("php{$oldVersion} -m");
-//            $installedModules = str_replace("[PHP Modules]", '', $installedModules);
-//            $installedModules = str_replace("[Zend Modules]", '', $installedModules);
-//            $installedModules = array_filter(explode("\n",$installedModules));
-//            foreach($installedModules as $module) {
-//                $this->pm->ensureInstalled("php{$version}-{$module}");
-//            }
-//        }
-//        }
 
         if ($this->sm->disabled($this->fpmServiceName())) {
             info('Enabling php'.$this->version.'-fpm...');
@@ -119,6 +121,9 @@ class PhpFpm
         }
         if ($updateCli) {
             $this->cli->run("update-alternatives --set php /usr/bin/php{$this->version}");
+        }
+        if ($installExt) {
+            $this->installExtensions();
         }
 
         if ($exception) {

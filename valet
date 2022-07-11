@@ -41,7 +41,7 @@ fi
 # If we are in the global Composer "bin" directory, we need to bump our
 # current directory up two, so that we will correctly proxy into the
 # Valet CLI script which is written in PHP. Will use PHP to do it.
-if [ ! -f "$DIR/cli/valet.php" ]
+if [[ ! -f "$DIR/cli/valet.php" ]]
 then
     DIR=$(php -r "echo realpath('$DIR/../laravel/valet');")
 fi
@@ -80,24 +80,22 @@ then
     PORT=$(cat "$HOME/.valet/config.json" | jq -r ".port")
 
     for linkname in ~/.valet/Sites/*; do
-        if [[ "$(readlink $linkname)" = "$PWD" ]]
+        if [[ "$(readlink ${linkname})" = "$PWD" ]]
         then
             HOST="${linkname##*/}"
         fi
     done
 
-    # Decide the correct PORT to use according if the site has a secure 
+    # Decide the correct PORT to use according if the site has a secure
     # config or not.
     if grep --no-messages --quiet 443 ~/.valet/Nginx/$HOST*
     then
         PORT=88
-    else
-        PORT=80
     fi
 
     # Fetch Ngrok URL In Background...
     bash "$DIR/cli/scripts/fetch-share-url.sh" &
-    sudo -u $USER "$DIR/bin/ngrok" http "$HOST.$DOMAIN:$PORT" -host-header=rewrite ${*:2}
+    sudo -u $USER "$DIR/bin/ngrok" http "$HOST.$DOMAIN:$PORT" --host-header=rewrite
     exit
 
 # Finally, for every other command we will just proxy into the PHP tool

@@ -19,9 +19,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.5.3';
+$version = 'v1.5.4';
 
-$app = new Application('Valet+', $version);
+$app = new Application('ValetLinux+', $version);
 
 /**
  * Detect environment.
@@ -497,9 +497,9 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Change the PHP version to the desired one.
      */
-    $app->command('use [preferedversion] [--update-cli]', function ($preferedversion = null, $updateCli = null) {
+    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function ($preferedVersion = null, $updateCli = null, $installExt = null) {
         info('Changing php-fpm version...');
-        PhpFpm::changeVersion($preferedversion, $updateCli);
+        PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
         info('php-fpm version successfully changed! 🎉');
     })->descriptions('Set the PHP-fpm version to use, enter "default" or leave empty to use version: '.PhpFpm::getVersion(true), [
         '--update-cli' => 'Updates CLI version as well',
