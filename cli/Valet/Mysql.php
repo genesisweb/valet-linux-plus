@@ -17,11 +17,13 @@ class Mysql
 
     public $cli;
     public $files;
+    public $pm;
+    public $sm;
     public $configuration;
     public $site;
     public $systemDatabase = ['sys', 'performance_schema', 'information_schema', 'mysql'];
     /**
-     * @var \PDO
+     * @var PDO
      */
     protected $link = false;
 
@@ -56,11 +58,11 @@ class Mysql
      */
     public function install()
     {
+        if (!extension_loaded('pdo')) {
+            $phpVersion = \PhpFpm::getVersion();
+            $this->pm->ensureInstalled("php{$phpVersion}-mysql");
+        }
         if ($this->pm->installed('mysql-server')) {
-            if (!extension_loaded('pdo')) {
-                $phpVersion = \PhpFpm::getVersion();
-                $this->pm->ensureInstalled("php{$phpVersion}-mysql");
-            }
             beginning:
             $input = new ArgvInput();
             $output = new ConsoleOutput();
@@ -80,10 +82,6 @@ class Mysql
             $config['mysql']['password'] = $rootPassword;
             $this->configuration->write($config);
         } else {
-            if (!extension_loaded('pdo')) {
-                $phpVersion = \PhpFpm::getVersion();
-                $this->pm->ensureInstalled("php{$phpVersion}-mysql");
-            }
             $this->pm->installOrFail('mysql-server');
             $this->sm->enable('mysql');
             $this->stop();
@@ -167,14 +165,14 @@ class Mysql
     /**
      * Get exists databases.
      *
-     * @return array|bool
+     * @return array
      */
     protected function getDatabases()
     {
         $result = $this->query('SHOW DATABASES');
 
         if (!$result) {
-            return false;
+            return ['Failed to get databases'];
         }
 
         return collect($result->fetchAll(PDO::FETCH_ASSOC))

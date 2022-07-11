@@ -63,7 +63,7 @@ class CommandLine
      *
      * @return string
      */
-    public function runAsUser($command, callable $onError = null)
+    public function runAsUser(string $command, callable $onError = null)
     {
         return $this->runCommand('sudo -u '.user().' '.$command, $onError);
     }
@@ -78,7 +78,8 @@ class CommandLine
      */
     protected function runCommand($command, callable $onError = null)
     {
-        $onError = $onError ?: function () {};
+        $onError = $onError ?: function () {
+        };
 
         // Symfony's 4.x Process component has deprecated passing a command string
         // to the constructor, but older versions (which Valet's Composer

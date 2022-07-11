@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
@@ -12,9 +13,12 @@ class DnsMasq
     public $cli;
     public $files;
     public $rclocal;
+    public $resolvconf;
+    public $dnsmasqconf;
+    public $dnsmasqOpts;
+    public $resolvedConfigPath;
     public $configPath;
     public $nmConfigPath;
-    public $resolvedConfig;
 
     /**
      * Create a new DnsMasq instance.
@@ -65,6 +69,8 @@ class DnsMasq
     /**
      * Enable nameserver merging.
      *
+     * @throws Exception
+     *
      * @return void
      */
     private function _mergeDns()
@@ -85,14 +91,14 @@ class DnsMasq
         $this->files->backup($this->resolvconf);
         $this->files->unlink($this->resolvconf);
         $this->files->symlink($script, $this->resolvconf);
-
-        return true;
     }
 
     /**
      * Install and configure DnsMasq.
      *
      * @param string $domain Domain TLD to use
+     *
+     * @throws Exception
      *
      * @return void
      */
@@ -108,6 +114,8 @@ class DnsMasq
 
     /**
      * Stop the DnsMasq service.
+     *
+     * @return void
      */
     public function stop()
     {
@@ -116,6 +124,8 @@ class DnsMasq
 
     /**
      * Restart the DnsMasq service.
+     *
+     * @return void
      */
     public function restart()
     {
@@ -148,6 +158,8 @@ class DnsMasq
     /**
      * Setup dnsmasq with Network Manager.
      *
+     * @throws Exception
+     *
      * @return void
      */
     public function dnsmasqSetup()
@@ -174,12 +186,11 @@ class DnsMasq
     /**
      * Update the domain used by DnsMasq.
      *
-     * @param string $oldDomain Old TLD
      * @param string $newDomain New TLD
      *
      * @return void
      */
-    public function updateDomain($oldDomain, $newDomain)
+    public function updateDomain($newDomain)
     {
         $this->createCustomConfigFile($newDomain);
         $this->sm->restart('dnsmasq');

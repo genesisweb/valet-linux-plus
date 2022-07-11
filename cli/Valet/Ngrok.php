@@ -3,6 +3,7 @@
 namespace Valet;
 
 use DomainException;
+use Exception;
 use Httpful\Request;
 
 class Ngrok
@@ -11,6 +12,8 @@ class Ngrok
 
     /**
      * Get the current tunnel URL from the Ngrok API.
+     *
+     * @throws Exception
      *
      * @return string
      */
@@ -44,5 +47,7 @@ class Ngrok
                 return $tunnel->public_url;
             }
         }
+
+        return null;
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Valet;
 
+use Tightenco\Collect\Support\Collection;
+
 class Site
 {
     public $config;
@@ -32,7 +34,7 @@ class Site
     public function host($path)
     {
         foreach ($this->files->scandir($this->sitesPath()) as $link) {
-            if ($resolved = realpath($this->sitesPath().'/'.$link) === $path) {
+            if (realpath($this->sitesPath().'/'.$link) === $path) {
                 return $link;
             }
         }
@@ -65,7 +67,7 @@ class Site
     /**
      * Pretty print out all links in Valet.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function links()
     {
@@ -83,11 +85,11 @@ class Site
      *
      * @param string $path
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getCertificates($path)
     {
-        return collect($this->files->scanDir($path))->filter(function ($value, $key) {
+        return collect($this->files->scanDir($path))->filter(function ($value) {
             return ends_with($value, '.crt');
         })->map(function ($cert) {
             return substr($cert, 0, -9);
@@ -97,10 +99,10 @@ class Site
     /**
      * Get list of links and present them formatted.
      *
-     * @param string                         $path
-     * @param \Illuminate\Support\Collection $certs
+     * @param string     $path
+     * @param Collection $certs
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getLinks($path, $certs)
     {
@@ -198,7 +200,7 @@ class Site
     /**
      * Get all of the URLs that are currently secured.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function secured()
     {
@@ -212,6 +214,7 @@ class Site
      * Secure the given host with TLS.
      *
      * @param string $url
+     * @param string $stub = null
      *
      * @return void
      */
@@ -270,7 +273,10 @@ class Site
     /**
      * Create the signing request for the TLS certificate.
      *
+     * @param string $url
      * @param string $keyPath
+     * @param string $csrPath
+     * @param string $confPath
      *
      * @return void
      */
@@ -288,9 +294,10 @@ class Site
     /**
      * Build the SSL config for the given URL.
      *
+     * @param string $path
      * @param string $url
      *
-     * @return string
+     * @return void
      */
     public function buildCertificateConf($path, $url)
     {
@@ -302,6 +309,7 @@ class Site
      * Trust the given certificate file in the Mac Keychain.
      *
      * @param string $crtPath
+     * @param string $url
      *
      * @return void
      */
@@ -321,7 +329,10 @@ class Site
     }
 
     /**
-     * @param $url
+     * @param string $url
+     * @param string $stub = null
+     *
+     * @return void
      */
     public function createSecureNginxServer($url, $stub = null)
     {
@@ -335,6 +346,7 @@ class Site
      * Build the TLS secured Nginx server for the given URL.
      *
      * @param string $url
+     * @param string $stub = null
      *
      * @return string
      */

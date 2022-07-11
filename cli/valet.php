@@ -12,6 +12,7 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
 
 use Illuminate\Container\Container;
 use Silly\Application;
+use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
@@ -33,7 +34,6 @@ Valet::environmentSetup();
  */
 $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     passthru(dirname(__FILE__).'/scripts/update.sh'); // Clean up cruft
-
     Requirements::setIgnoreSELinux($ignoreSELinux)->check();
     Configuration::install();
     Nginx::install();
@@ -65,13 +65,12 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
-            return info(Configuration::read()['domain']);
+            info(Configuration::read()['domain']);
+            return;
         }
 
-        DnsMasq::updateDomain(
-            $oldDomain = Configuration::read()['domain'],
-            $domain = trim($domain, '.')
-        );
+        DnsMasq::updateDomain($domain = trim($domain, '.'));
+        $oldDomain = Configuration::read()['domain'];
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
@@ -234,7 +233,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * List subdomains.
      */
     $app->command('subdomain:list', function () {
-        $links = Site::links(basename(getcwd()));
+        $links = Site::links();
         table(['Site', 'SSL', 'URL', 'Path'], $links->all());
     })->descriptions('List all subdomains');
 
@@ -533,7 +532,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Drop database in MySQL.
      */
-    $app->command('db:drop [database_name] [-y|--yes]', function ($input, $output, $database_name) {
+    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -550,7 +549,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Reset database in MySQL.
      */
-    $app->command('db:reset [database_name] [-y|--yes]', function ($input, $output, $database_name) {
+    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -582,7 +581,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Import database in MySQL.
      */
-    $app->command('db:import [database_name] [dump_file]', function ($input, $output, $database_name, $dump_file) {
+    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
         if (!$database_name) {
@@ -612,7 +611,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Export database in MySQL.
      */
-    $app->command('db:export [database_name] [--sql]', function ($input, $database_name) {
+    $app->command('db:export [database_name] [--sql]', function (Input $input, $database_name) {
         info('Exporting database...');
         $defaults = $input->getOptions();
         $data = Mysql::exportDatabase($database_name, $defaults['sql']);
@@ -641,4 +640,8 @@ foreach (Valet::extensions() as $extension) {
 /**
  * Run the application.
  */
-$app->run();
+try {
+    $app->run();
+} catch (Exception $e) {
+    warning($e->getMessage());
+}
