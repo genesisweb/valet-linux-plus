@@ -459,19 +459,26 @@ if (is_dir(VALET_HOME_PATH)) {
         info('Specified Valet services have been stopped.');
     })->descriptions('Stop the Valet services');
 
-
-
-    $app->command('dev-tools:phpstorm [folder]', function ($folder) {
+    /**
+     * PHPStorm IDE Helper Command.
+     */
+    $app->command('ps [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
         DevTools::runApp($folder,\Valet\DevTools::PHP_STORM);
-    })->descriptions('Open project in PHPstorm');
+    })->descriptions('Open project in PHPStorm');
 
-    $app->command('dev-tools:atom [folder]', function ($folder) {
+    /**
+     * Atom IDE Helper Command.
+     */
+    $app->command('atom [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
         DevTools::runApp($folder,\Valet\DevTools::ATOM);
     })->descriptions('Open project in Atom');
 
-    $app->command('dev-tools:sublime [folder]', function ($folder) {
+    /**
+     * Sublime IDE Helper Command.
+     */
+    $app->command('subl [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
         DevTools::runApp($folder,\Valet\DevTools::SUBLIME);
     })->descriptions('Open project in Sublime');

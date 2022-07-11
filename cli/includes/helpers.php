@@ -246,3 +246,14 @@ function ask_secret($question, $suggestion = null, $default = null)
 {
     return CliPrompt::prompt($question, true, $suggestion, $default);
 }
+
+
+if(!function_exists('str_ends_with')) {
+    function str_ends_with( $haystack, $needle ) {
+        $length = strlen( $needle );
+        if( !$length ) {
+            return true;
+        }
+        return substr( $haystack, -$length ) === $needle;
+    }
+}

@@ -46,7 +46,18 @@ class DevTools
         if (!($bin = $this->getService($service))) {
             $bin = $this->getService($service,true);
         }
-        return trim(preg_replace('/\s\s+/', ' ', $bin));
+        $bins = preg_split('/\n/', $bin);
+        $servicePath = null;
+        foreach($bins as $bin) {
+            if(str_ends_with($bin, "bin/${service}")) {
+                $servicePath = $bin;
+                break;
+            }
+        }
+        if($servicePath) {
+            return trim(preg_replace('/\s\s+/', ' ', $servicePath));
+        }
+        return false;
     }
 
     public function getService($service,$locate = false) {
@@ -77,10 +88,10 @@ class DevTools
     }
 
     public function runApp($folder,$service) {
-
         if ($this->ensureInstalled($service)) {
-
             $this->runService($service,$folder);
-        } else warning("$service not available");
+        } else {
+            warning("$service not available");
+        }
     }
 }
