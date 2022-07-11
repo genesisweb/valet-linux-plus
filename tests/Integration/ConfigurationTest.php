@@ -7,14 +7,14 @@ use Valet\Filesystem;
 
 class ConfigurationTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
         Container::setInstance(new Container());
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }

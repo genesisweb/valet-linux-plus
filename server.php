@@ -13,7 +13,7 @@ if (!function_exists('show_valet_404')) {
     function show_valet_404()
     {
         http_response_code(404);
-        require __DIR__ . '/cli/templates/404.html';
+        require __DIR__.'/cli/templates/404.html';
         exit;
     }
 }
@@ -25,19 +25,19 @@ if (!function_exists('show_project_directory')) {
      * @param string $directory
      * @param string $siteName
      * @param string $uri
-     * @param array $ignoredPaths
+     * @param array  $ignoredPaths
      */
     function show_project_directory($directory, $siteName, $uri, $ignoredPaths = ['.'])
     {
         if (!substr($uri, 0, -1)) {
             $ignoredPaths[] = '..';
         }
-        include __DIR__ . '/cli/templates/directory.php';
+        include __DIR__.'/cli/templates/directory.php';
         exit;
     }
 }
 
-if(!function_exists('show_available_sites')) {
+if (!function_exists('show_available_sites')) {
     /**
      * Show available sites.
      *
@@ -57,7 +57,7 @@ if(!function_exists('show_available_sites')) {
     }
 }
 
-if(!function_exists('valet_support_xip_io')) {
+if (!function_exists('valet_support_xip_io')) {
     /**
      * @param $domain string Domain to filter
      *
@@ -81,7 +81,7 @@ if(!function_exists('valet_support_xip_io')) {
     }
 }
 
-if(!function_exists('valet_path_to_slug')) {
+if (!function_exists('valet_path_to_slug')) {
     /**
      * Convert absolute path to slug.
      *
@@ -267,6 +267,7 @@ $isPhpFile = pathinfo($uri, PATHINFO_EXTENSION) === 'php';
 
 if ($uri !== '/' && !$isPhpFile && $staticFilePath = $valetDriver->isStaticFile($valetSitePath, $siteName, $uri)) {
     $valetDriver->serveStaticFile($staticFilePath, $valetSitePath, $siteName, $uri);
+
     return;
 }
 

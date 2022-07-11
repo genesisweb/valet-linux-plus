@@ -8,7 +8,7 @@ use Valet\Tests\Functional\FunctionalTestCase;
  */
 class ShareTest extends FunctionalTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         // Create filesystem structure
         mkdir($_SERVER['HOME'].'/valet-site');
@@ -16,7 +16,7 @@ class ShareTest extends FunctionalTestCase
         $this->valetCommand('link valet', $_SERVER['HOME'].'/valet-site');
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->valetCommand('unsecure', $_SERVER['HOME'].'/valet-site');
         Configuration::prune();

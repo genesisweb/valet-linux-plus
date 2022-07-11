@@ -11,7 +11,7 @@ use Httpful\Exception\ConnectionErrorException;
  */
 class SecureTest extends FunctionalTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         // Create filesystem structure
         mkdir($_SERVER['HOME'].'/valet-site');
@@ -19,7 +19,7 @@ class SecureTest extends FunctionalTestCase
         $this->valetCommand('link', $_SERVER['HOME'].'/valet-site');
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->valetCommand('unlink', $_SERVER['HOME'].'/valet-site');
         Filesystem::remove($_SERVER['HOME'].'/valet-site');

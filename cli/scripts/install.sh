@@ -2,13 +2,13 @@
 
 apt-get install libnss3-tools jq xsel > /dev/null 2>&1
 
-# Install PHP 7.0
-if [[ ! $(apt-cache search php[5-7].[0-9]-cli) ]]
+# Install PHP 8.1
+if [[ ! $(apt-cache search php[5-8].[0-9]-cli) ]]
 then
     add-apt-repository -y ppa:ondrej/php && apt-get update
 fi
 
-$VERSION='7.0'
+$VERSION='8.1'
 # Install PHP $VERSION
 apt-get install -y "php$VERSION-cli php$VERSION-common php$VERSION-curl php$VERSION-json php$VERSION-mbstring php$VERSION-mcrypt php$VERSION-mysql php$VERSION-opcache php$VERSION-readline php$VERSION-xml php$VERSION-zip"
 

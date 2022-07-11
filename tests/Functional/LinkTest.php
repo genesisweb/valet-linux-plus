@@ -8,14 +8,14 @@ use Valet\Tests\Functional\FunctionalTestCase;
  */
 class LinkTest extends FunctionalTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         // Create filesystem structure
         mkdir($_SERVER['HOME'].'/linked-directory');
         file_put_contents($_SERVER['HOME'].'/linked-directory/index.html', 'Valet linked site');
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         Filesystem::remove($_SERVER['HOME'].'/linked-directory');
         Filesystem::removeBrokenLinksAt(VALET_HOME_PATH.'/Sites');

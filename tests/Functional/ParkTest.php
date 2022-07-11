@@ -11,7 +11,7 @@ use Filesystem;
  */
 class ParkTest extends FunctionalTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         // Create filesystem structure
         mkdir($_SERVER['HOME'].'/Code');
@@ -26,7 +26,7 @@ class ParkTest extends FunctionalTestCase
         file_put_contents($_SERVER['HOME'].'/Code/with spaces/index.html', 'With Spaces');
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         Filesystem::remove($_SERVER['HOME'].'/Code');
         Configuration::prune();
