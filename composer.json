@@ -64,8 +64,8 @@
         "tightenco/collect": "^5.3|^6.0|^7.0|^8.0"
     },
     "require-dev": {
-        "mockery/mockery": "~0.9.4",
-        "phpunit/phpunit": "~5.5"
+        "mockery/mockery": "^1.2.3",
+        "phpunit/phpunit": "~5.5|^9.0"
     },
     "scripts": {
         "post-install-cmd": [
