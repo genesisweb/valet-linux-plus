@@ -17,11 +17,13 @@ class Mysql
 
     public $cli;
     public $files;
+    public $pm;
+    public $sm;
     public $configuration;
     public $site;
     public $systemDatabase = ['sys', 'performance_schema', 'information_schema', 'mysql'];
     /**
-     * @var \PDO
+     * @var PDO
      */
     protected $link = false;
 
@@ -54,22 +56,38 @@ class Mysql
     /**
      * Install the service.
      */
-    public function install()
+    public function install($useMariaDB = false)
     {
-        if ($this->pm->installed('mysql-server')) {
-            if (!extension_loaded('pdo')) {
-                $phpVersion = \PhpFpm::getVersion();
-                $this->pm->ensureInstalled("php{$phpVersion}-mysql");
+        $package = $useMariaDB ? 'mariadb-server' : 'mysql-server';
+
+        if (!extension_loaded('pdo')) {
+            $phpVersion = \PhpFpm::getVersion();
+            $this->pm->ensureInstalled("php{$phpVersion}-mysql");
+        }
+
+        if($package === 'mariadb-server') {
+            if($this->pm->installed('mysql-server')) {
+                warning('Installation is selected for MariaDB but MySQL is already installed.');
+                return;
             }
+        }
+        if($package === 'mysql-server') {
+            if($this->pm->installed('mariadb-server')) {
+                warning('Installation is selected for MySQL but MariaDB is already installed.');
+                return;
+            }
+        }
+
+        if ($this->pm->installed($package)) {
             beginning:
             $input = new ArgvInput();
             $output = new ConsoleOutput();
-            $question = new Question('Looks like MySQL already installed to your system, please enter MySQL [root] user password to connect MySQL with us:');
+            $question = new Question('Looks like MySQL/MariaDB already installed to your system, please enter MySQL/MariaDB [root] user password to connect MySQL/MariaDB with us:');
             $helper = new HelperSet([new QuestionHelper()]);
             $question->setHidden(true);
             $helper = $helper->get('question');
             $rootPassword = $helper->ask($input, $output, $question);
-            $connection = $this->getConnection($rootPassword ? $rootPassword : '');
+            $connection = $this->getConnection($rootPassword ?: '');
             if (!$connection) {
                 goto beginning;
             }
@@ -80,11 +98,7 @@ class Mysql
             $config['mysql']['password'] = $rootPassword;
             $this->configuration->write($config);
         } else {
-            if (!extension_loaded('pdo')) {
-                $phpVersion = \PhpFpm::getVersion();
-                $this->pm->ensureInstalled("php{$phpVersion}-mysql");
-            }
-            $this->pm->installOrFail('mysql-server');
+            $this->pm->installOrFail($package);
             $this->sm->enable('mysql');
             $this->stop();
             $this->restart();
@@ -122,7 +136,7 @@ class Mysql
      * @param string $oldPwd
      * @param string $newPwd
      */
-    public function setRootPassword($oldPwd = '', $newPwd = self::MYSQL_ROOT_PASSWORD)
+    public function setRootPassword(string $oldPwd = '', string $newPwd = self::MYSQL_ROOT_PASSWORD)
     {
         $success = true;
         $this->cli->runAsUser(
@@ -167,14 +181,14 @@ class Mysql
     /**
      * Get exists databases.
      *
-     * @return array|bool
+     * @return array
      */
     protected function getDatabases()
     {
         $result = $this->query('SHOW DATABASES');
 
         if (!$result) {
-            return false;
+            return ['Failed to get databases'];
         }
 
         return collect($result->fetchAll(PDO::FETCH_ASSOC))
@@ -249,9 +263,9 @@ class Mysql
      *
      * @param string $file
      * @param string $database
-     * @param bool   $isDatabaseExists
+     * @param bool $isDatabaseExists
      */
-    public function importDatabase($file, $database, $isDatabaseExists)
+    public function importDatabase(string $file, string $database, bool $isDatabaseExists)
     {
         $database = $this->getDatabaseName($database);
 
@@ -274,11 +288,11 @@ class Mysql
     /**
      * Get database name via name or current dir.
      *
-     * @param $database
+     * @param string $database
      *
      * @return string
      */
-    protected function getDatabaseName($database = '')
+    protected function getDatabaseName(string $database = '')
     {
         return $database ?: $this->getDirName();
     }
@@ -306,7 +320,7 @@ class Mysql
      *
      * @return bool
      */
-    public function dropDatabase($name)
+    public function dropDatabase(string $name)
     {
         $name = $this->getDatabaseName($name);
 
@@ -336,7 +350,7 @@ class Mysql
      *
      * @return bool|string
      */
-    public function createDatabase($name)
+    public function createDatabase(string $name)
     {
         if ($this->isDatabaseExists($name)) {
             warning("Database [$name] is already exists!");
@@ -361,7 +375,7 @@ class Mysql
      *
      * @return bool
      */
-    public function isDatabaseExists($name)
+    public function isDatabaseExists(string $name)
     {
         $name = $this->getDatabaseName($name);
         $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$name}'");
@@ -374,11 +388,11 @@ class Mysql
      * Export Mysql database.
      *
      * @param $database
-     * @param $exportSql
+     * @param bool $exportSql
      *
      * @return array
      */
-    public function exportDatabase($database, $exportSql = false)
+    public function exportDatabase($database, bool $exportSql = false)
     {
         $database = $this->getDatabaseName($database);
 

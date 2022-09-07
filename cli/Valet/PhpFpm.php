@@ -3,6 +3,7 @@
 namespace Valet;
 
 use DomainException;
+use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
@@ -84,9 +85,11 @@ class PhpFpm
      * @param bool|null        $updateCli
      * @param bool|null        $installExt
      *
+     * @throws Exception
+     *
      * @return void
      */
-    public function changeVersion($version = null, $updateCli = null, $installExt = null)
+    public function changeVersion($version = null, bool $updateCli = null, bool $installExt = null)
     {
         $oldVersion = $this->version;
         $exception = null;
@@ -185,7 +188,7 @@ class PhpFpm
     /**
      * Get installed PHP version.
      *
-     * @param string $real force getting version from /usr/bin/php.
+     * @param bool $real force getting version from /usr/bin/php.
      *
      * @return string
      */

@@ -12,6 +12,7 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
 
 use Illuminate\Container\Container;
 use Silly\Application;
+use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 /**
@@ -19,7 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.5.4';
+$version = 'v1.5.6';
 
 $app = new Application('ValetLinux+', $version);
 
@@ -31,19 +32,18 @@ Valet::environmentSetup();
 /**
  * Allow Valet to be run more conveniently by allowing the Node proxy to run password-less sudo.
  */
-$app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
+$app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux, $mariaDB) {
     passthru(dirname(__FILE__).'/scripts/update.sh'); // Clean up cruft
-
     Requirements::setIgnoreSELinux($ignoreSELinux)->check();
-    Configuration::install();
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
+    Configuration::install();
     Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
     ValetRedis::install();
-    Mysql::install();
+    Mysql::install($mariaDB);
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
 })->descriptions('Install the Valet services', [
@@ -65,13 +65,12 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
-            return info(Configuration::read()['domain']);
+            info(Configuration::read()['domain']);
+            return;
         }
 
-        DnsMasq::updateDomain(
-            $oldDomain = Configuration::read()['domain'],
-            $domain = trim($domain, '.')
-        );
+        DnsMasq::updateDomain($domain = trim($domain, '.'));
+        $oldDomain = Configuration::read()['domain'];
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
@@ -127,7 +126,34 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Determine if the site is secured or not');
 
     /**
-     * Add the current working directory to the paths configuration.
+     * Create Nginx proxy config for the specified domain.
+     */
+    $app->command('proxy domain host [--secure]', function ($domain, $host, $secure) {
+        Site::proxyCreate($domain, $host, $secure);
+        Nginx::restart();
+    })->descriptions('Create an Nginx proxy site for the specified host. Useful for docker, node etc.', [
+        '--secure' => 'Create a proxy with a trusted TLS certificate',
+    ]);
+
+    /**
+     * Delete Nginx proxy config.
+     */
+    $app->command('unproxy domain', function ($domain) {
+        Site::proxyDelete($domain);
+        Nginx::restart();
+    })->descriptions('Delete an Nginx proxy config.');
+
+    /**
+     * Display all the sites that are proxies.
+     */
+    $app->command('proxies', function () {
+        $proxies = Site::proxies();
+
+        table(['URL', 'SSL', 'Host'], $proxies->all());
+    })->descriptions('Display all of the proxy sites');
+
+    /**
+     * Add the current working directory to paths configuration.
      */
     $app->command('park [path]', function ($path = null) {
         Configuration::addPath($path ?: getcwd());
@@ -136,7 +162,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Register the current working (or specified) directory with Valet');
 
     /**
-     * Remove the current working directory from the paths configuration.
+     * Remove the current working directory from paths configuration.
      */
     $app->command('forget [path]', function ($path = null) {
         Configuration::removePath($path ?: getcwd());
@@ -145,7 +171,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Remove the current working (or specified) directory from Valet\'s list of paths');
 
     /**
-     * Remove the current working directory to the paths configuration.
+     * Remove the current working directory to paths configuration.
      */
     $app->command('status', function () {
         PhpFpm::status();
@@ -162,7 +188,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Link the current working directory to Valet');
 
     /**
-     * Display all of the registered symbolic links.
+     * Display all the registered symbolic links.
      */
     $app->command('links', function () {
         $links = Site::links();
@@ -234,7 +260,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * List subdomains.
      */
     $app->command('subdomain:list', function () {
-        $links = Site::links(basename(getcwd()));
+        $links = Site::links();
         table(['Site', 'SSL', 'URL', 'Path'], $links->all());
     })->descriptions('List all subdomains');
 
@@ -254,7 +280,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Determine which Valet driver serves the current working directory');
 
     /**
-     * Display all of the registered paths.
+     * Display all the registered paths.
      */
     $app->command('paths', function () {
         $paths = Configuration::read()['paths'];
@@ -460,6 +486,30 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Stop the Valet services');
 
     /**
+     * PHPStorm IDE Helper Command.
+     */
+    $app->command('ps [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
+    })->descriptions('Open project in PHPStorm');
+
+    /**
+     * Atom IDE Helper Command.
+     */
+    $app->command('atom [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::ATOM);
+    })->descriptions('Open project in Atom');
+
+    /**
+     * Sublime IDE Helper Command.
+     */
+    $app->command('subl [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::SUBLIME);
+    })->descriptions('Open project in Sublime');
+
+    /**
      * Uninstall Valet entirely.
      */
     $app->command('uninstall', function () {
@@ -521,19 +571,19 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('db:list', function () {
         Mysql::listDatabases();
-    })->descriptions('List all available database in MySQL');
+    })->descriptions('List all available database in MySQL/MariaDB');
 
     /**
      * Create new database in MySQL.
      */
     $app->command('db:create [database_name]', function ($database_name) {
         Mysql::createDatabase($database_name);
-    })->descriptions('Create new database in MySQL');
+    })->descriptions('Create new database in MySQL/MariaDB');
 
     /**
      * Drop database in MySQL.
      */
-    $app->command('db:drop [database_name] [-y|--yes]', function ($input, $output, $database_name) {
+    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -545,12 +595,12 @@ if (is_dir(VALET_HOME_PATH)) {
             }
         }
         Mysql::dropDatabase($database_name);
-    })->descriptions('Drop given database from MySQL');
+    })->descriptions('Drop given database from MySQL/MariaDB');
 
     /**
      * Reset database in MySQL.
      */
-    $app->command('db:reset [database_name] [-y|--yes]', function ($input, $output, $database_name) {
+    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -577,12 +627,13 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         info("Database [{$database_name}] reset successfully");
-    })->descriptions('Clear all tables for given database in MySQL');
+    })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
      * Import database in MySQL.
+     * @throws Exception
      */
-    $app->command('db:import [database_name] [dump_file]', function ($input, $output, $database_name, $dump_file) {
+    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
         if (!$database_name) {
@@ -607,17 +658,17 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         Mysql::importDatabase($dump_file, $database_name, $isExistsDatabase);
-    })->descriptions('Import dump file for selected database in MySQL');
+    })->descriptions('Import dump file for selected database in MySQL/MariaDB');
 
     /**
      * Export database in MySQL.
      */
-    $app->command('db:export [database_name] [--sql]', function ($input, $database_name) {
+    $app->command('db:export [database_name] [--sql]', function (Input $input, $database_name) {
         info('Exporting database...');
         $defaults = $input->getOptions();
         $data = Mysql::exportDatabase($database_name, $defaults['sql']);
         info("Database [{$data['database']}] exported into file {$data['filename']}");
-    })->descriptions('Export selected MySQL database');
+    })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
      * Change root user password in MySQL.
@@ -628,11 +679,18 @@ if (is_dir(VALET_HOME_PATH)) {
         }
         info('Setting password for root user...');
         Mysql::setRootPassword($current_password, $new_password);
-    })->descriptions('Change MySQL root user password');
+    })->descriptions('Change MySQL/MariaDB root user password');
+
+    $app->command('ngrok-auth [authtoken]', function($authtoken) {
+        if(!$authtoken) {
+            throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
+        }
+        Ngrok::setAuthToken($authtoken);
+    })->descriptions('Set authtoken for ngrok');
 }
 
 /**
- * Load all of the Valet extensions.
+ * Load all Valet extensions.
  */
 foreach (Valet::extensions() as $extension) {
     include $extension;
@@ -641,4 +699,8 @@ foreach (Valet::extensions() as $extension) {
 /**
  * Run the application.
  */
-$app->run();
+try {
+    $app->run();
+} catch (Exception $e) {
+    warning($e->getMessage());
+}

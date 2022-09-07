@@ -7,6 +7,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 /**
  * Define the ~/.valet path as a constant.
  */
+define('VALET_LOOPBACK', '127.0.0.1');
 define('VALET_HOME_PATH', $_SERVER['HOME'].'/.valet');
 define('VALET_ROOT_PATH', realpath(__DIR__.'/../../'));
 define('VALET_BIN_PATH', realpath(__DIR__.'/../../bin/'));
@@ -65,6 +66,9 @@ function output($output)
 {
     if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing') {
         return;
+    }
+    if(is_null($output)) {
+        $output = '';
     }
 
     (new ConsoleOutput())->writeln($output);
@@ -245,4 +249,15 @@ function ask($question, $suggestion = null, $default = null)
 function ask_secret($question, $suggestion = null, $default = null)
 {
     return CliPrompt::prompt($question, true, $suggestion, $default);
+}
+
+
+if(!function_exists('str_ends_with')) {
+    function str_ends_with( $haystack, $needle ) {
+        $length = strlen( $needle );
+        if( !$length ) {
+            return true;
+        }
+        return substr( $haystack, -$length ) === $needle;
+    }
 }

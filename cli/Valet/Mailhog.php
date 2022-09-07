@@ -14,7 +14,7 @@ class Mailhog
     public $files;
 
     /**
-     * Create a new Mailhog instance.
+     * Create a new MailHog instance.
      *
      * @param PackageManager $pm
      * @param ServiceManager $sm
@@ -32,7 +32,7 @@ class Mailhog
     }
 
     /**
-     * Install the configuration files for Mailhog.
+     * Install the configuration files for MailHog.
      *
      * @return void
      */
@@ -45,6 +45,11 @@ class Mailhog
         $this->sm->start('mailhog');
     }
 
+    /**
+     * Validate if system already has MailHog installed in it.
+     *
+     * @return void
+     */
     public function ensureInstalled()
     {
         if (!$this->isAvailable()) {
@@ -52,9 +57,12 @@ class Mailhog
         }
     }
 
+    /**
+     * @return void
+     */
     public function createService()
     {
-        info('Installing Mailhog service...');
+        info('Installing MailHog service...');
 
         $servicePath = '/etc/init.d/mailhog';
         $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailhog.sh';
@@ -81,6 +89,11 @@ class Mailhog
         \Nginx::restart();
     }
 
+    /**
+     * Update domain for HTTP access.
+     *
+     * @return void
+     */
     public function updateDomain()
     {
         $domain = \Configuration::read()['domain'];
@@ -88,12 +101,15 @@ class Mailhog
         \Site::secure("mailhog.{$domain}", __DIR__.'/../stubs/mailhog.conf');
     }
 
+    /**
+     * @return bool
+     */
     public function isAvailable()
     {
         try {
             $output = $this->cli->run(
                 'which mailhog',
-                function ($exitCode, $output) {
+                function () {
                     throw new DomainException('Service not available');
                 }
             );
@@ -105,7 +121,7 @@ class Mailhog
     }
 
     /**
-     * Start the Mailhog service.
+     * Start the MailHog service.
      *
      * @return void
      */
@@ -115,7 +131,7 @@ class Mailhog
     }
 
     /**
-     * Restart the Mailhog service.
+     * Restart the MailHog service.
      *
      * @return void
      */
@@ -125,7 +141,7 @@ class Mailhog
     }
 
     /**
-     * Stop the Mailhog service.
+     * Stop the MailHog service.
      *
      * @return void
      */
@@ -135,7 +151,7 @@ class Mailhog
     }
 
     /**
-     * Mailhog service status.
+     * MailHog service status.
      *
      * @return void
      */
@@ -145,7 +161,7 @@ class Mailhog
     }
 
     /**
-     * Prepare Mailhog for uninstall.
+     * Prepare MailHog for uninstall.
      *
      * @return void
      */

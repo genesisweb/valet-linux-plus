@@ -3,14 +3,30 @@
 namespace Valet;
 
 use DomainException;
+use Exception;
 use Httpful\Request;
 
 class Ngrok
 {
     public $tunnelsEndpoint = 'http://127.0.0.1:4040/api/tunnels';
+    public $cli;
+
+    /**
+     * Create a new Ngrok instance.
+     *
+     * @param CommandLine $cli
+     *
+     * @return void
+     */
+    public function __construct(CommandLine $cli)
+    {
+        $this->cli = $cli;
+    }
 
     /**
      * Get the current tunnel URL from the Ngrok API.
+     *
+     * @throws Exception
      *
      * @return string
      */
@@ -44,5 +60,19 @@ class Ngrok
                 return $tunnel->public_url;
             }
         }
+        return null;
+    }
+
+    /**
+     * Find the HTTP tunnel URL from the list of tunnels.
+     *
+     * @param string $authToken
+     *
+     * @return void
+     */
+    public function setAuthToken(string $authToken)
+    {
+        $this->cli->run(__DIR__.'/../../bin/ngrok config add-authtoken '.$authToken);
+        info('Ngrok authentication token set.');
     }
 }

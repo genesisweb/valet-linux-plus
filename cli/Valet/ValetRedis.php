@@ -11,10 +11,22 @@ namespace Valet;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
+/**
+ * Class ValetRedis.
+ */
 class ValetRedis
 {
+    /**
+     * @var PackageManager
+     */
     public $pm;
+    /**
+     * @var ServiceManager
+     */
     public $sm;
+    /**
+     * @var CommandLine
+     */
     public $cli;
 
     /**
@@ -33,6 +45,11 @@ class ValetRedis
         $this->sm = $sm;
     }
 
+    /**
+     * Install Redis Server.
+     *
+     * @return void
+     */
     public function install()
     {
         $this->pm->ensureInstalled('redis-server');
@@ -40,7 +57,7 @@ class ValetRedis
     }
 
     /**
-     * Returns wether redis is installed or not.
+     * Returns true if Redis is installed or not.
      *
      * @return bool
      */

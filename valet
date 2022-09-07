@@ -23,7 +23,16 @@ function check_dependencies() {
     if [[ $msg != '' ]]; then
         printf "${RED}You have missing Valet dependiencies:\n"
         printf "$msg"
-        printf "\nPlease refer to https://cpriego.github.io/valet-linux/requirements on how to install them.${NC}\n"
+        printf "\nPlease refer to https://valetlinux.plus/ on how to install them.${NC}\n"
+        exit 1
+    fi
+}
+
+function verify_ngrok_auth() {
+    if ! [[ -f "${HOME}/.config/ngrok/ngrok.yml" ]]
+    then
+        printf "Please register for an ngrok account at: https://dashboard.ngrok.com/signup and install your authtoken.${NC}\n"
+        printf "Valet can help you to install the authtoken, use 'valet ngrok-auth {authtoken}' command.\n"
         exit 1
     fi
 }
@@ -74,6 +83,7 @@ fi
 if [[ "$1" = "share" ]]
 then
     check_dependencies
+    verify_ngrok_auth
 
     HOST="${PWD##*/}"
     DOMAIN=$(cat "$HOME/.valet/config.json" | jq -r ".domain")

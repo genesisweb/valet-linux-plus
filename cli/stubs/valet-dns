@@ -58,7 +58,7 @@ function updateNameservers() {
     echo "${FILES[@]}" | tee "${WORKDIR}/resolvfiles.log" &>/dev/null
 
     cat "$DNSHEAD" | unique | tee "$DNSFILE" &>/dev/null
-    cat "${FILES[@]}" | grep -i '^nameserver' | grep -v '127.0.0.1' | unique | tee -a "$DNSFILE" &>/dev/null
+    cat "${FILES[@]}" | grep -i '^nameserver' | grep -vE '127\.(0\.){2}\d{1,3}' | unique | tee -a "$DNSFILE" &>/dev/null
 
     symlinkResolv
 

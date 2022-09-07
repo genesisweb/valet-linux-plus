@@ -2,14 +2,26 @@
 
 namespace Valet;
 
+use ArrayObject;
 use CommandLine as CommandLineFacade;
+use Exception;
+use FilesystemIterator;
+use Traversable;
 
+/**
+ * Class Filesystem.
+ */
 class Filesystem
 {
+    /**
+     * @param $files
+     *
+     * @return ArrayObject
+     */
     private function toIterator($files)
     {
-        if (!$files instanceof \Traversable) {
-            $files = new \ArrayObject(is_array($files) ? $files : [$files]);
+        if (!$files instanceof Traversable) {
+            $files = new ArrayObject(is_array($files) ? $files : [$files]);
         }
 
         return $files;
@@ -19,6 +31,8 @@ class Filesystem
      * Delete the specified file or directory with files.
      *
      * @param string $files
+     *
+     * @throws Exception
      *
      * @return void
      */
@@ -32,20 +46,20 @@ class Filesystem
             }
 
             if (is_dir($file) && !is_link($file)) {
-                $this->remove(new \FilesystemIterator($file));
+                $this->remove(new FilesystemIterator($file));
 
                 if (true !== @rmdir($file)) {
-                    throw new \Exception(sprintf('Failed to remove directory "%s".', $file), 0, null, $file);
+                    throw new Exception(sprintf('Failed to remove directory "%s".', $file));
                 }
             } else {
                 // https://bugs.php.net/bug.php?id=52176
                 if ('\\' === DIRECTORY_SEPARATOR && is_dir($file)) {
                     if (true !== @rmdir($file)) {
-                        throw new \Exception(sprintf('Failed to remove file "%s".', $file), 0, null, $file);
+                        throw new Exception(sprintf('Failed to remove file "%s".', $file));
                     }
                 } else {
                     if (true !== @unlink($file)) {
-                        throw new \Exception(sprintf('Failed to remove file "%s".', $file), 0, null, $file);
+                        throw new Exception(sprintf('Failed to remove file "%s".', $file));
                     }
                 }
             }
@@ -108,7 +122,7 @@ class Filesystem
      */
     public function mkdirAsUser($path, $mode = 0755)
     {
-        return $this->mkdir($path, user(), $mode);
+        $this->mkdir($path, user(), $mode);
     }
 
     /**
@@ -139,13 +153,13 @@ class Filesystem
      */
     public function touchAsUser($path)
     {
-        return $this->touch($path, user());
+        $this->touch($path, user());
     }
 
     /**
      * Determine if the given file exists.
      *
-     * @param string $path
+     * @param string $files
      *
      * @return bool
      */
@@ -250,6 +264,21 @@ class Filesystem
     }
 
     /**
+     * Copy the given file to a new location for the non-root user.
+     *
+     * @param string $from
+     * @param string $to
+     *
+     * @return void
+     */
+    public function copyAsUser($from, $to)
+    {
+        copy($from, $to);
+
+        $this->chown($to, user());
+    }
+
+    /**
      * Backup the given file.
      *
      * @param string $file
@@ -285,21 +314,6 @@ class Filesystem
         }
 
         return false;
-    }
-
-    /**
-     * Copy the given file to a new location for the non-root user.
-     *
-     * @param string $from
-     * @param string $to
-     *
-     * @return void
-     */
-    public function copyAsUser($from, $to)
-    {
-        copy($from, $to);
-
-        $this->chown($to, user());
     }
 
     /**
@@ -380,7 +394,7 @@ class Filesystem
     public function unlink($path)
     {
         if (file_exists($path) || is_link($path)) {
-            @unlink($path);
+            unlink($path);
         }
     }
 
@@ -389,6 +403,8 @@ class Filesystem
      *
      * @param string $path
      * @param string $user
+     *
+     * @return void
      */
     public function chown($path, $user)
     {
@@ -400,6 +416,8 @@ class Filesystem
      *
      * @param string $path
      * @param string $group
+     *
+     * @return void
      */
     public function chgrp($path, $group)
     {

@@ -35,6 +35,8 @@ class Requirements
 
     /**
      * Run all checks and output warnings.
+     *
+     * @return void
      */
     public function check()
     {
