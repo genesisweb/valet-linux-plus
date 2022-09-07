@@ -152,6 +152,7 @@ class Filesystem extends Facade
  *
  * @method static string currentTunnelUrl()
  * @method static string|null findHttpTunnelUrl(array $tunnels)
+ * @method static void setAuthToken(string $authToken)
  */
 class Ngrok extends Facade
 {
@@ -189,6 +190,7 @@ class PhpFpm extends Facade
  * @method static void pruneLinks()
  * @method static void resecureForNewDomain(string $oldDomain, string $domain)
  * @method static Collection secured()
+ * @method static void proxyCreate(string $domain, string $host,bool $secure)
  * @method static void secure(string $url, string $stub = null)
  * @method static void createCertificate(string $url)
  * @method static void createPrivateKey(string $keyPath)
@@ -279,7 +281,7 @@ class CliPrompt extends Facade
 /**
  * Class Mysql.
  *
- * @method static void install()
+ * @method static void install($useMariaDB = false)
  * @method static void stop()
  * @method static void restart()
  * @method static void uninstall()

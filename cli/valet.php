@@ -20,7 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.5.4';
+$version = 'v1.5.6';
 
 $app = new Application('ValetLinux+', $version);
 
@@ -32,18 +32,18 @@ Valet::environmentSetup();
 /**
  * Allow Valet to be run more conveniently by allowing the Node proxy to run password-less sudo.
  */
-$app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
+$app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux, $mariaDB) {
     passthru(dirname(__FILE__).'/scripts/update.sh'); // Clean up cruft
     Requirements::setIgnoreSELinux($ignoreSELinux)->check();
-    Configuration::install();
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
+    Configuration::install();
     Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
     ValetRedis::install();
-    Mysql::install();
+    Mysql::install($mariaDB);
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
 })->descriptions('Install the Valet services', [
@@ -124,6 +124,33 @@ if (is_dir(VALET_HOME_PATH)) {
 
         return 0;
     })->descriptions('Determine if the site is secured or not');
+
+    /**
+     * Create Nginx proxy config for the specified domain.
+     */
+    $app->command('proxy domain host [--secure]', function ($domain, $host, $secure) {
+        Site::proxyCreate($domain, $host, $secure);
+        Nginx::restart();
+    })->descriptions('Create an Nginx proxy site for the specified host. Useful for docker, node etc.', [
+        '--secure' => 'Create a proxy with a trusted TLS certificate',
+    ]);
+
+    /**
+     * Delete Nginx proxy config.
+     */
+    $app->command('unproxy domain', function ($domain) {
+        Site::proxyDelete($domain);
+        Nginx::restart();
+    })->descriptions('Delete an Nginx proxy config.');
+
+    /**
+     * Display all the sites that are proxies.
+     */
+    $app->command('proxies', function () {
+        $proxies = Site::proxies();
+
+        table(['URL', 'SSL', 'Host'], $proxies->all());
+    })->descriptions('Display all of the proxy sites');
 
     /**
      * Add the current working directory to paths configuration.
@@ -544,14 +571,14 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('db:list', function () {
         Mysql::listDatabases();
-    })->descriptions('List all available database in MySQL');
+    })->descriptions('List all available database in MySQL/MariaDB');
 
     /**
      * Create new database in MySQL.
      */
     $app->command('db:create [database_name]', function ($database_name) {
         Mysql::createDatabase($database_name);
-    })->descriptions('Create new database in MySQL');
+    })->descriptions('Create new database in MySQL/MariaDB');
 
     /**
      * Drop database in MySQL.
@@ -568,7 +595,7 @@ if (is_dir(VALET_HOME_PATH)) {
             }
         }
         Mysql::dropDatabase($database_name);
-    })->descriptions('Drop given database from MySQL');
+    })->descriptions('Drop given database from MySQL/MariaDB');
 
     /**
      * Reset database in MySQL.
@@ -600,7 +627,7 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         info("Database [{$database_name}] reset successfully");
-    })->descriptions('Clear all tables for given database in MySQL');
+    })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
      * Import database in MySQL.
@@ -631,7 +658,7 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         Mysql::importDatabase($dump_file, $database_name, $isExistsDatabase);
-    })->descriptions('Import dump file for selected database in MySQL');
+    })->descriptions('Import dump file for selected database in MySQL/MariaDB');
 
     /**
      * Export database in MySQL.
@@ -641,7 +668,7 @@ if (is_dir(VALET_HOME_PATH)) {
         $defaults = $input->getOptions();
         $data = Mysql::exportDatabase($database_name, $defaults['sql']);
         info("Database [{$data['database']}] exported into file {$data['filename']}");
-    })->descriptions('Export selected MySQL database');
+    })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
      * Change root user password in MySQL.
@@ -652,7 +679,14 @@ if (is_dir(VALET_HOME_PATH)) {
         }
         info('Setting password for root user...');
         Mysql::setRootPassword($current_password, $new_password);
-    })->descriptions('Change MySQL root user password');
+    })->descriptions('Change MySQL/MariaDB root user password');
+
+    $app->command('ngrok-auth [authtoken]', function($authtoken) {
+        if(!$authtoken) {
+            throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
+        }
+        Ngrok::setAuthToken($authtoken);
+    })->descriptions('Set authtoken for ngrok');
 }
 
 /**
