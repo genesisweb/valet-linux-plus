@@ -20,7 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.5.7';
+$version = 'v1.5.8';
 
 $app = new Application('ValetLinux+', $version);
 
@@ -484,6 +484,14 @@ if (is_dir(VALET_HOME_PATH)) {
 
         info('Specified Valet services have been stopped.');
     })->descriptions('Stop the Valet services');
+
+    /**
+     * Visual Studio Code IDE Helper Command.
+     */
+    $app->command('code [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::VS_CODE);
+    })->descriptions('Open project in Visual Studio Code');
 
     /**
      * PHPStorm IDE Helper Command.

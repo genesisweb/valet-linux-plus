@@ -1,30 +1,29 @@
 <?php
 
-
 namespace Valet;
-
 
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
-/**
- *
- */
 class DevTools
 {
     /**
-     * Sublime binary selector
+     * Sublime binary selector.
+     */
+    const VS_CODE = 'code';
+    /**
+     * Sublime binary selector.
      */
     const SUBLIME = 'subl';
 
     /**
-     * PHPStorm binary selector
+     * PHPStorm binary selector.
      */
     const PHP_STORM = 'phpstorm.sh';
 
     /**
-     * Atom binary selector
+     * Atom binary selector.
      */
     const ATOM = 'atom';
 
@@ -50,11 +49,12 @@ class DevTools
      *
      * @param  PackageManager $pm
      * @param  ServiceManager $sm
-     * @param  CommandLine $cli
-     * @param  Filesystem $files
+     * @param  CommandLine    $cli
+     * @param  Filesystem     $files
      * @return void
      */
-    public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files) {
+    public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
+    {
 
         $this->cli = $cli;
         $this->pm = $pm;
@@ -64,9 +64,11 @@ class DevTools
 
     /**
      * @param $service
+     *
      * @return false|string
      */
-    public function ensureInstalled($service) {
+    public function ensureInstalled($service)
+    {
 
         return $this->getBin($service);
     }
