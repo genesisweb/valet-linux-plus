@@ -60,6 +60,7 @@ class Ngrok
                 return $tunnel->public_url;
             }
         }
+
         return null;
     }
 

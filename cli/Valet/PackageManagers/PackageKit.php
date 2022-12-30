@@ -12,6 +12,7 @@ class PackageKit implements PackageManager
     public $redisPackageName = 'redis-server';
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
+
     /**
      * Create a new PackageKit instance.
      *
