@@ -9,7 +9,9 @@ use Valet\Contracts\PackageManager;
 class Dnf implements PackageManager
 {
     public $cli;
-
+    public $redisPackageName = 'redis';
+    public $mysqlPackageName = 'mysql-server';
+    public $mariaDBPackageName = 'mariadb-server';
     /**
      * Create a new Apt instance.
      *

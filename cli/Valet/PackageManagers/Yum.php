@@ -9,6 +9,9 @@ use Valet\Contracts\PackageManager;
 class Yum implements PackageManager
 {
     public $cli;
+    public $redisPackageName = 'redis';
+    public $mysqlPackageName = 'mysql-server';
+    public $mariaDBPackageName = 'mariadb-server';
 
     /**
      * Create a new Yum instance.

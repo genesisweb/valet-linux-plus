@@ -11,7 +11,7 @@ class Systemd implements ServiceManager
     public $cli;
 
     /**
-     * Create a new Brew instance.
+     * Create a new Systemd instance.
      *
      * @param CommandLine $cli CommandLine object
      */

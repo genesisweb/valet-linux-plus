@@ -7,13 +7,15 @@ use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\PackageManagers\Pacman;
 
 class Mysql
 {
-    const MYSQL_ROOT_PASSWORD = 'root';
+    const MYSQL_USER = 'valet';
 
     public $cli;
     public $files;
@@ -26,6 +28,7 @@ class Mysql
      * @var PDO
      */
     protected $link = false;
+    protected $currentPackage;
 
     /**
      * Create a new instance.
@@ -51,6 +54,12 @@ class Mysql
         $this->site = $site;
         $this->files = $files;
         $this->configuration = $configuration;
+        if ($this->pm->installed($this->pm->mysqlPackageName)) {
+            $this->currentPackage = $this->pm->mysqlPackageName;
+        }
+        if ($this->pm->installed($this->pm->mariaDBPackageName)) {
+            $this->currentPackage = $this->pm->mariaDBPackageName;
+        }
     }
 
     /**
@@ -58,51 +67,49 @@ class Mysql
      */
     public function install($useMariaDB = false)
     {
-        $package = $useMariaDB ? 'mariadb-server' : 'mysql-server';
-
-        if (!extension_loaded('pdo')) {
-            $phpVersion = \PhpFpm::getVersion();
+        $package = $useMariaDB ? $this->pm->mariaDBPackageName: $this->pm->mysqlPackageName;
+        $this->currentPackage = $package;
+        $service = $this->serviceName();
+        if (!extension_loaded('mysql')) {
+            $phpVersion = \PhpFpm::getVersion(true);
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
 
-        if($package === 'mariadb-server') {
-            if($this->pm->installed('mysql-server')) {
-                warning('Installation is selected for MariaDB but MySQL is already installed.');
+        if ($package === $this->pm->mariaDBPackageName) {
+            if ($this->pm->installed($this->pm->mysqlPackageName)) {
+                warning('MySQL is already installed, please remove --mariadb flag and try again!');
                 return;
             }
         }
-        if($package === 'mysql-server') {
-            if($this->pm->installed('mariadb-server')) {
-                warning('Installation is selected for MySQL but MariaDB is already installed.');
+        if ($package === $this->pm->mysqlPackageName) {
+            if ($this->pm->installed($this->pm->mariaDBPackageName)) {
+                warning('MariaDB is already installed, please add --mariadb flag and try again!');
                 return;
             }
         }
 
         if ($this->pm->installed($package)) {
-            beginning:
-            $input = new ArgvInput();
-            $output = new ConsoleOutput();
-            $question = new Question('Looks like MySQL/MariaDB already installed to your system, please enter MySQL/MariaDB [root] user password to connect MySQL/MariaDB with us:');
-            $helper = new HelperSet([new QuestionHelper()]);
-            $question->setHidden(true);
-            $helper = $helper->get('question');
-            $rootPassword = $helper->ask($input, $output, $question);
-            $connection = $this->getConnection($rootPassword ?: '');
-            if (!$connection) {
-                goto beginning;
-            }
             $config = $this->configuration->read();
             if (!isset($config['mysql'])) {
                 $config['mysql'] = [];
             }
-            $config['mysql']['password'] = $rootPassword;
-            $this->configuration->write($config);
+            if (!isset($config['mysql']['password'])) {
+                info("Looks like MySQL/MariaDB already installed to your system");
+                $this->configure();
+            }
         } else {
             $this->pm->installOrFail($package);
-            $this->sm->enable('mysql');
+            $this->sm->enable($service);
             $this->stop();
             $this->restart();
-            $this->setRootPassword();
+            $input = new ArgvInput();
+            $output = new ConsoleOutput();
+            $question = new Question('Please enter new password for `'.self::MYSQL_USER.'` database user: ');
+            $helper = new HelperSet([new QuestionHelper()]);
+            $question->setHidden(true);
+            $helper = $helper->get('question');
+            $password = $helper->ask($input, $output, $question);
+            $this->createValetUser($password);
         }
     }
 
@@ -111,7 +118,7 @@ class Mysql
      */
     public function stop()
     {
-        $this->sm->stop('mysql');
+        $this->sm->stop($this->serviceName());
     }
 
     /**
@@ -119,7 +126,7 @@ class Mysql
      */
     public function restart()
     {
-        $this->sm->restart('mysql');
+        $this->sm->restart($this->serviceName());
     }
 
     /**
@@ -131,18 +138,78 @@ class Mysql
     }
 
     /**
+     * Configure Database user for Valet
+     * @param bool $force
+     * @return void
+     */
+    public function configure(bool $force = false)
+    {
+        $config = $this->configuration->read();
+        if (!isset($config['mysql'])) {
+            $config['mysql'] = [];
+        }
+
+        if (!$force && isset($config['mysql']['password'])) {
+            info('Valet database user is already configured. Use --force to reconfigure database user.');
+            return;
+        }
+        $input = new ArgvInput();
+        $output = new ConsoleOutput();
+        if(empty($config['mysql']['user'])) {
+            $question = new Question('Please enter MySQL/MariaDB user: ');
+        } else {
+            $question = new Question('Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ', $config['mysql']['user']);
+        }
+        $helper = new HelperSet([new QuestionHelper()]);
+        $helper = $helper->get('question');
+        $user = $helper->ask($input, $output, $question);
+        $question = new Question('Please enter MySQL/MariaDB password: ');
+        $helper = new HelperSet([new QuestionHelper()]);
+        $question->setHidden(true);
+        $helper = $helper->get('question');
+        $password = $helper->ask($input, $output, $question);
+
+        $connection = $this->validateCredentials($user, $password);
+        if (!$connection) {
+            $question = new ConfirmationQuestion('Would you like to try again? [Y/n] ', true);
+            if (!$helper->ask($input, $output, $question)) {
+                warning('Valet database user is not configured!');
+                return;
+            } else {
+                $this->configure($force);
+                return;
+            }
+        }
+        $config['mysql']['user'] = $user;
+        $config['mysql']['password'] = $password;
+        $this->configuration->write($config);
+        info("Database user configured successfully!");
+    }
+    private function serviceName() {
+        if ($this->isMariaDB()) {
+            return 'mariadb';
+        }
+        return 'mysql';
+    }
+    private function isMariaDB() {
+        return $this->currentPackage === $this->pm->mariaDBPackageName;
+    }
+    /**
      * Set root password of Mysql.
      *
-     * @param string $oldPwd
-     * @param string $newPwd
+     * @param string $password
      */
-    public function setRootPassword(string $oldPwd = '', string $newPwd = self::MYSQL_ROOT_PASSWORD)
+    private function createValetUser(string $password)
     {
         $success = true;
-        $this->cli->runAsUser(
-            "mysqladmin -u root --password='".$oldPwd."' password ".$newPwd,
-            function () use (&$success) {
-                warning('Setting password for root user failed.');
+        $query = "sudo mysql -e \"CREATE USER '".self::MYSQL_USER."'@'localhost' IDENTIFIED WITH mysql_native_password BY '".$password."';GRANT ALL PRIVILEGES ON *.* TO '".self::MYSQL_USER."'@'localhost' WITH GRANT OPTION;FLUSH PRIVILEGES;\"";
+        if ($this->isMariaDB()) {
+            $query = "sudo mysql -e \"CREATE USER '".self::MYSQL_USER."'@'localhost' IDENTIFIED BY '".$password."';GRANT ALL PRIVILEGES ON *.* TO '".self::MYSQL_USER."'@'localhost' WITH GRANT OPTION;FLUSH PRIVILEGES;\"";
+        }
+        $this->cli->run(
+            $query,
+            function ($statusCode, $error) use (&$success) {
+                warning('Setting password for valet user failed due to `['.$statusCode.'] '.$error.'`');
                 $success = false;
             }
         );
@@ -152,7 +219,8 @@ class Mysql
             if (!isset($config['mysql'])) {
                 $config['mysql'] = [];
             }
-            $config['mysql']['password'] = $newPwd;
+            $config['mysql']['user'] = self::MYSQL_USER;
+            $config['mysql']['password'] = $password;
             $this->configuration->write($config);
         }
     }
@@ -160,14 +228,20 @@ class Mysql
     /**
      * Returns the stored password from the config. If not configured returns the default root password.
      */
-    private function getRootPassword()
+    private function getCredentials()
     {
         $config = $this->configuration->read();
-        if (isset($config['mysql']) && isset($config['mysql']['password'])) {
-            return $config['mysql']['password'];
+        if (!isset($config['mysql']['password']) && !is_null($config['mysql']['password'])) {
+            warning('Valet database user is not configured!');
+            exit;
         }
 
-        return self::MYSQL_ROOT_PASSWORD;
+        // For previously installed user.
+        if (empty($config['mysql']['user'])) {
+            $config['mysql']['user'] = 'root';
+        }
+
+        return ['user' => $config['mysql']['user'], 'password' => $config['mysql']['password']];
     }
 
     /**
@@ -218,13 +292,33 @@ class Mysql
     }
 
     /**
+     * Validate Username & Password.
+     * @param $username
+     * @param $password
+     * @return bool
+     */
+    protected function validateCredentials($username, $password)
+    {
+        try {
+            // Create connection
+            $connection = new PDO(
+                'mysql:host=localhost',
+                $username,
+                $password
+            );
+            $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return true;
+        } catch (\PDOException $e) {
+            warning('Connection failed due to `'.$e->getMessage().'`');
+            return false;
+        }
+    }
+
+    /**
      * Return Mysql connection.
-     *
-     * @param $rootPassword bool|String
-     *
      * @return bool|PDO
      */
-    protected function getConnection($rootPassword = null)
+    protected function getConnection()
     {
         // if connection already exists return it early.
         if ($this->link) {
@@ -233,18 +327,18 @@ class Mysql
 
         try {
             // Create connection
+            $credentials = $this->getCredentials();
             $this->link = new PDO(
                 'mysql:host=localhost',
-                'root',
-                ($rootPassword !== null ? $rootPassword : $this->getRootPassword())
+                $credentials['user'],
+                $credentials['password']
             );
             $this->link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return $this->link;
         } catch (\PDOException $e) {
-            warning('Failed to connect to MySQL');
-
-            return false;
+            warning('Failed to connect MySQL due to :`'.$e->getMessage().'`');
+            exit;
         }
     }
 
@@ -282,7 +376,8 @@ class Mysql
             $sqlFile = " < {$file}";
         }
         $database = escapeshellarg($database);
-        $this->cli->run("{$gzip}mysql -u root -p{$this->getRootPassword()} {$database} {$sqlFile}");
+        $credentials = $this->getCredentials();
+        $this->cli->run("{$gzip}mysql -u {$credentials['user']} -p{$credentials['password']} {$database} {$sqlFile}");
     }
 
     /**
@@ -404,7 +499,8 @@ class Mysql
             $filename = $filename.'.sql.gz';
         }
 
-        $command = "mysqldump -u root -p{$this->getRootPassword()} ".escapeshellarg($database).' ';
+        $credentials = $this->getCredentials();
+        $command = "mysqldump -u {$credentials['user']} -p{$credentials['password']} ".escapeshellarg($database).' ';
         if ($exportSql) {
             $command .= ' > '.escapeshellarg($filename);
         } else {
