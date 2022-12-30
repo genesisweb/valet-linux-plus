@@ -1,0 +1,26 @@
+name: PHP Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - 7.1
+          - 7.2
+          - 7.3
+          - 7.4
+          - 8.0
+          - 8.1
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v3
+        with:
+          php-version: ${{ matrix.php }}
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Test
+        run: vendor/bin/phpunit
