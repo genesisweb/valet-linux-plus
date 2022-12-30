@@ -302,6 +302,6 @@ class Mysql extends Facade
  *
  * @method static void run(string $folder,string $service)
  */
-class DevTools extends Facade{
-
+class DevTools extends Facade
+{
 }

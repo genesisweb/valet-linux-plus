@@ -12,6 +12,7 @@ class Dnf implements PackageManager
     public $redisPackageName = 'redis';
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
+
     /**
      * Create a new Apt instance.
      *

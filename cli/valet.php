@@ -66,6 +66,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
             info(Configuration::read()['domain']);
+
             return;
         }
 
@@ -587,6 +588,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
     /**
      * Import database in MySQL.
+     *
      * @throws Exception
      */
     $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
@@ -607,6 +609,7 @@ if (is_dir(VALET_HOME_PATH)) {
             $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', false);
             if (!$helper->ask($input, $output, $question)) {
                 warning('Aborted');
+
                 return;
             }
             $isExistsDatabase = true;
@@ -626,7 +629,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
-     * Configure valet database user for MySQL/MariaDB
+     * Configure valet database user for MySQL/MariaDB.
      */
     $app->command('db:configure [--force]', function ($force) {
         Mysql::configure($force);
@@ -637,7 +640,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('code [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::VS_CODE);
+        DevTools::run($folder, \Valet\DevTools::VS_CODE);
     })->descriptions('Open project in Visual Studio Code');
 
     /**
@@ -645,7 +648,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('ps [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
+        DevTools::run($folder, \Valet\DevTools::PHP_STORM);
     })->descriptions('Open project in PHPStorm');
 
     /**
@@ -653,7 +656,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('atom [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::ATOM);
+        DevTools::run($folder, \Valet\DevTools::ATOM);
     })->descriptions('Open project in Atom');
 
     /**
@@ -661,14 +664,14 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('subl [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::SUBLIME);
+        DevTools::run($folder, \Valet\DevTools::SUBLIME);
     })->descriptions('Open project in Sublime');
 
     /**
-     * Set authentication token in Ngrok
+     * Set authentication token in Ngrok.
      */
     $app->command('ngrok-auth [authtoken]', function ($authtoken) {
-        if(!$authtoken) {
+        if (!$authtoken) {
             throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
         }
         Ngrok::setAuthToken($authtoken);
