@@ -6,6 +6,7 @@ use DomainException;
 use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\PackageManagers\Pacman;
 
 class PhpFpm
 {
@@ -71,6 +72,10 @@ class PhpFpm
 
     public function installExtensions()
     {
+        if ($this->pm instanceof Pacman) {
+            warning('PHP Extension install is not supported for Pacman package manager');
+            return;
+        }
         $extArray = [];
         foreach ($this->commonExt as $ext) {
             $extArray[] = "php{$this->version}-{$ext}";
@@ -228,11 +233,13 @@ class PhpFpm
     public function fpmConfigPath()
     {
         return collect([
-            '/etc/php/'.$this->version.'/fpm/pool.d', // Ubuntu
-            '/etc/php'.$this->version.'/fpm/pool.d', // Ubuntu
+            '/etc/php/' . $this->version . '/fpm/pool.d', // Ubuntu
+            '/etc/php' . $this->version . '/fpm/pool.d', // Ubuntu
+            '/etc/php' . $this->version . '/php-fpm.d', // Manjaro
             '/etc/php-fpm.d', // Fedora
             '/etc/php/php-fpm.d', // Arch
-            '/etc/php7/fpm/php-fpm.d', // openSUSE
+            '/etc/php7/fpm/php-fpm.d', // openSUSE PHP7
+            '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
         ])->first(function ($path) {
             return is_dir($path);
         }, function () {

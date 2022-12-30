@@ -11,7 +11,7 @@ class LinuxService implements ServiceManager
     public $cli;
 
     /**
-     * Create a new Brew instance.
+     * Create a new Linux instance.
      *
      * @param CommandLine $cli CommandLine object
      */
@@ -142,13 +142,12 @@ class LinuxService implements ServiceManager
             foreach ($services as $service) {
                 try {
                     $service = $this->getRealService($service);
-
                     if (!$this->disabled($service)) {
                         $this->cli->quietly('sudo systemctl disable '.$service);
                         info(ucfirst($service).' has been disabled');
+                    } else {
+                        info(ucfirst($service).' was already disabled');
                     }
-
-                    info(ucfirst($service).' was already disabled');
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
                 }
@@ -187,17 +186,11 @@ class LinuxService implements ServiceManager
                     if ($this->disabled($service)) {
                         $this->cli->quietly('sudo systemctl enable '.$service);
                         info(ucfirst($service).' has been enabled');
-
-                        return true;
+                    } else {
+                        info(ucfirst($service).' was already enabled');
                     }
-
-                    info(ucfirst($service).' was already enabled');
-
-                    return true;
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
-
-                    return false;
                 }
             }
         } else {
@@ -208,12 +201,8 @@ class LinuxService implements ServiceManager
                     $service = $this->getRealService($service);
                     $this->cli->quietly("sudo update-rc.d $service defaults");
                     info(ucfirst($service).' has been enabled');
-
-                    return true;
                 } catch (DomainException $e) {
                     warning(ucfirst($service).' not available.');
-
-                    return false;
                 }
             }
         }

@@ -9,7 +9,9 @@ use Valet\Contracts\PackageManager;
 class Eopkg implements PackageManager
 {
     public $cli;
-
+    public $redisPackageName = 'redis-server';
+    public $mysqlPackageName = 'mysql-server';
+    public $mariaDBPackageName = 'mariadb-server';
     /**
      * Create a new Eopkg instance.
      *

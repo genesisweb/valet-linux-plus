@@ -9,6 +9,9 @@ use Valet\Contracts\PackageManager;
 class Apt implements PackageManager
 {
     public $cli;
+    public $redisPackageName = 'redis-server';
+    public $mysqlPackageName = 'mysql-server';
+    public $mariaDBPackageName = 'mariadb-server';
 
     /**
      * Create a new Apt instance.
@@ -95,7 +98,7 @@ class Apt implements PackageManager
      */
     public function nmRestart($sm)
     {
-        $sm->restart(['network-manager']);
+        $sm->restart(['NetworkManager']);
     }
 
     /**

@@ -88,9 +88,6 @@ class DnsMasq
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
         }
-        $this->files->backup($this->resolvconf);
-        $this->files->unlink($this->resolvconf);
-        $this->files->symlink($script, $this->resolvconf);
     }
 
     /**
@@ -107,7 +104,6 @@ class DnsMasq
         $this->dnsmasqSetup();
         $this->fixResolved();
         $this->createCustomConfigFile($domain);
-        $this->pm->nmRestart($this->sm);
         $this->sm->restart('dnsmasq');
         $this->sm->restart('valet-dns');
     }
@@ -151,8 +147,17 @@ class DnsMasq
      */
     public function fixResolved()
     {
-        $this->sm->disable('systemd-resolved');
-        $this->sm->stop('systemd-resolved');
+        // https://www.freedesktop.org/software/systemd/man/resolved.conf.html#DNSStubListener=
+        // Disable listener on port 53
+        $this->files->ensureDirExists('/etc/systemd/resolved.conf.d');
+        $this->files->putAsUser(
+            '/etc/systemd/resolved.conf.d/valet.conf',
+            $this->files->get(__DIR__.'/../stubs/resolved.conf')
+        );
+        if ($this->sm->disabled('systemd-resolved')) {
+            $this->sm->enable('systemd-resolved');
+        }
+        $this->sm->restart('systemd-resolved');
     }
 
     /**
@@ -214,7 +219,12 @@ class DnsMasq
 
         $this->_lockResolvConf(false);
         $this->files->restore($this->rclocal);
-        $this->files->restore($this->resolvconf);
+
+        $this->cli->passthru('rm -f /etc/resolv.conf');
+        $this->sm->stop('systemd-resolved');
+        $this->sm->start('systemd-resolved');
+        $this->files->symlink('/run/systemd/resolve/resolv.conf', $this->resolvconf);
+
         $this->files->restore($this->dnsmasqconf);
         $this->files->commentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
 
@@ -222,6 +232,5 @@ class DnsMasq
         $this->sm->restart('dnsmasq');
 
         info('Valet DNS changes have been rolled back');
-        warning('If your system depended on systemd-resolved (like Ubuntu 17.04), please enable it manually');
     }
 }

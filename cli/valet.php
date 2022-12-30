@@ -20,7 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.5.8';
+$version = 'v1.6.0';
 
 $app = new Application('ValetLinux+', $version);
 
@@ -35,10 +35,10 @@ Valet::environmentSetup();
 $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux, $mariaDB) {
     passthru(dirname(__FILE__).'/scripts/update.sh'); // Clean up cruft
     Requirements::setIgnoreSELinux($ignoreSELinux)->check();
+    Configuration::install();
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
-    Configuration::install();
     Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
@@ -427,15 +427,11 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('stop [services]*', function ($services) {
         if (empty($services)) {
-            DnsMasq::stop();
             PhpFpm::stop();
             Nginx::stop();
             Mailhog::stop();
             Mysql::stop();
             ValetRedis::stop();
-//            Elasticsearch::stop();
-//            RabbitMq::stop();
-//            Varnish::stop();
             info('Valet services have been stopped.');
 
             return;
@@ -455,10 +451,6 @@ if (is_dir(VALET_HOME_PATH)) {
                     Mailhog::stop();
                     break;
 
-                case 'dnsmasq':
-                    DnsMasq::stop();
-                    break;
-
                 case 'mysql':
                     Mysql::stop();
                     break;
@@ -467,55 +459,11 @@ if (is_dir(VALET_HOME_PATH)) {
                     ValetRedis::stop();
                     break;
 
-//                case 'elasticsearch': {
-//                    Elasticsearch::stop();
-//                    break;
-//                }
-//                case 'rabbitmq': {
-//                    RabbitMq::stop();
-//                    break;
-//                }
-//                case 'varnish': {
-//                    Varnish::stop();
-//                    break;
-//                }
             }
         }
 
         info('Specified Valet services have been stopped.');
     })->descriptions('Stop the Valet services');
-
-    /**
-     * Visual Studio Code IDE Helper Command.
-     */
-    $app->command('code [folder]', function ($folder) {
-        $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::VS_CODE);
-    })->descriptions('Open project in Visual Studio Code');
-
-    /**
-     * PHPStorm IDE Helper Command.
-     */
-    $app->command('ps [folder]', function ($folder) {
-        $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
-    })->descriptions('Open project in PHPStorm');
-
-    /**
-     * Atom IDE Helper Command.
-     */
-    $app->command('atom [folder]', function ($folder) {
-        $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::ATOM);
-    })->descriptions('Open project in Atom');
-
-    /**
-     * Sublime IDE Helper Command.
-     */
-    $app->command('subl [folder]', function ($folder) {
-        $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::SUBLIME);
-    })->descriptions('Open project in Sublime');
 
     /**
      * Uninstall Valet entirely.
@@ -659,7 +607,6 @@ if (is_dir(VALET_HOME_PATH)) {
             $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', false);
             if (!$helper->ask($input, $output, $question)) {
                 warning('Aborted');
-
                 return;
             }
             $isExistsDatabase = true;
@@ -679,22 +626,53 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
-     * Change root user password in MySQL.
+     * Configure valet database user for MySQL/MariaDB
      */
-    $app->command('db:password [current_password] [new_password]', function ($current_password, $new_password) {
-        if ($current_password === null || $new_password === null) {
-            throw new Exception('Missing arguments to change root user password. Use: "valet db:password [current_password] [new_password]"');
-        }
-        info('Setting password for root user...');
-        Mysql::setRootPassword($current_password, $new_password);
-    })->descriptions('Change MySQL/MariaDB root user password');
+    $app->command('db:configure [--force]', function ($force) {
+        Mysql::configure($force);
+    })->descriptions('Configure valet database user for MySQL/MariaDB');
 
-    $app->command('ngrok-auth [authtoken]', function($authtoken) {
+    /**
+     * Visual Studio Code IDE Helper Command.
+     */
+    $app->command('code [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::VS_CODE);
+    })->descriptions('Open project in Visual Studio Code');
+
+    /**
+     * PHPStorm IDE Helper Command.
+     */
+    $app->command('ps [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
+    })->descriptions('Open project in PHPStorm');
+
+    /**
+     * Atom IDE Helper Command.
+     */
+    $app->command('atom [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::ATOM);
+    })->descriptions('Open project in Atom');
+
+    /**
+     * Sublime IDE Helper Command.
+     */
+    $app->command('subl [folder]', function ($folder) {
+        $folder = $folder ?: getcwd();
+        DevTools::run($folder,\Valet\DevTools::SUBLIME);
+    })->descriptions('Open project in Sublime');
+
+    /**
+     * Set authentication token in Ngrok
+     */
+    $app->command('ngrok-auth [authtoken]', function ($authtoken) {
         if(!$authtoken) {
             throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
         }
         Ngrok::setAuthToken($authtoken);
-    })->descriptions('Set authtoken for ngrok');
+    })->descriptions('Set authentication token for ngrok');
 }
 
 /**

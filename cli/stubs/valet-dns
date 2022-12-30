@@ -132,7 +132,7 @@ function start {
         echo -e "Starting Valet DNS Watcher..."
         main
         sleep 2 && echo $(pgrep -f 'inotifywait -q -m -e modify') > "${WORKDIR}/watch.pid"
-        echo -e "Valet DNS Watcher started succesfully."
+        echo -e "Valet DNS Watcher started successfully."
     fi
 }
 

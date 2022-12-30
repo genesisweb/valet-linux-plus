@@ -10,6 +10,9 @@ class Pacman implements PackageManager
 {
     public $cli;
 
+    public $redisPackageName = 'redis';
+    public $mysqlPackageName = 'mysql';
+    public $mariaDBPackageName = 'mariadb';
     /**
      * Create a new Pacman instance.
      *

@@ -51,6 +51,7 @@ class Nginx
     {
         $this->pm->ensureInstalled('nginx');
         $this->sm->enable('nginx');
+        $this->handleApacheService();
         $this->files->ensureDirExists('/etc/nginx/sites-available');
         $this->files->ensureDirExists('/etc/nginx/sites-enabled');
 
@@ -58,6 +59,22 @@ class Nginx
         $this->installConfiguration();
         $this->installServer();
         $this->installNginxDirectory();
+    }
+
+    /**
+     * Disable Apache2 Service.
+     *
+     * @return void
+     */
+    public function handleApacheService()
+    {
+        if (!$this->pm->installed('apache2')) {
+            return;
+        }
+        if (!$this->sm->disabled('apache2')) {
+            $this->sm->disable('apache2');
+        }
+        $this->sm->stop('apache2');
     }
 
     /**
