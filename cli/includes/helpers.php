@@ -67,7 +67,7 @@ function output($output)
     if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing') {
         return;
     }
-    if(is_null($output)) {
+    if (is_null($output)) {
         $output = '';
     }
 
@@ -251,13 +251,14 @@ function ask_secret($question, $suggestion = null, $default = null)
     return CliPrompt::prompt($question, true, $suggestion, $default);
 }
 
-
-if(!function_exists('str_ends_with')) {
-    function str_ends_with( $haystack, $needle ) {
-        $length = strlen( $needle );
-        if( !$length ) {
+if (!function_exists('str_ends_with')) {
+    function str_ends_with($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if (!$length) {
             return true;
         }
-        return substr( $haystack, -$length ) === $needle;
+
+        return substr($haystack, -$length) === $needle;
     }
 }

@@ -90,18 +90,18 @@ class Site
         $dir = $this->nginxPath();
         $domain = $this->config->read()['domain'];
         $links = $this->links();
-        $certs = $this->getCertificates(VALET_HOME_PATH . '/Certificates');
-        if (! $this->files->exists($dir)) {
+        $certs = $this->getCertificates(VALET_HOME_PATH.'/Certificates');
+        if (!$this->files->exists($dir)) {
             return collect();
         }
         $proxies = collect($this->files->scandir($dir))
             ->filter(function ($site) use ($domain) {
                 // keep sites that match our TLD
 
-                return ends_with($site, '.' . $domain);
+                return ends_with($site, '.'.$domain);
             })->map(function ($site) use ($domain) {
                 // remove the TLD suffix for consistency
-                return str_replace('.' . $domain, '', $site);
+                return str_replace('.'.$domain, '', $site);
             })->reject(function ($site) use ($links) {
                 return $links->has($site);
             })->mapWithKeys(function ($site) {
@@ -113,41 +113,44 @@ class Site
                 return $host === '(other)';
             })->map(function ($host, $site) use ($certs, $domain) {
                 $secured = $certs->has($site);
-                $url = ($secured ? 'https' : 'http') . '://' . $site . '.' . $domain;
+                $url = ($secured ? 'https' : 'http').'://'.$site.'.'.$domain;
 
                 return [
-                    'url' => $url,
+                    'url'     => $url,
                     'secured' => $secured ? ' X' : '',
-                    'path' => $host,
+                    'path'    => $host,
                 ];
             });
+
         return $proxies;
     }
 
     /**
      * Unsecure the given URL so that it will use HTTP again.
      *
-     * @param  string  $url
+     * @param string $url
+     *
      * @return void
      */
     public function proxyDelete($url)
     {
         $tld = $this->config->read()['domain'];
-        if (! ends_with($url, '.' . $tld)) {
-            $url .= '.' . $tld;
+        if (!ends_with($url, '.'.$tld)) {
+            $url .= '.'.$tld;
         }
 
         $this->unsecure($url);
         $this->files->unlink($this->nginxPath($url));
 
-        info('Valet will no longer proxy [https://' . $url . '].');
+        info('Valet will no longer proxy [https://'.$url.'].');
     }
 
     /**
      * Identify whether a site is for a proxy by reading the host name from its config file.
      *
-     * @param  string  $site  Site name without TLD
-     * @param  string  $configContents  Config file contents
+     * @param string $site           Site name without TLD
+     * @param string $configContents Config file contents
+     *
      * @return string|null
      */
     public function getProxyHostForSite($site, $configContents = null)
@@ -169,20 +172,21 @@ class Site
     /**
      * Build the Nginx proxy config for the specified domain.
      *
-     * @param  string  $url  The domain name to serve
-     * @param  string  $host  The URL to proxy to, eg: http://127.0.0.1:8080
-     * @param  bool  $secure
+     * @param string $url    The domain name to serve
+     * @param string $host   The URL to proxy to, eg: http://127.0.0.1:8080
+     * @param bool   $secure
+     *
      * @return string
      */
     public function proxyCreate($url, $host, $secure = false)
     {
-        if (! preg_match('~^https?://.*$~', $host)) {
+        if (!preg_match('~^https?://.*$~', $host)) {
             throw new \InvalidArgumentException(sprintf('"%s" is not a valid URL', $host));
         }
 
         $domain = $this->config->read()['domain'];
 
-        if (! ends_with($url, '.'.$domain)) {
+        if (!ends_with($url, '.'.$domain)) {
             $url .= '.'.$domain;
         }
 
@@ -208,7 +212,7 @@ class Site
 
         $protocol = $secure ? 'https' : 'http';
 
-        info('Valet will now proxy [' . $protocol . '://' . $url . '] traffic to [' . $host . '].');
+        info('Valet will now proxy ['.$protocol.'://'.$url.'] traffic to ['.$host.'].');
     }
 
     public function valetLoopback()
@@ -221,7 +225,7 @@ class Site
      */
     public function nginxPath($additionalPath = null)
     {
-        return $this->valetHomePath() . '/Nginx' . ($additionalPath ? '/' . $additionalPath : '');
+        return $this->valetHomePath().'/Nginx'.($additionalPath ? '/'.$additionalPath : '');
     }
 
     public function valetHomePath()
@@ -232,8 +236,9 @@ class Site
     /**
      * Create the given nginx host.
      *
-     * @param  string  $url
-     * @param  string  $siteConf pregenerated Nginx config file contents
+     * @param string $url
+     * @param string $siteConf pregenerated Nginx config file contents
+     *
      * @return void
      */
     public function put($url, $siteConf)
@@ -243,16 +248,18 @@ class Site
         $this->files->ensureDirExists($this->nginxPath(), user());
 
         $this->files->putAsUser(
-            $this->nginxPath($url), $siteConf
+            $this->nginxPath($url),
+            $siteConf
         );
     }
 
     /**
      * Parse Nginx site config file contents to swap old loopback address to new.
      *
-     * @param  string  $siteConf  Nginx site config content
-     * @param  string  $old  Old loopback address
-     * @param  string  $new  New loopback address
+     * @param string $siteConf Nginx site config content
+     * @param string $old      Old loopback address
+     * @param string $new      New loopback address
+     *
      * @return string
      */
     public function replaceOldLoopbackWithNew($siteConf, $old, $new)
@@ -273,7 +280,7 @@ class Site
                     $replaced = '#'.$replaced;
                 }
 
-                if (! $shouldComment) {
+                if (!$shouldComment) {
                     $replaced = ltrim($replaced, '#');
                 }
 
@@ -287,6 +294,7 @@ class Site
     /**
      * @param $site
      * @param null $suffix
+     *
      * @return string|null
      */
     public function getSiteConfigFileContents($site, $suffix = null)
