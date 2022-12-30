@@ -7,22 +7,25 @@ use Valet\PackageManagers\Apt;
 
 class AptTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
-        Container::setInstance(new Container());
+        Container::setInstance(new Container);
     }
 
-    public function tearDown(): void
+
+    protected function tearDown(): void
     {
         Mockery::close();
     }
+
 
     public function test_apt_can_be_resolved_from_container()
     {
         $this->assertInstanceOf(Apt::class, resolve(Apt::class));
     }
+
 
     public function test_installed_returns_true_when_given_formula_is_installed()
     {
@@ -33,6 +36,7 @@ class AptTest extends TestCase
         swap(CommandLine::class, $cli);
         $this->assertTrue(resolve(Apt::class)->installed('php7.0-cli'));
     }
+
 
     public function test_installed_returns_false_when_given_formula_is_not_installed()
     {
@@ -51,6 +55,7 @@ class AptTest extends TestCase
         $this->assertFalse(resolve(Apt::class)->installed('php7.0-cli'));
     }
 
+
     public function test_install_or_fail_will_install_packages()
     {
         $cli = Mockery::mock(CommandLine::class);
@@ -59,11 +64,14 @@ class AptTest extends TestCase
         resolve(Apt::class)->installOrFail('dnsmasq');
     }
 
+
     /**
-     * @throws DomainException
+     * @expectedException DomainException
      */
     public function test_install_or_fail_throws_exception_on_failure()
     {
+        $this->expectException(DomainException::class);
+
         $cli = Mockery::mock(CommandLine::class);
         $cli->shouldReceive('run')->andReturnUsing(function ($command, $onError) {
             $onError(1, 'test error ouput');

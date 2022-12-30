@@ -7,22 +7,25 @@ use Valet\ServiceManagers\LinuxService;
 
 class LinuxServiceTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
 
-        Container::setInstance(new Container());
+        Container::setInstance(new Container);
     }
 
-    public function tearDown(): void
+
+    protected function tearDown(): void
     {
         Mockery::close();
     }
+
 
     public function test_service_can_be_resolved_from_container()
     {
         $this->assertInstanceOf(LinuxService::class, resolve(LinuxService::class));
     }
+
 
     public function test_restart_restarts_the_service_using_linux_services()
     {
@@ -32,6 +35,7 @@ class LinuxServiceTest extends TestCase
         resolve(StubForGetRealService::class)->restart('nginx');
     }
 
+
     public function test_start_starts_the_service_using_linux_services()
     {
         $cli = Mockery::mock(CommandLine::class);
@@ -39,6 +43,7 @@ class LinuxServiceTest extends TestCase
         swap(CommandLine::class, $cli);
         resolve(StubForGetRealService::class)->start('nginx');
     }
+
 
     public function test_stop_stops_the_service_using_linux_services()
     {

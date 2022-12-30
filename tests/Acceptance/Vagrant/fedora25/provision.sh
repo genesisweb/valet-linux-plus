@@ -25,7 +25,7 @@ then
     "repositories": [
       {
         "type": "path",
-        "url": "/home/vagrant/cpriego-valet-linux",
+        "url": "/home/vagrant/valet-linux-plus",
         "options": {
           "symlink": false
         }
@@ -39,7 +39,7 @@ else
     "repositories": [
       {
         "type": "path",
-        "url": "/home/vagrant/cpriego-valet-linux"
+        "url": "/home/vagrant/valet-linux-plus"
       }
     ]
   }' >> ~/.config/composer/composer.json

@@ -10,17 +10,18 @@ use Valet\Filesystem;
 
 class DnsMasqTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         $_SERVER['SUDO_USER'] = user();
-        Container::setInstance(new Container());
+        Container::setInstance(new Container);
     }
 
-    public function tearDown(): void
+
+    protected function tearDown(): void
     {
-        exec('rm -rf '.__DIR__.'/output');
-        mkdir(__DIR__.'/output');
-        touch(__DIR__.'/output/.gitkeep');
+        exec('rm -rf ' . __DIR__ . '/output');
+        mkdir(__DIR__ . '/output');
+        touch(__DIR__ . '/output/.gitkeep');
 
         Mockery::close();
     }
@@ -34,11 +35,11 @@ class DnsMasqTest extends TestCase
         swap(ServiceManager::class, $sm);
 
         $dnsMasq = resolve(DnsMasq::class);
-        $dnsMasq->configPath = __DIR__.'/output/valet';
+        $dnsMasq->configPath = __DIR__ . '/output/valet';
 
         $dnsMasq->createCustomConfigFile('test');
 
-        $this->assertSame('address=/.test/127.0.0.1'.PHP_EOL, file_get_contents(__DIR__.'/output/valet'));
+        $this->assertSame('address=/.test/127.0.0.1' . PHP_EOL, file_get_contents(__DIR__ . '/output/valet'));
     }
 
     public function test_update_domain_removes_old_resolver_and_reinstalls()
@@ -48,7 +49,7 @@ class DnsMasqTest extends TestCase
         $cli = Mockery::mock(Filesystem::class);
         $files = Mockery::mock(CommandLine::class);
 
-        $dnsMasq = Mockery::mock(DnsMasq::class.'[createCustomConfigFile,fixResolved]', [$pm, $sm, $cli, $files]);
+        $dnsMasq = Mockery::mock(DnsMasq::class . '[createCustomConfigFile,fixResolved]', [$pm, $sm, $cli, $files]);
 
         $dnsMasq->shouldReceive('createCustomConfigFile')->once()->with('new');
         $sm->shouldReceive('restart')->once()->with('dnsmasq');
@@ -58,7 +59,8 @@ class DnsMasqTest extends TestCase
 
 class StubForFiles extends Filesystem
 {
-    public function ensureDirExists($path, $owner = null, $mode = 0755)
+    function ensureDirExists($path, $owner = null, $mode = 0755)
     {
+        return;
     }
 }

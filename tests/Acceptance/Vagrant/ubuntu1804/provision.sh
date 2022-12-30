@@ -27,7 +27,7 @@ then
     "repositories": [
       {
         "type": "path",
-        "url": "/home/ubuntu/cpriego-valet-linux",
+        "url": "/home/ubuntu/valet-linux-plus",
         "options": {
           "symlink": false
         }
@@ -41,7 +41,7 @@ else
     "repositories": [
       {
         "type": "path",
-        "url": "/home/ubuntu/cpriego-valet-linux"
+        "url": "/home/ubuntu/valet-linux-plus"
       }
     ]
   }' >> ~/.config/composer/composer.json

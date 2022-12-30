@@ -10,7 +10,7 @@ then
 fi
 
 # Go into repository workspace
-cd ~/cpriego-valet-linux
+cd ~/valet-linux-plus
 
 # Install valet
 valet install

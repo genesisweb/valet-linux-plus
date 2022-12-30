@@ -1,7 +1,7 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/fedora-26"
 
-  config.vm.synced_folder "../../../../", "/home/vagrant/cpriego-valet-linux"
+  config.vm.synced_folder "../../../../", "/home/vagrant/valet-linux-plus"
 
   config.vm.provision "shell" do |s|
     s.path = "provision.sh"

@@ -39,7 +39,7 @@ if [ $# -gt 0 ]; then
   # Run Acceptance tests against given environment
   elif [ "$1" == "test" ]; then
     ./develop up $2 && \
-    ./develop ssh $2 --command "bash ~/cpriego-valet-linux/tests/Acceptance/vagrant.sh"
+    ./develop ssh $2 --command "bash ~/valet-linux-plus/tests/Acceptance/vagrant.sh"
 
   # Run Acceptance tests against ALL environments
   elif [ "$1" == "test-all" ]; then
