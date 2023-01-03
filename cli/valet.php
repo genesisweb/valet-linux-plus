@@ -20,7 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 Container::setInstance(new Container());
 
-$version = 'v1.6.0';
+$version = 'v1.6.1';
 
 $app = new Application('ValetLinux+', $version);
 
@@ -39,10 +39,10 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
-    Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
     ValetRedis::install();
+    Nginx::restart();
     Mysql::install($mariaDB);
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
@@ -306,7 +306,10 @@ if (is_dir(VALET_HOME_PATH)) {
      * Generate a publicly accessible URL for your project.
      */
     $app->command('share', function () {
-        warning('It looks like you are running `cli/valet.php` directly, please use the `valet` script in the project root instead.');
+        warning(
+            'It looks like you are running `cli/valet.php` directly,
+            please use the `valet` script in the project root instead.'
+        );
     })->descriptions('Generate a publicly accessible URL for your project');
 
     /**
@@ -356,7 +359,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::restart();
                     break;
-
+                default:
+                    break;
             }
         }
 
@@ -404,7 +408,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::restart();
                     break;
-
+                default:
+                    break;
 //                case 'elasticsearch': {
 //                    Elasticsearch::restart();
 //                    break;
@@ -459,6 +464,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::stop();
                     break;
+                default:
+                    break;
 
             }
         }
@@ -504,13 +511,21 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Change the PHP version to the desired one.
      */
-    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function ($preferedVersion = null, $updateCli = null, $installExt = null) {
+    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function (
+        $preferedVersion = null,
+        $updateCli = null,
+        $installExt = null)
+    {
         info('Changing php-fpm version...');
         PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
         info('php-fpm version successfully changed! 🎉');
-    })->descriptions('Set the PHP-fpm version to use, enter "default" or leave empty to use version: '.PhpFpm::getVersion(true), [
-        '--update-cli' => 'Updates CLI version as well',
-    ]);
+    })->descriptions(
+        'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
+        . PhpFpm::getVersion(true),
+        [
+            '--update-cli' => 'Updates CLI version as well',
+        ]
+    );
 
     /**
      * Determine if this is the latest release of Valet.
@@ -533,14 +548,14 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Create new database in MySQL.
      */
-    $app->command('db:create [database_name]', function ($database_name) {
-        Mysql::createDatabase($database_name);
+    $app->command('db:create [database_name]', function ($databaseName) {
+        Mysql::createDatabase($databaseName);
     })->descriptions('Create new database in MySQL/MariaDB');
 
     /**
      * Drop database in MySQL.
      */
-    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
+    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -551,13 +566,13 @@ if (is_dir(VALET_HOME_PATH)) {
                 return;
             }
         }
-        Mysql::dropDatabase($database_name);
+        Mysql::dropDatabase($databaseName);
     })->descriptions('Drop given database from MySQL/MariaDB');
 
     /**
      * Reset database in MySQL.
      */
-    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
+    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -568,14 +583,14 @@ if (is_dir(VALET_HOME_PATH)) {
                 return;
             }
         }
-        $dropDB = Mysql::dropDatabase($database_name);
+        $dropDB = Mysql::dropDatabase($databaseName);
         if (!$dropDB) {
             warning('Error resetting database');
 
             return;
         }
 
-        $databaseName = Mysql::createDatabase($database_name);
+        $databaseName = Mysql::createDatabase($databaseName);
 
         if (!$databaseName) {
             warning('Error resetting database');
@@ -583,7 +598,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        info("Database [{$database_name}] reset successfully");
+        info("Database [{$databaseName}] reset successfully");
     })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
@@ -591,22 +606,25 @@ if (is_dir(VALET_HOME_PATH)) {
      *
      * @throws Exception
      */
-    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
+    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $databaseName, $dumpFile) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
-        if (!$database_name) {
+        if (!$databaseName) {
             throw new Exception('Please provide database name');
         }
-        if (!$dump_file) {
+        if (!$dumpFile) {
             throw new Exception('Please provide a dump file');
         }
-        if (!file_exists($dump_file)) {
-            throw new Exception("Unable to locate [$dump_file]");
+        if (!file_exists($dumpFile)) {
+            throw new Exception("Unable to locate [$dumpFile]");
         }
         $isExistsDatabase = false;
         // check if database already exists.
-        if (Mysql::isDatabaseExists($database_name)) {
-            $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', false);
+        if (Mysql::isDatabaseExists($databaseName)) {
+            $question = new ConfirmationQuestion(
+                'Database already exists are you sure you want to continue? [y/N] ',
+                false
+            );
             if (!$helper->ask($input, $output, $question)) {
                 warning('Aborted');
 
@@ -615,16 +633,16 @@ if (is_dir(VALET_HOME_PATH)) {
             $isExistsDatabase = true;
         }
 
-        Mysql::importDatabase($dump_file, $database_name, $isExistsDatabase);
+        Mysql::importDatabase($dumpFile, $databaseName, $isExistsDatabase);
     })->descriptions('Import dump file for selected database in MySQL/MariaDB');
 
     /**
      * Export database in MySQL.
      */
-    $app->command('db:export [database_name] [--sql]', function (Input $input, $database_name) {
+    $app->command('db:export [database_name] [--sql]', function (Input $input, $databaseName) {
         info('Exporting database...');
         $defaults = $input->getOptions();
-        $data = Mysql::exportDatabase($database_name, $defaults['sql']);
+        $data = Mysql::exportDatabase($databaseName, $defaults['sql']);
         info("Database [{$data['database']}] exported into file {$data['filename']}");
     })->descriptions('Export selected MySQL/MariaDB database');
 

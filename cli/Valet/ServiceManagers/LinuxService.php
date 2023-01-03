@@ -273,34 +273,26 @@ class LinuxService implements ServiceManager
     }
 
     /**
-     * Install Valet DNS services.
+     * Remove Valet DNS services.
      *
-     * @param Filesystem $files Filesystem object
+     * @param \Filesystem $files Filesystem object
      *
      * @return void
      */
-    public function installValetDns($files)
+    public function removeValetDns($files)
     {
-        info('Installing Valet DNS service...');
-
         $servicePath = '/etc/init.d/valet-dns';
-        $serviceFile = __DIR__.'/../../stubs/init/sysvinit';
         $hasSystemd = $this->_hasSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/valet-dns.service';
-            $serviceFile = __DIR__.'/../../stubs/init/systemd';
         }
 
-        $files->put(
-            $servicePath,
-            $files->get($serviceFile)
-        );
-
-        if (!$hasSystemd) {
-            $this->cli->run("chmod +x $servicePath");
+        if ($files->exists($servicePath)) {
+            info('Removing Valet DNS service...');
+            $this->disable('valet-dns');
+            $this->stop('valet-dns');
+            $files->remove($servicePath);
         }
-
-        $this->enable('valet-dns');
     }
 }

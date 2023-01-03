@@ -90,7 +90,7 @@ interface ServiceManager
      *
      * @return void
      */
-    public function installValetDns($files);
+    public function removeValetDns($files);
 
     /**
      * Status of the given services.

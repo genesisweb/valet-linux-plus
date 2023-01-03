@@ -85,8 +85,6 @@ class Mailhog
         $this->sm->enable('mailhog');
 
         $this->updateDomain();
-
-        \Nginx::restart();
     }
 
     /**

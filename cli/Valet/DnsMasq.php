@@ -76,14 +76,11 @@ class DnsMasq
     private function _mergeDns()
     {
         $optDir = '/opt/valet-linux';
-        $script = $optDir.'/valet-dns';
-
-        $this->pm->ensureInstalled('inotify-tools');
         $this->files->remove($optDir);
         $this->files->ensureDirExists($optDir);
-        $this->files->put($script, $this->files->get(__DIR__.'/../stubs/valet-dns'));
-        $this->cli->run("chmod +x $script");
-        $this->sm->installValetDns($this->files);
+
+        $this->files->put($optDir.'/dns-servers', $this->files->get(__DIR__.'/../stubs/dns-servers'));
+        $this->sm->removeValetDns($this->files);
 
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
@@ -105,7 +102,6 @@ class DnsMasq
         $this->fixResolved();
         $this->createCustomConfigFile($domain);
         $this->sm->restart('dnsmasq');
-        $this->sm->restart('valet-dns');
     }
 
     /**
@@ -208,8 +204,7 @@ class DnsMasq
      */
     public function uninstall()
     {
-        $this->sm->stop('valet-dns');
-        $this->sm->disable('valet-dns');
+        $this->sm->removeValetDns($this->files);
 
         $this->cli->passthru('rm -rf /opt/valet-linux');
         $this->files->unlink($this->configPath);

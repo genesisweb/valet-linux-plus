@@ -229,19 +229,19 @@ class Systemd implements ServiceManager
     /**
      * Install Valet DNS services.
      *
-     * @param Filesystem $files Filesystem object
+     * @param \Filesystem $files Filesystem object
      *
      * @return void
      */
-    public function installValetDns($files)
+    public function removeValetDns($files)
     {
-        info('Installing Valet DNS service...');
-
-        $files->put(
-            '/etc/systemd/system/valet-dns.service',
-            $files->get(__DIR__.'/../../stubs/init/systemd')
-        );
-
+        $servicePath = '/etc/systemd/system/valet-dns.service';
+        if ($files->exists($servicePath)) {
+            info('Removing Valet DNS service...');
+            $this->disable('valet-dns');
+            $this->stop('valet-dns');
+            $files->remove($servicePath);
+        }
         $this->enable('valet-dns');
     }
 
