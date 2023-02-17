@@ -69,9 +69,9 @@ class Mysql
         $package = $useMariaDB ? $this->pm->mariaDBPackageName : $this->pm->mysqlPackageName;
         $this->currentPackage = $package;
         $service = $this->serviceName();
-        if (!extension_loaded('mysql')) {
+        if (!extension_loaded('mysqli')) {
             $phpVersion = \PhpFpm::getVersion(true);
-            $this->pm->ensureInstalled("php{$phpVersion}-mysql");
+            $this->pm->ensureInstalled("php{$phpVersion}-mysqli");
         }
 
         if ($package === $this->pm->mariaDBPackageName) {
