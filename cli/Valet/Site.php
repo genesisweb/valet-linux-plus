@@ -578,7 +578,7 @@ class Site
      */
     public function buildSecureNginxServer($url, $stub = null)
     {
-        $stub = ($stub ? $stub : __DIR__.'/../stubs/secure.valet.conf');
+        $stub = ($stub ? $stub : $this->files->get(__DIR__.'/../stubs/secure.valet.conf'));
         $path = $this->certificatesPath();
 
         return str_array_replace(
@@ -593,7 +593,7 @@ class Site
                 'VALET_HTTPS_PORT'    => $this->config->get('https_port', 443),
                 'VALET_REDIRECT_PORT' => $this->httpsSuffix(),
             ],
-            $this->files->get($stub)
+            $stub
         );
     }
 
