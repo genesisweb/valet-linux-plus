@@ -21,7 +21,7 @@ function check_dependencies() {
     done
 
     if [[ $msg != '' ]]; then
-        printf "${RED}You have missing Valet dependiencies:\n"
+        printf "${RED}You have missing Valet dependencies:\n"
         printf "$msg"
         printf "\nPlease refer to https://valetlinux.plus/ on how to install them.${NC}\n"
         exit 1
@@ -29,12 +29,16 @@ function check_dependencies() {
 }
 
 function verify_ngrok_auth() {
-    # TODO: Need to modify logic to validate auth token.
     if ! [[ -f "${HOME}/.config/ngrok/ngrok.yml" ]]
     then
-        printf "Please register for an ngrok account at: https://dashboard.ngrok.com/signup and install your authtoken.${NC}\n"
-        printf "Valet can help you to install the authtoken, use 'valet ngrok-auth {authtoken}' command.\n"
-        exit 1
+        if  [[ -f "${HOME}/.ngrok2/ngrok.yml" ]]
+        then
+            sudo -u $USER "$DIR/bin/ngrok" config upgrade --relocate
+        else
+            printf "Please register for an ngrok account at: https://dashboard.ngrok.com/signup and install your authtoken.${NC}\n"
+            printf "Valet can help you to install the authtoken, use 'valet ngrok-auth {authtoken}' command.\n"
+            exit 1
+        fi
     fi
 }
 
