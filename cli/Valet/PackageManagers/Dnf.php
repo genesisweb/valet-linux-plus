@@ -12,6 +12,9 @@ class Dnf implements PackageManager
     public $redisPackageName = 'redis';
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
+    const SUPPORTED_PHP_VERSIONS = [
+        'php',
+    ];
 
     /**
      * Create a new Apt instance.
@@ -107,5 +110,10 @@ class Dnf implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function supportedPhpVersions()
+    {
+        return collect(static::SUPPORTED_PHP_VERSIONS);
     }
 }

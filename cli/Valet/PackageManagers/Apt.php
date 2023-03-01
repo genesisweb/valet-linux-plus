@@ -13,6 +13,17 @@ class Apt implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
+    const SUPPORTED_PHP_VERSIONS = [
+        'php',
+        'php81',
+        'php80',
+        'php74',
+        'php73',
+        'php72',
+        'php71',
+        'php70',
+    ];
+
     /**
      * Create a new Apt instance.
      *
@@ -117,5 +128,10 @@ class Apt implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function supportedPhpVersions()
+    {
+        return collect(static::SUPPORTED_PHP_VERSIONS);
     }
 }

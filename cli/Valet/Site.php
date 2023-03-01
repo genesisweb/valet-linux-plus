@@ -190,17 +190,20 @@ class Site
             $url .= '.'.$domain;
         }
 
-        $siteConf = $this->replaceOldLoopbackWithNew(
-            $this->files->get(
-                $secure ? __DIR__.'/../stubs/secure.proxy.valet.conf' : __DIR__.'/../stubs/proxy.valet.conf'
-            ),
-            'VALET_LOOPBACK',
-            $this->valetLoopback()
+        $siteConf = $this->files->get(
+            $secure ? __DIR__.'/../stubs/secure.proxy.valet.conf' : __DIR__.'/../stubs/proxy.valet.conf'
         );
 
-        $siteConf = str_replace(
-            ['VALET_HOME_PATH', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_SITE', 'VALET_PROXY_HOST'],
-            [$this->valetHomePath(), VALET_SERVER_PATH, VALET_STATIC_PREFIX, $url, $host],
+        $siteConf = str_array_replace(
+            [
+                'VALET_HOME_PATH'     => $this->valetHomePath(),
+                'VALET_SERVER_PATH'   => VALET_SERVER_PATH,
+                'VALET_STATIC_PREFIX' => VALET_STATIC_PREFIX,
+                'VALET_SITE'          => $url,
+                'VALET_PROXY_HOST'    => $host,
+                'VALET_HTTP_PORT'     => $this->config->get('port', 80),
+                'VALET_HTTPS_PORT'    => $this->config->get('https_port', 443),
+            ],
             $siteConf
         );
 
@@ -313,8 +316,10 @@ class Site
      *
      * @return Collection
      */
-    public function getCertificates($path)
+    public function getCertificates($path = null)
     {
+        $path = $path ?: $this->certificatesPath();
+
         return collect($this->files->scanDir($path))->filter(function ($value) {
             return ends_with($value, '.crt');
         })->map(function ($cert) {
@@ -649,5 +654,211 @@ class Site
     public function certificatesPath()
     {
         return VALET_HOME_PATH.'/Certificates';
+    }
+
+    /**
+     * Get list of sites and return them formatted
+     * Will work for symlink and normal site paths.
+     *
+     * @param $path
+     * @param $certs
+     * @return Collection
+     */
+    public function getSites($path, $certs)
+    {
+        $config = $this->config->read();
+
+        $this->files->ensureDirExists($path, user());
+
+        return collect($this->files->scandir($path))->mapWithKeys(function ($site) use ($path) {
+            $sitePath = $path . '/' . $site;
+
+            if ($this->files->isLink($sitePath)) {
+                $realPath = $this->files->readLink($sitePath);
+            } else {
+                $realPath = $this->files->realpath($sitePath);
+            }
+
+            return [$site => $realPath];
+        })->filter(function ($path) {
+            return $this->files->isDir($path);
+        })->map(function ($path, $site) use ($certs, $config) {
+            $secured = $certs->has($site);
+            $url = ($secured ? 'https' : 'http') . '://' . $site . '.' . $config['domain'];
+            $phpVersion = $this->getPhpVersion($site . '.' . $config['domain']);
+
+            return [
+                'site' => $site,
+                'secured' => $secured ? ' X' : '',
+                'url' => $url,
+                'path' => $path,
+                'phpVersion' => $phpVersion,
+            ];
+        });
+    }
+
+
+    /**
+     * Get the PHP version for the given site.
+     *
+     * @param string $url Site URL including the TLD
+     * @return string
+     */
+    public function getPhpVersion($url)
+    {
+        $defaultPhpVersion = PHP_VERSION;
+        $phpVersion = PhpFpm::normalizePhpVersion($this->customPhpVersion($url));
+        if (empty($phpVersion)) {
+            $phpVersion = PhpFpm::normalizePhpVersion($defaultPhpVersion);
+        }
+
+        return $phpVersion;
+    }
+
+
+    public function parked()
+    {
+        $certs = $this->getCertificates();
+
+        $links = $this->getSites($this->sitesPath(), $certs);
+
+        $config = $this->config->read();
+        $parkedLinks = collect();
+        foreach (array_reverse($config['paths']) as $path) {
+            if ($path === $this->sitesPath()) {
+                continue;
+            }
+
+            // Only merge on the parked sites that don't interfere with the linked sites
+            $sites = $this->getSites($path, $certs)->filter(function ($site, $key) use ($links) {
+                return !$links->has($key);
+            });
+
+            $parkedLinks = $parkedLinks->merge($sites);
+        }
+
+        return $parkedLinks;
+    }
+
+    /**
+     * Get the site URL from a directory if it's a valid Valet site.
+     *
+     * @param string $directory
+     * @return string
+     */
+    public function getSiteUrl($directory)
+    {
+        $tld = $this->config->read()['domain'];
+
+        if ($directory == '.' || $directory == './') { // Allow user to use dot as current dir's site `--site=.`
+            $directory = $this->host(getcwd());
+        }
+
+        $directory = str_replace('.' . $tld, '', $directory); // Remove .tld from sitename if it was provided
+
+        if (!$this->parked()->merge($this->links())->where('site', $directory)->count() > 0) {
+            throw new DomainException("The [{$directory}] site could not be found in Valet's site list.");
+        }
+
+        return $directory . '.' . $tld;
+    }
+
+    /**
+     * Create new nginx config or modify existing nginx config to isolate this site
+     * to a custom version of PHP.
+     *
+     * @param string $valetSite
+     * @param string $phpVersion
+     * @return void
+     */
+    public function isolate($valetSite, $phpVersion)
+    {
+        if ($this->files->exists($this->nginxPath($valetSite))) {
+            // Modify the existing config if it exists (likely because it's secured)
+            $siteConf = $this->files->get($this->nginxPath($valetSite));
+            $siteConf = $this->replaceSockFile($siteConf, $phpVersion);
+        } else {
+            $siteConf = str_replace(
+                ['VALET_HOME_PATH', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_SITE', 'VALET_PHP_FPM_SOCKET', 'VALET_ISOLATED_PHP_VERSION', 'VALET_PORT'],
+                [VALET_HOME_PATH, VALET_SERVER_PATH, VALET_STATIC_PREFIX, $valetSite, PhpFpm::fpmSockName($phpVersion), $phpVersion, $this->config->read()['port']],
+                $this->files->get(__DIR__ . '/../stubs/isolated.valet.conf')
+            );
+        }
+
+        $this->files->putAsUser($this->nginxPath($valetSite), $siteConf);
+    }
+
+
+    /**
+     * Remove PHP Version isolation from a specific site.
+     *
+     * @param string $valetSite
+     * @return void
+     */
+    public function removeIsolation($valetSite)
+    {
+        // If a site has an SSL certificate, we need to keep its custom config file, but we can
+        // just re-generate it without defining a custom `valet.sock` file
+        if ($this->files->exists($this->certificatesPath())) {
+            $siteConf = $this->buildSecureNginxServer($valetSite);
+            $this->files->putAsUser($this->nginxPath($valetSite), $siteConf);
+        } else {
+            // When site doesn't have SSL, we can remove the custom nginx config file to remove isolation
+            $this->files->unlink($this->nginxPath($valetSite));
+        }
+    }
+
+    /**
+     * Extract PHP version of exising nginx conifg.
+     *
+     * @param string $url
+     * @return string|void
+     */
+    public function customPhpVersion($url)
+    {
+        if ($this->files->exists($this->nginxPath($url))) {
+            $siteConf = $this->files->get($this->nginxPath($url));
+
+            if (starts_with($siteConf, '# ' . ISOLATED_PHP_VERSION)) {
+                $firstLine = explode(PHP_EOL, $siteConf)[0];
+
+                return preg_replace("/[^\d]*/", '', $firstLine); // Example output: "74" or "81"
+            }
+        }
+    }
+
+    /**
+     * Replace .sock file in an Nginx site configuration file contents.
+     *
+     * @param string $siteConf
+     * @param string $phpVersion
+     * @return string
+     */
+    public function replaceSockFile($siteConf, $phpVersion)
+    {
+        $sockFile = PhpFpm::fpmSockName($phpVersion);
+
+        $siteConf = preg_replace('/valet[0-9]*.sock/', $sockFile, $siteConf);
+        // Remove ISOLATED_PHP_VERSION line from config
+        $siteConf = preg_replace('/# ' . ISOLATED_PHP_VERSION . '.*\n/', '', $siteConf);
+
+        return '# ' . ISOLATED_PHP_VERSION . '=' . $phpVersion . PHP_EOL . $siteConf;
+    }
+
+    /**
+     * Get PHP version from .valetphprc for a site.
+     *
+     * @param string $site
+     * @return string|null
+     */
+    public function phpRcVersion($site)
+    {
+        if ($site = $this->parked()->merge($this->links())->where('site', $site)->first()) {
+            $path = data_get($site, 'path') . '/.valetphprc';
+
+            if ($this->files->exists($path)) {
+                return PhpFpm::normalizePhpVersion(trim($this->files->get($path)));
+            }
+        }
     }
 }

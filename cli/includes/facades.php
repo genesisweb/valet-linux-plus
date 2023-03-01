@@ -171,6 +171,9 @@ class Ngrok extends Facade
  * @method static string getVersion(bool $real = false)
  * @method static string fpmServiceName()
  * @method static string fpmConfigPath()
+ * @method static string isolatedDirectories()
+ * @method static string isolateDirectory($site, $phpVersion)
+ * @method static string unIsolateDirectory($site)
  */
 class PhpFpm extends Facade
 {
@@ -203,6 +206,8 @@ class PhpFpm extends Facade
  * @method static void regenerateSecuredSitesConfig()
  * @method static string sitesPath()
  * @method static string certificatesPath()
+ * @method static string phpRcVersion($site)
+ * @method static string customPhpVersion($site)
  */
 class Site extends Facade
 {
@@ -300,6 +305,8 @@ class Mysql extends Facade
 /**
  * Class DevTools.
  *
+ * @method static void getBin(string $service)
+ * @method static void getService(string $service, bool $locate = false)
  * @method static void run(string $folder,string $service)
  */
 class DevTools extends Facade

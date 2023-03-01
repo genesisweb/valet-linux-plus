@@ -694,6 +694,84 @@ if (is_dir(VALET_HOME_PATH)) {
         }
         Ngrok::setAuthToken($authtoken);
     })->descriptions('Set authentication token for ngrok');
+
+    /**
+     * Allow the user to change the version of PHP Valet uses to serve the current site.
+     */
+    $app->command('isolate [phpVersion] [--site=]', function ($phpVersion, $site = null) {
+        if (! $site) {
+            $site = basename(getcwd());
+        }
+
+        if (is_null($phpVersion) && $phpVersion = Site::phpRcVersion($site)) {
+            info("Found '{$site}/.valetphprc' specifying version: {$phpVersion}");
+        }
+
+        PhpFpm::isolateDirectory($site, $phpVersion);
+    })->descriptions('Change the version of PHP used by Valet to serve the current working directory', [
+        'phpVersion' => 'The PHP version you want to use; e.g php@8.1',
+        '--site' => 'Specify the site to isolate (e.g. if the site isn\'t linked as its directory name)',
+    ]);
+
+    /**
+     * Allow the user to un-do specifying the version of PHP Valet uses to serve the current site.
+     */
+    $app->command('unisolate [--site=]', function ($site = null) {
+        if (! $site) {
+            $site = basename(getcwd());
+        }
+
+        PhpFpm::unIsolateDirectory($site);
+    })->descriptions('Stop customizing the version of PHP used by Valet to serve the current working directory', [
+        '--site' => 'Specify the site to un-isolate (e.g. if the site isn\'t linked as its directory name)',
+    ]);
+
+    /**
+     * List isolated sites.
+     */
+    $app->command('isolated', function () {
+        $sites = PhpFpm::isolatedDirectories();
+
+        table(['Path', 'PHP Version'], $sites->all());
+    })->descriptions('List all sites using isolated versions of PHP.');
+
+
+    /**
+     * Get the PHP executable path for a site.
+     */
+    $app->command('which-php [site]', function ($site) {
+        $phpVersion = Site::customPhpVersion(
+            Site::host($site ?: getcwd()).'.'.Configuration::read()['domain']
+        );
+
+        if (! $phpVersion) {
+            $phpVersion = Site::phpRcVersion($site ?: basename(getcwd()));
+        }
+
+        info(PhpFpm::getPhpExecutablePath($phpVersion));
+    })->descriptions('Get the PHP executable path for a given site', [
+        'site' => 'The site to get the PHP executable path for',
+    ]);
+
+    /**
+     * Proxy commands through to an isolated site's version of PHP.
+     */
+    $app->command('php [--site=] [command]', function () {
+        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+    })->descriptions("Proxy PHP commands with isolated site's PHP executable", [
+        'command' => "Command to run with isolated site's PHP executable",
+        '--site' => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+    ]);
+
+    /**
+     * Proxy commands through to an isolated site's version of Composer.
+     */
+    $app->command('composer [--site=] [command]', function () {
+        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+    })->descriptions("Proxy Composer commands with isolated site's PHP executable", [
+        'command' => "Composer command to run with isolated site's PHP executable",
+        '--site' => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+    ]);
 }
 
 /**

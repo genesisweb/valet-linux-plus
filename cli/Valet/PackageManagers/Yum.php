@@ -13,6 +13,10 @@ class Yum implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
+    const SUPPORTED_PHP_VERSIONS = [
+        'php',
+    ];
+
     /**
      * Create a new Yum instance.
      *
@@ -107,5 +111,10 @@ class Yum implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function supportedPhpVersions()
+    {
+        return collect(static::SUPPORTED_PHP_VERSIONS);
     }
 }

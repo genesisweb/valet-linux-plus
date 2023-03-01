@@ -77,22 +77,6 @@ interface ServiceManager
     public function isAvailable();
 
     /**
-     * Determine if service manager is systemctl/service.
-     *
-     * @return bool
-     */
-    public function _hasSystemd();
-
-    /**
-     * Determine if service manager is systemctl/service.
-     *
-     * @param Filesystem $files Filesystem object
-     *
-     * @return void
-     */
-    public function removeValetDns($files);
-
-    /**
      * Status of the given services.
      *
      * @param mixed $services Service name

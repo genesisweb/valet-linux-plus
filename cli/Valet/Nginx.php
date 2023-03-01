@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use Tightenco\Collect\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
@@ -231,5 +232,18 @@ class Nginx
         if ($this->files->exists('/etc/nginx/sites-available/default')) {
             $this->files->symlink('/etc/nginx/sites-available/default', '/etc/nginx/sites-enabled/default');
         }
+    }
+
+    /**
+     * Return a list of all sites with explicit Nginx configurations.
+     *
+     * @return Collection
+     */
+    public function configuredSites()
+    {
+        return collect($this->files->scandir(VALET_HOME_PATH.'/Nginx'))
+            ->reject(function ($file) {
+                return starts_with($file, '.');
+            });
     }
 }
