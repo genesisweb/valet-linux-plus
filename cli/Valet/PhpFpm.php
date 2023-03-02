@@ -261,9 +261,10 @@ class PhpFpm
      *
      * @param string $directory
      * @param string $version
+     * @param bool $secure
      * @return void
      */
-    public function isolateDirectory($directory, $version)
+    public function isolateDirectory($directory, $version, $secure = false)
     {
         $site = $this->site->getSiteUrl($directory);
 
@@ -272,7 +273,7 @@ class PhpFpm
         $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
         $this->createConfigurationFiles($version);
 
-        $this->site->isolate($site, $version);
+        $this->site->isolate($site, $version, $secure);
 
         $this->stopIfUnused($oldCustomPhpVersion);
         $this->restart($version);

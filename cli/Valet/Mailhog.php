@@ -96,7 +96,7 @@ class Mailhog
     {
         $domain = \Configuration::read()['domain'];
 
-        \Site::secure("mailhog.{$domain}", __DIR__.'/../stubs/mailhog.conf');
+        \Site::proxyCreate("mailhog.{$domain}", 'http://localhost:8025', true);
     }
 
     /**

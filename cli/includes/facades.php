@@ -172,7 +172,7 @@ class Ngrok extends Facade
  * @method static string fpmServiceName()
  * @method static string fpmConfigPath()
  * @method static string isolatedDirectories()
- * @method static string isolateDirectory($site, $phpVersion)
+ * @method static string isolateDirectory($site, $phpVersion, $secure = false)
  * @method static string unIsolateDirectory($site)
  */
 class PhpFpm extends Facade

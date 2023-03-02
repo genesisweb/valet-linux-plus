@@ -75,7 +75,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
-        Mailhog::updateDomain();
+//        Mailhog::updateDomain();
         PhpFpm::restart();
         Nginx::restart();
 
@@ -698,7 +698,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Allow the user to change the version of PHP Valet uses to serve the current site.
      */
-    $app->command('isolate [phpVersion] [--site=]', function ($phpVersion, $site = null) {
+    $app->command('isolate [phpVersion] [--site=] [--secure]', function ($phpVersion, $site = null, $secure) {
         if (! $site) {
             $site = basename(getcwd());
         }
@@ -707,10 +707,11 @@ if (is_dir(VALET_HOME_PATH)) {
             info("Found '{$site}/.valetphprc' specifying version: {$phpVersion}");
         }
 
-        PhpFpm::isolateDirectory($site, $phpVersion);
+        PhpFpm::isolateDirectory($site, $phpVersion, $secure);
     })->descriptions('Change the version of PHP used by Valet to serve the current working directory', [
         'phpVersion' => 'The PHP version you want to use; e.g php@8.1',
         '--site' => 'Specify the site to isolate (e.g. if the site isn\'t linked as its directory name)',
+        '--secure' => 'Create a isolated site with a trusted TLS certificate',
     ]);
 
     /**
