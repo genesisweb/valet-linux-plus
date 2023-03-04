@@ -53,6 +53,8 @@ class Mailhog
     public function ensureInstalled()
     {
         if (!$this->isAvailable()) {
+            $optDir = '/opt/valet-linux';
+            $this->files->ensureDirExists($optDir);
             $this->cli->run('ln -s '.VALET_BIN_PATH.'/mailhog /opt/valet-linux/mailhog');
         }
     }

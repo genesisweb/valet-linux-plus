@@ -71,13 +71,13 @@ class Site
      */
     public function links()
     {
-        $certsPath = VALET_HOME_PATH . '/Certificates';
+        $certsPath = $this->certificatesPath();
 
         $this->files->ensureDirExists($certsPath, user());
 
         $certs = $this->getCertificates($certsPath);
 
-        return $this->getLinks(VALET_HOME_PATH . '/Sites', $certs);
+        return $this->getLinks($this->sitesPath(), $certs);
     }
 
     /**
@@ -90,7 +90,7 @@ class Site
         $dir = $this->nginxPath();
         $domain = $this->config->read()['domain'];
         $links = $this->links();
-        $certs = $this->getCertificates(VALET_HOME_PATH . '/Certificates');
+        $certs = $this->getCertificates($this->certificatesPath());
         if (!$this->files->exists($dir)) {
             return collect();
         }
@@ -257,6 +257,18 @@ class Site
         $this->unsecure($url);
 
         $this->files->ensureDirExists($this->nginxPath(), user());
+
+        $siteConf = str_array_replace(
+            [
+                'VALET_HOME_PATH' => $this->valetHomePath(),
+                'VALET_SERVER_PATH' => VALET_SERVER_PATH,
+                'VALET_STATIC_PREFIX' => VALET_STATIC_PREFIX,
+                'VALET_SITE' => $url,
+                'VALET_HTTP_PORT' => $this->config->get('port', 80),
+                'VALET_HTTPS_PORT' => $this->config->get('https_port', 443),
+            ],
+            $siteConf
+        );
 
         $this->files->putAsUser(
             $this->nginxPath($url),
@@ -466,6 +478,9 @@ class Site
      */
     public function secure($url, $stub = null)
     {
+        if (is_null($stub)) {
+            $stub = $this->prepareConf($url, true);
+        }
         $this->unsecure($url);
 
         $this->files->ensureDirExists($this->certificatesPath(), user());
@@ -583,7 +598,7 @@ class Site
     public function createSecureNginxServer($url, $stub = null)
     {
         $this->files->putAsUser(
-            VALET_HOME_PATH . '/Nginx/' . $url,
+            $this->nginxPath($url),
             $this->buildSecureNginxServer($url, $stub)
         );
     }
@@ -598,12 +613,12 @@ class Site
      */
     public function buildSecureNginxServer($url, $stub = null)
     {
-        $stub = ($stub ? $stub : $this->files->get(__DIR__ . '/../stubs/secure.valet.conf'));
+        $stub = ($stub ?: $this->files->get(__DIR__ . '/../stubs/secure.valet.conf'));
         $path = $this->certificatesPath();
 
         return str_array_replace(
             [
-                'VALET_HOME_PATH' => VALET_HOME_PATH,
+                'VALET_HOME_PATH' => $this->valetHomePath(),
                 'VALET_SERVER_PATH' => VALET_SERVER_PATH,
                 'VALET_STATIC_PREFIX' => VALET_STATIC_PREFIX,
                 'VALET_SITE' => $url,
@@ -627,7 +642,7 @@ class Site
     public function unsecure($url)
     {
         if ($this->files->exists($this->certificatesPath() . '/' . $url . '.crt')) {
-            $this->files->unlink(VALET_HOME_PATH . '/Nginx/' . $url);
+            $this->files->unlink($this->nginxPath() . '/' . $url);
 
             $this->files->unlink($this->certificatesPath() . '/' . $url . '.conf');
             $this->files->unlink($this->certificatesPath() . '/' . $url . '.key');
@@ -658,7 +673,7 @@ class Site
      */
     public function sitesPath()
     {
-        return VALET_HOME_PATH . '/Sites';
+        return $this->valetHomePath() . '/Sites';
     }
 
     /**
@@ -668,7 +683,7 @@ class Site
      */
     public function certificatesPath()
     {
-        return VALET_HOME_PATH . '/Certificates';
+        return $this->valetHomePath() . '/Certificates';
     }
 
     /**
@@ -782,37 +797,25 @@ class Site
      * Create new nginx config or modify existing nginx config to isolate this site
      * to a custom version of PHP.
      *
-     * @param string $valetSite
+     * @param string $url
      * @param string $phpVersion
      * @param bool $secure
      * @return void
      */
-    public function isolate($valetSite, $phpVersion, $secure = false)
+    public function isolate($url, $phpVersion, $secure = false)
     {
         $stub = $secure ? __DIR__ . '/../stubs/secure.isolated.valet.conf' : __DIR__ . '/../stubs/isolated.valet.conf';
-
-        // General Variables
-        $siteConf = str_array_replace(
-            [
-                'VALET_HOME_PATH' => $this->valetHomePath(),
-                'VALET_SERVER_PATH' => VALET_SERVER_PATH,
-                'VALET_STATIC_PREFIX' => VALET_STATIC_PREFIX,
-                'VALET_SITE' => $valetSite,
-                'VALET_HTTP_PORT' => $this->config->get('port', 80),
-                'VALET_HTTPS_PORT' => $this->config->get('https_port', 443),
-            ],
-            $this->files->get($stub)
-        );
 
         // Isolate specific variables
         $siteConf = str_array_replace([
             'VALET_PHP_FPM_SOCKET' => PhpFpm::fpmSockName($phpVersion),
             'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
-        ], $siteConf);
+        ], $this->files->get($stub));
+
         if ($secure) {
-            $this->secure($valetSite, $siteConf);
+            $this->secure($url, $siteConf);
         } else {
-            $this->put($this->nginxPath($valetSite), $siteConf);
+            $this->put($url, $siteConf);
         }
     }
 
@@ -827,6 +830,7 @@ class Site
     {
         // If a site has an SSL certificate, we need to keep its custom config file, but we can
         // just re-generate it without defining a custom `valet.sock` file
+        // TODO: Validate site certificates instead of certificatePath.
         if ($this->files->exists($this->certificatesPath())) {
             $siteConf = $this->buildSecureNginxServer($valetSite);
             $this->files->putAsUser($this->nginxPath($valetSite), $siteConf);
@@ -840,16 +844,23 @@ class Site
      * Extract PHP version of exising nginx conifg.
      *
      * @param string $url
+     * @param string $siteConf
+     * @param bool $returnDecimal
      * @return string|void
      */
-    public function customPhpVersion($url)
+    public function customPhpVersion($url, $siteConf = null, $returnDecimal = false)
     {
-        if ($this->files->exists($this->nginxPath($url))) {
-            $siteConf = $this->files->get($this->nginxPath($url));
-            if (strpos($siteConf, '# ' . ISOLATED_PHP_VERSION) !== false) {
-                preg_match('/^# ISOLATED_PHP_VERSION=(.*?)\n/m', $siteConf, $version);
-                return preg_replace("/[^\d]*/", '', $version[1]); // Example output: "74" or "81"
+        if (!$this->files->exists($this->nginxPath($url))) {
+            return;
+        }
+
+        $siteConf = $siteConf ?: $this->files->get($this->nginxPath($url));
+        if (strpos($siteConf, '# ' . ISOLATED_PHP_VERSION) !== false) {
+            preg_match('/^# ISOLATED_PHP_VERSION=(.*?)\n/m', $siteConf, $version);
+            if ($returnDecimal) {
+                return $version[1];
             }
+            return preg_replace("/[^\d]*/", '', $version[1]); // Example output: "74" or "81"
         }
     }
 
@@ -895,5 +906,53 @@ class Site
         }
 
         return $this->files->get($this->nginxPath() . '/' . $url);
+    }
+
+    /**
+     * Prepare Nginx Conf based on existing config file.
+     * @param string $url
+     * @param bool $requireSecure
+     * @return null|string
+     **/
+    private function prepareConf(string $url, bool $requireSecure = false) {
+        /*
+         * Find Stub name
+         * Get related variables.
+         * There are two stub types: isolated & proxy.
+         * If Isolated then get PHP version
+         * If proxy then get proxy_pass host.
+         * */
+        if (!$this->files->exists($this->nginxPath($url))) {
+            return null;
+        }
+
+        $existingConf = $this->files->get($this->nginxPath($url));
+
+        preg_match('/# valet stub: (?<tls>secure)?(?:\.)?(?<stub>.*?).valet.conf/m', $existingConf, $stubDetail);
+
+        if (empty($stubDetail['stub'])) {
+            return null;
+        }
+
+        if ($stubDetail['stub'] === 'proxy') {
+            // Find proxy_pass from existingConf.
+
+            // get new stub and replace proxy_pass and return.
+        }
+
+        if ($stubDetail['stub'] === 'isolated') {
+            $phpVersion = $this->customPhpVersion($url, $existingConf, true);
+            // empty($stubDetail['tls']) ||  We can use this statement if needed.
+            $stub = $requireSecure ?
+                __DIR__ . '/../stubs/secure.isolated.valet.conf' :
+                __DIR__ . '/../stubs/isolated.valet.conf';
+            $stub = $this->files->get($stub);
+            // Isolate specific variables
+            return str_array_replace([
+                'VALET_PHP_FPM_SOCKET' => \PhpFpm::fpmSockName($phpVersion),
+                'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
+            ], $stub);
+        }
+        return null;
     }
 }

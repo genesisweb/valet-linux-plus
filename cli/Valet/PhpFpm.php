@@ -372,7 +372,7 @@ class PhpFpm
     public static function fpmSockName($phpVersion = null)
     {
         if (!$phpVersion) {
-            $phpVersion = self::getPhpVersion();
+            $phpVersion = \PhpFpm::getPhpVersion();
         }
 
         $versionInteger = preg_replace('~[^\d]~', '', $phpVersion);

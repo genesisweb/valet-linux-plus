@@ -99,7 +99,7 @@ class DnsMasq
     public function install($domain = 'test')
     {
         $this->dnsmasqSetup();
-        $this->fixResolved();
+        $this->stopResolved();
         $this->createCustomConfigFile($domain);
         $this->sm->restart('dnsmasq');
     }
@@ -133,7 +133,10 @@ class DnsMasq
      */
     public function createCustomConfigFile($domain)
     {
-        $this->files->putAsUser($this->configPath, 'address=/.'.$domain.'/127.0.0.1'.PHP_EOL);
+        $this->files->putAsUser(
+            $this->configPath,
+            'address=/.'.$domain.'/127.0.0.1'.PHP_EOL.'server=1.1.1.1'.PHP_EOL.'server=8.8.8.8'.PHP_EOL
+        );
     }
 
     /**
@@ -141,19 +144,12 @@ class DnsMasq
      *
      * @return void
      */
-    public function fixResolved()
+    public function stopResolved()
     {
-        // https://www.freedesktop.org/software/systemd/man/resolved.conf.html#DNSStubListener=
-        // Disable listener on port 53
-        $this->files->ensureDirExists('/etc/systemd/resolved.conf.d');
-        $this->files->putAsUser(
-            '/etc/systemd/resolved.conf.d/valet.conf',
-            $this->files->get(__DIR__.'/../stubs/resolved.conf')
-        );
-        if ($this->sm->disabled('systemd-resolved')) {
-            $this->sm->enable('systemd-resolved');
+        if (!$this->sm->disabled('systemd-resolved')) {
+            $this->sm->disable('systemd-resolved');
         }
-        $this->sm->restart('systemd-resolved');
+        $this->sm->stop('systemd-resolved');
     }
 
     /**

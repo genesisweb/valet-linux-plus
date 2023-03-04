@@ -99,7 +99,7 @@ class Configuration extends Facade
  * @method static void stop()
  * @method static void restart()
  * @method static void createCustomConfigFile(string $domain)
- * @method static void fixResolved()
+ * @method static void stopResolved()
  * @method static void dnsmasqSetup()
  * @method static void updateDomain(string $newDomain)
  * @method static void uninstall()
