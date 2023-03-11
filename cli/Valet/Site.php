@@ -636,12 +636,18 @@ class Site
      * Unsecure the given URL so that it will use HTTP again.
      *
      * @param string $url
+     * @param bool $preserveUnsecureConfig
      *
      * @return void
      */
-    public function unsecure($url)
+    public function unsecure($url, $preserveUnsecureConfig = false)
     {
+        $stub = null;
         if ($this->files->exists($this->certificatesPath() . '/' . $url . '.crt')) {
+            if ($preserveUnsecureConfig) {
+                $stub = $this->prepareConf($url);
+            }
+
             $this->files->unlink($this->nginxPath() . '/' . $url);
 
             $this->files->unlink($this->certificatesPath() . '/' . $url . '.conf');
@@ -651,6 +657,9 @@ class Site
 
             $this->cli->run(sprintf('certutil -d sql:$HOME/.pki/nssdb -D -n "%s"', $url));
             $this->cli->run(sprintf('certutil -d $HOME/.mozilla/firefox/*.default -D -n "%s"', $url));
+        }
+        if ($stub) {
+            $this->put($url, $stub);
         }
     }
 
@@ -787,7 +796,7 @@ class Site
         $directory = str_replace('.' . $tld, '', $directory); // Remove .tld from sitename if it was provided
 
         if (!$this->parked()->merge($this->links())->where('site', $directory)->count() > 0) {
-            throw new DomainException("The [{$directory}] site could not be found in Valet's site list.");
+            throw new \DomainException("The [{$directory}] site could not be found in Valet's site list.");
         }
 
         return $directory . '.' . $tld;
@@ -830,8 +839,7 @@ class Site
     {
         // If a site has an SSL certificate, we need to keep its custom config file, but we can
         // just re-generate it without defining a custom `valet.sock` file
-        // TODO: Validate site certificates instead of certificatePath.
-        if ($this->files->exists($this->certificatesPath())) {
+        if ($this->files->exists($this->certificatesPath() . '/' . $valetSite . '.crt')) {
             $siteConf = $this->buildSecureNginxServer($valetSite);
             $this->files->putAsUser($this->nginxPath($valetSite), $siteConf);
         } else {
@@ -850,7 +858,7 @@ class Site
      */
     public function customPhpVersion($url, $siteConf = null, $returnDecimal = false)
     {
-        if (!$this->files->exists($this->nginxPath($url))) {
+        if (is_null($siteConf) && !$this->files->exists($this->nginxPath($url))) {
             return;
         }
 
@@ -862,6 +870,26 @@ class Site
             }
             return preg_replace("/[^\d]*/", '', $version[1]); // Example output: "74" or "81"
         }
+    }
+
+    /**
+     * Extract Proxy pass of exising nginx conifg.
+     *
+     * @param string $url
+     * @param string $siteConf
+     * @return string|null
+     */
+    public function getProxyPass($url, $siteConf = null)
+    {
+        if (is_null($siteConf) && !$this->files->exists($this->nginxPath($url))) {
+            return null;
+        }
+
+        $siteConf = $siteConf ?: $this->files->get($this->nginxPath($url));
+        preg_match('/proxy_pass (?<host>.*?);/m', $siteConf, $matches);
+
+        return $matches['host'] ?? null;
+
     }
 
     /**
@@ -915,13 +943,6 @@ class Site
      * @return null|string
      **/
     private function prepareConf(string $url, bool $requireSecure = false) {
-        /*
-         * Find Stub name
-         * Get related variables.
-         * There are two stub types: isolated & proxy.
-         * If Isolated then get PHP version
-         * If proxy then get proxy_pass host.
-         * */
         if (!$this->files->exists($this->nginxPath($url))) {
             return null;
         }
@@ -936,8 +957,18 @@ class Site
 
         if ($stubDetail['stub'] === 'proxy') {
             // Find proxy_pass from existingConf.
+            $proxyPass = $this->getProxyPass($url, $existingConf);
+            if (!$proxyPass) {
+                return null;
+            }
+            $stub = $requireSecure ?
+                __DIR__ . '/../stubs/secure.proxy.valet.conf' :
+                __DIR__ . '/../stubs/proxy.valet.conf';
+            $stub = $this->files->get($stub);
 
-            // get new stub and replace proxy_pass and return.
+            return str_array_replace([
+                'VALET_PROXY_HOST' => $proxyPass
+            ], $stub);
         }
 
         if ($stubDetail['stub'] === 'isolated') {

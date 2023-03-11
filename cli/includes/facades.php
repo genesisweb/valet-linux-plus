@@ -202,7 +202,7 @@ class PhpFpm extends Facade
  * @method static void trustCertificate(string $crtPath, string $url)
  * @method static void createSecureNginxServer(string $url, string $stub = null)
  * @method static void buildSecureNginxServer(string $url, string $stub = null)
- * @method static void unsecure(string $url)
+ * @method static void unsecure(string $url, bool $preserveUnsecureConfig = false)
  * @method static void regenerateSecuredSitesConfig()
  * @method static string sitesPath()
  * @method static string certificatesPath()

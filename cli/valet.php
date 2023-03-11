@@ -224,7 +224,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('unsecure [domain]', function ($domain = null) {
         $url = ($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'];
 
-        Site::unsecure($url);
+        Site::unsecure($url, true);
         Nginx::restart();
 
         info('The ['.$url.'] site will now serve traffic over HTTP.');
