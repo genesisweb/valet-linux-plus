@@ -2,8 +2,6 @@
 
 namespace Valet\Contracts;
 
-use Valet\Filesystem;
-
 interface ServiceManager
 {
     /**

@@ -124,7 +124,7 @@ class LinuxService implements ServiceManager
     {
         $service = $this->getRealService($service);
 
-        return (strpos(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled')) === false;
+        return strpos(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled') === false;
     }
 
     /**

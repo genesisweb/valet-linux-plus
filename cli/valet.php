@@ -464,7 +464,6 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 default:
                     break;
-
             }
         }
 
@@ -512,14 +511,14 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('use [preferedversion] [--update-cli] [--install-ext]', function (
         $preferedVersion = null,
         $updateCli = null,
-        $installExt = null)
-    {
+        $installExt = null
+    ) {
         info('Changing php-fpm version...');
         PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
         info('php-fpm version successfully changed! 🎉');
     })->descriptions(
         'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
-        . PhpFpm::getVersion(true),
+        .PhpFpm::getVersion(true),
         [
             '--update-cli' => 'Updates CLI version as well',
         ]
@@ -697,7 +696,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Allow the user to change the version of PHP Valet uses to serve the current site.
      */
     $app->command('isolate [phpVersion] [--site=] [--secure]', function ($phpVersion, $site = null, $secure) {
-        if (! $site) {
+        if (!$site) {
             $site = basename(getcwd());
         }
 
@@ -708,15 +707,15 @@ if (is_dir(VALET_HOME_PATH)) {
         PhpFpm::isolateDirectory($site, $phpVersion, $secure);
     })->descriptions('Change the version of PHP used by Valet to serve the current working directory', [
         'phpVersion' => 'The PHP version you want to use; e.g php@8.1',
-        '--site' => 'Specify the site to isolate (e.g. if the site isn\'t linked as its directory name)',
-        '--secure' => 'Create a isolated site with a trusted TLS certificate',
+        '--site'     => 'Specify the site to isolate (e.g. if the site isn\'t linked as its directory name)',
+        '--secure'   => 'Create a isolated site with a trusted TLS certificate',
     ]);
 
     /**
      * Allow the user to un-do specifying the version of PHP Valet uses to serve the current site.
      */
     $app->command('unisolate [--site=]', function ($site = null) {
-        if (! $site) {
+        if (!$site) {
             $site = basename(getcwd());
         }
 
@@ -734,7 +733,6 @@ if (is_dir(VALET_HOME_PATH)) {
         table(['Path', 'PHP Version'], $sites->all());
     })->descriptions('List all sites using isolated versions of PHP.');
 
-
     /**
      * Get the PHP executable path for a site.
      */
@@ -743,7 +741,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Site::host($site ?: getcwd()).'.'.Configuration::read()['domain']
         );
 
-        if (! $phpVersion) {
+        if (!$phpVersion) {
             $phpVersion = Site::phpRcVersion($site ?: basename(getcwd()));
         }
 
@@ -759,7 +757,7 @@ if (is_dir(VALET_HOME_PATH)) {
         warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
     })->descriptions("Proxy PHP commands with isolated site's PHP executable", [
         'command' => "Command to run with isolated site's PHP executable",
-        '--site' => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
     ]);
 
     /**
@@ -769,7 +767,7 @@ if (is_dir(VALET_HOME_PATH)) {
         warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
     })->descriptions("Proxy Composer commands with isolated site's PHP executable", [
         'command' => "Composer command to run with isolated site's PHP executable",
-        '--site' => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
     ]);
 }
 

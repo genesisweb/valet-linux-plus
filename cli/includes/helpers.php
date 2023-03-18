@@ -89,12 +89,13 @@ if (!function_exists('resolve')) {
     }
 }
 
-if (! function_exists('ends_with')) {
+if (!function_exists('ends_with')) {
     /**
      * Determine if a given string ends with a given substring.
      *
-     * @param  string  $haystack
-     * @param  string|array  $needles
+     * @param string       $haystack
+     * @param string|array $needles
+     *
      * @return bool
      */
     function ends_with($haystack, $needles)
@@ -109,12 +110,13 @@ if (! function_exists('ends_with')) {
     }
 }
 
-if (! function_exists('starts_with')) {
+if (!function_exists('starts_with')) {
     /**
      * Determine if a given string starts with a given substring.
      *
-     * @param  string  $haystack
-     * @param  string|string[]  $needles
+     * @param string          $haystack
+     * @param string|string[] $needles
+     *
      * @return bool
      */
     function starts_with($haystack, $needles)
