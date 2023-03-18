@@ -1,4 +1,4 @@
-<p align="center"><img width="500" src="/genesisweb/valet-linux-plus/raw/master/images/logo.png"></p>
+<p align="center"><img width="500" src="images/logo.png"></p>
 
 <p align="center">
 <a href="https://github.styleci.io/repos/218757845"><img src="https://github.styleci.io/repos/218757845/shield?branch=master" alt="StyleCI"></a>
