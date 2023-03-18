@@ -149,7 +149,7 @@ class Mysql
 
     public function configureDataDirectory()
     {
-        $this->cli->runAsUser('mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function($statusCode, $output) {
+        $this->cli->runAsUser('mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
             output($output);
         });
     }

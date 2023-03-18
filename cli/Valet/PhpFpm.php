@@ -80,7 +80,7 @@ class PhpFpm
 
     public function installExtensions($version = null)
     {
-        $version = $version?: $this->version;
+        $version = $version ?: $this->version;
         if ($this->pm instanceof Pacman) {
             warning('PHP Extension install is not supported for Pacman package manager');
 
@@ -199,6 +199,7 @@ class PhpFpm
      * Stop a given PHP version, if that specific version isn't being used globally or by any sites.
      *
      * @param string|null $phpVersion
+     *
      * @return void
      */
     public function stopIfUnused($phpVersion = null)
@@ -210,7 +211,6 @@ class PhpFpm
         $phpVersion = $this->normalizePhpVersion($phpVersion);
 
         if (!in_array($phpVersion, $this->utilizedPhpVersions())) {
-
             $this->sm->stop($this->fpmServiceName($phpVersion));
         }
     }
@@ -253,6 +253,7 @@ class PhpFpm
         if (!$version) {
             $version = $this->getPhpVersion();
         }
+
         return "php{$version}-fpm";
     }
 
@@ -261,7 +262,8 @@ class PhpFpm
      *
      * @param string $directory
      * @param string $version
-     * @param bool $secure
+     * @param bool   $secure
+     *
      * @return void
      */
     public function isolateDirectory($directory, $version, $secure = false)
@@ -286,6 +288,7 @@ class PhpFpm
      * Remove PHP version isolation for a given directory.
      *
      * @param string $directory
+     *
      * @return void
      */
     public function unIsolateDirectory($directory)
@@ -309,7 +312,7 @@ class PhpFpm
     public function isolatedDirectories()
     {
         return $this->nginx->configuredSites()->filter(function ($item) {
-            return strpos($this->files->get(VALET_HOME_PATH . '/Nginx/' . $item), ISOLATED_PHP_VERSION) !== false;
+            return strpos($this->files->get(VALET_HOME_PATH.'/Nginx/'.$item), ISOLATED_PHP_VERSION) !== false;
         })->map(function ($item) {
             return ['url' => $item, 'version' => $this->normalizePhpVersion($this->site->customPhpVersion($item))];
         });
@@ -319,6 +322,7 @@ class PhpFpm
      * Symlink (Capistrano-style) a given Valet.sock file to be the primary valet.sock.
      *
      * @param string $phpVersion
+     *
      * @return void
      */
     public function symlinkPrimaryValetSock($phpVersion = null)
@@ -328,8 +332,8 @@ class PhpFpm
         }
 
         $this->files->symlinkAsUser(
-            VALET_HOME_PATH . '/' . $this->fpmSockName($phpVersion),
-            VALET_HOME_PATH . '/valet.sock'
+            VALET_HOME_PATH.'/'.$this->fpmSockName($phpVersion),
+            VALET_HOME_PATH.'/valet.sock'
         );
     }
 
@@ -338,14 +342,14 @@ class PhpFpm
      */
     public static function normalizePhpVersion($version)
     {
-        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string)$version), 0, 3);
+        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string) $version), 0, 3);
     }
-
 
     /**
      * Validate the requested version to be sure we can support it.
      *
      * @param string $version
+     *
      * @return string
      */
     public function validateRequestedVersion($version): string
@@ -367,6 +371,7 @@ class PhpFpm
      * Get FPM sock file name for a given PHP version.
      *
      * @param string|null $phpVersion
+     *
      * @return string
      */
     public static function fpmSockName($phpVersion = null)
@@ -386,18 +391,19 @@ class PhpFpm
      * Writes FPM config file, pointing to the correct .sock file, and log and ini files.
      *
      * @param string $phpVersion
+     *
      * @return void
      */
     public function createConfigurationFiles($phpVersion)
     {
         info("Updating PHP configuration for {$phpVersion}...");
 
-        $fpmConfigFile = $this->fpmConfigPath($phpVersion) . '/valet.conf';
+        $fpmConfigFile = $this->fpmConfigPath($phpVersion).'/valet.conf';
 
         $this->files->ensureDirExists(dirname($fpmConfigFile), user());
 
         // rename (to disable) old FPM Pool configuration, regardless of whether it's a default config or one customized by an older Valet version
-        $oldFile = dirname($fpmConfigFile) . '/www.conf';
+        $oldFile = dirname($fpmConfigFile).'/www.conf';
         if (file_exists($oldFile)) {
             $this->cli->run("mv $oldFile $oldFile-backup");
         }
@@ -406,17 +412,17 @@ class PhpFpm
         $contents = str_replace(
             ['VALET_USER', 'VALET_HOME_PATH', 'valet.sock'],
             [user(), VALET_HOME_PATH, self::fpmSockName($phpVersion)],
-            $this->files->get(__DIR__ . '/../stubs/etc-phpfpm-valet.conf')
+            $this->files->get(__DIR__.'/../stubs/etc-phpfpm-valet.conf')
         );
         $this->files->put($fpmConfigFile, $contents);
 
         // Create other config files from stubs
-        $destDir = dirname(dirname($fpmConfigFile)) . '/conf.d';
+        $destDir = dirname(dirname($fpmConfigFile)).'/conf.d';
         $this->files->ensureDirExists($destDir, user());
 
         // Create log directory and file
-        $this->files->ensureDirExists(VALET_HOME_PATH . '/Log', user());
-        $this->files->touch(VALET_HOME_PATH . '/Log/php-fpm.log', user());
+        $this->files->ensureDirExists(VALET_HOME_PATH.'/Log', user());
+        $this->files->touch(VALET_HOME_PATH.'/Log/php-fpm.log', user());
     }
 
     /**
@@ -432,7 +438,7 @@ class PhpFpm
         })->unique();
 
         return $this->nginx->configuredSites()->map(function ($file) use ($fpmSockFiles) {
-            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
+            $content = $this->files->get(VALET_HOME_PATH.'/Nginx/'.$file);
 
             // Get the normalized PHP version for this config file, if it's defined
             foreach ($fpmSockFiles as $sock) {
@@ -473,17 +479,18 @@ class PhpFpm
         if (!$this->version) {
             $this->version = $this->normalizePhpVersion(PHP_VERSION);
         }
+
         return $this->version;
     }
 
     public function getPhpExecutablePath($phpVersion = null)
     {
-        if (! $phpVersion) {
+        if (!$phpVersion) {
             return \DevTools::getBin('php');
         }
 
         $phpVersion = $this->normalizePhpVersion($phpVersion);
 
-        return \DevTools::getBin("php".$phpVersion);
+        return \DevTools::getBin('php'.$phpVersion);
     }
 }

@@ -171,7 +171,7 @@ $uri = rawurldecode(
 );
 
 $siteName = basename(
-// Filter host to support xip.io feature
+    // Filter host to support xip.io feature
     valet_support_xip_io(explode(':', strtolower($_SERVER['HTTP_HOST']))[0]),
     '.'.$valetConfig['domain']
 );
