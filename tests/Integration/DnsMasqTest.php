@@ -60,6 +60,5 @@ class StubForFiles extends Filesystem
 {
     public function ensureDirExists($path, $owner = null, $mode = 0755)
     {
-
     }
 }

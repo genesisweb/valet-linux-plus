@@ -49,4 +49,8 @@ interface PackageManager
      * @return bool
      */
     public function isAvailable();
+
+    public function supportedPhpVersions();
+
+    public function getPhpServicePattern();
 }

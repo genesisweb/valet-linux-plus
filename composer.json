@@ -34,8 +34,12 @@
             "email": "joaquin@marcher.com.uy"
         },
         {
-            "name": "Gensis Web",
-            "email": "info@genesisweb.co.in"
+            "name": "Uttam Rabadiya",
+            "email": "mail@uttam.dev"
+        },
+        {
+            "name": "Divyank Munjapara",
+            "email": "mail@divyank.dev"
         }
     ],
     "autoload": {

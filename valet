@@ -3,7 +3,7 @@
 set -e
 
 SOURCE="${BASH_SOURCE[0]}"
-SUDOCMDS="uninstall install start restart stop unsecure secure use"
+SUDOCMDS="uninstall install start restart stop unsecure secure use isolate unisolate"
 HOMEPATH=$HOME
 
 function check_dependencies() {
@@ -21,7 +21,7 @@ function check_dependencies() {
     done
 
     if [[ $msg != '' ]]; then
-        printf "${RED}You have missing Valet dependiencies:\n"
+        printf "${RED}You have missing Valet dependencies:\n"
         printf "$msg"
         printf "\nPlease refer to https://valetlinux.plus/ on how to install them.${NC}\n"
         exit 1
@@ -31,9 +31,14 @@ function check_dependencies() {
 function verify_ngrok_auth() {
     if ! [[ -f "${HOME}/.config/ngrok/ngrok.yml" ]]
     then
-        printf "Please register for an ngrok account at: https://dashboard.ngrok.com/signup and install your authtoken.${NC}\n"
-        printf "Valet can help you to install the authtoken, use 'valet ngrok-auth {authtoken}' command.\n"
-        exit 1
+        if  [[ -f "${HOME}/.ngrok2/ngrok.yml" ]]
+        then
+            sudo -u $USER "$DIR/bin/ngrok" config upgrade --relocate
+        else
+            printf "Please register for an ngrok account at: https://dashboard.ngrok.com/signup and install your authtoken.${NC}\n"
+            printf "Valet can help you to install the authtoken, use 'valet ngrok-auth {authtoken}' command.\n"
+            exit 1
+        fi
     fi
 }
 
@@ -106,6 +111,30 @@ then
     # Fetch Ngrok URL In Background...
     bash "$DIR/cli/scripts/fetch-share-url.sh" &
     sudo -u $USER "$DIR/bin/ngrok" http "$HOST.$DOMAIN:$PORT" --host-header=rewrite
+    exit
+
+# Proxy PHP commands to the "php" executable on the isolated site
+elif [[ "$1" = "php" ]]
+then
+    if [[ $2 == *"--site="* ]]; then
+        SITE=${2#*=}
+        $(php "$DIR/cli/valet.php" which-php $SITE) "${@:3}"
+    else
+        $(php "$DIR/cli/valet.php" which-php) "${@:2}"
+    fi
+
+    exit
+
+# Proxy Composer commands with the "php" executable on the isolated site
+elif [[ "$1" = "composer" ]]
+then
+    if [[ $2 == *"--site="* ]]; then
+        SITE=${2#*=}
+        $(php "$DIR/cli/valet.php" which-php $SITE) $(which composer) "${@:3}"
+    else
+        $(php "$DIR/cli/valet.php" which-php) $(which composer) "${@:2}"
+    fi
+
     exit
 
 # Finally, for every other command we will just proxy into the PHP tool

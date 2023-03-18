@@ -2,8 +2,6 @@
 
 namespace Valet\Contracts;
 
-use Valet\Filesystem;
-
 interface ServiceManager
 {
     /**
@@ -75,22 +73,6 @@ interface ServiceManager
      * @return bool
      */
     public function isAvailable();
-
-    /**
-     * Determine if service manager is systemctl/service.
-     *
-     * @return bool
-     */
-    public function _hasSystemd();
-
-    /**
-     * Determine if service manager is systemctl/service.
-     *
-     * @param Filesystem $files Filesystem object
-     *
-     * @return void
-     */
-    public function installValetDns($files);
 
     /**
      * Status of the given services.

@@ -11,6 +11,8 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\PackageManagers\Dnf;
+use Valet\PackageManagers\Pacman;
 
 class Mysql
 {
@@ -66,10 +68,13 @@ class Mysql
      */
     public function install($useMariaDB = false)
     {
+        if ($this->pm instanceof Pacman || $this->pm instanceof Dnf) {
+            $useMariaDB = true;
+        }
         $package = $useMariaDB ? $this->pm->mariaDBPackageName : $this->pm->mysqlPackageName;
         $this->currentPackage = $package;
         $service = $this->serviceName();
-        if (!extension_loaded('mysql')) {
+        if ($this->pm instanceof Pacman && !extension_loaded('mysql')) {
             $phpVersion = \PhpFpm::getVersion(true);
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
@@ -102,6 +107,10 @@ class Mysql
             $this->pm->installOrFail($package);
             $this->sm->enable($service);
             $this->stop();
+            if ($this->pm instanceof Pacman) {
+                // Configure data directory.
+                $this->configureDataDirectory();
+            }
             $this->restart();
             $input = new ArgvInput();
             $output = new ConsoleOutput();
@@ -136,6 +145,13 @@ class Mysql
     public function uninstall()
     {
         $this->stop();
+    }
+
+    public function configureDataDirectory()
+    {
+        $this->cli->runAsUser('mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
+            output($output);
+        });
     }
 
     /**

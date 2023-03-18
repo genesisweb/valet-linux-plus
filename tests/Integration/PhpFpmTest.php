@@ -55,6 +55,5 @@ class StubForUpdatingFpmConfigFiles extends PhpFpm
 
     public function systemdDropInOverride()
     {
-
     }
 }
