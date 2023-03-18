@@ -242,7 +242,6 @@ class Systemd implements ServiceManager
             $this->stop('valet-dns');
             $files->remove($servicePath);
         }
-        $this->enable('valet-dns');
     }
 
     /**

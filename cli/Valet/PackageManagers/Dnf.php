@@ -15,6 +15,7 @@ class Dnf implements PackageManager
     const SUPPORTED_PHP_VERSIONS = [
         'php',
     ];
+    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
 
     /**
      * Create a new Apt instance.
@@ -115,5 +116,10 @@ class Dnf implements PackageManager
     public function supportedPhpVersions()
     {
         return collect(static::SUPPORTED_PHP_VERSIONS);
+    }
+
+    public function getPhpServicePattern()
+    {
+        return self::SUPPORTED_PHP_SERVICE_PATTERN;
     }
 }

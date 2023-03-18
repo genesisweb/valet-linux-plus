@@ -1,4 +1,4 @@
-resolv-file=/opt/valet-linux/dns-servers
+no-resolv
 cache-size=0
 proxy-dnssec
 all-servers

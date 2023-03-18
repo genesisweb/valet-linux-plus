@@ -179,8 +179,8 @@ class PhpFpm
         if (!$version) {
             $version = $this->getPhpVersion();
         }
-
-        $serviceName = "php{$version}-fpm";
+        $serviceNamePattern = $this->pm->getPhpServicePattern();
+        $serviceName = str_replace('{VERSION}', $version, $serviceNamePattern);
 
         $this->sm->restart($serviceName);
     }

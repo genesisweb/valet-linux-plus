@@ -24,6 +24,8 @@ class Apt implements PackageManager
         'php70',
     ];
 
+    const SUPPORTED_PHP_SERVICE_PATTERN = 'php{VERSION}-fpm';
+
     /**
      * Create a new Apt instance.
      *
@@ -133,5 +135,10 @@ class Apt implements PackageManager
     public function supportedPhpVersions()
     {
         return collect(static::SUPPORTED_PHP_VERSIONS);
+    }
+
+    public function getPhpServicePattern()
+    {
+        return self::SUPPORTED_PHP_SERVICE_PATTERN;
     }
 }

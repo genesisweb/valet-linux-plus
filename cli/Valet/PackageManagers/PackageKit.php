@@ -16,6 +16,7 @@ class PackageKit implements PackageManager
     const SUPPORTED_PHP_VERSIONS = [
         'php',
     ];
+    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
 
     /**
      * Create a new PackageKit instance.
@@ -133,5 +134,10 @@ class PackageKit implements PackageManager
     public function supportedPhpVersions()
     {
         return collect(static::SUPPORTED_PHP_VERSIONS);
+    }
+
+    public function getPhpServicePattern()
+    {
+        return self::SUPPORTED_PHP_SERVICE_PATTERN;
     }
 }

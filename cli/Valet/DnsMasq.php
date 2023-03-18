@@ -79,7 +79,6 @@ class DnsMasq
         $this->files->remove($optDir);
         $this->files->ensureDirExists($optDir);
 
-        $this->files->put($optDir.'/dns-servers', $this->files->get(__DIR__.'/../stubs/dns-servers'));
         $this->sm->removeValetDns($this->files);
 
         if ($this->files->exists($this->rclocal)) {
