@@ -74,7 +74,7 @@ class Mysql
         $package = $useMariaDB ? $this->pm->mariaDBPackageName : $this->pm->mysqlPackageName;
         $this->currentPackage = $package;
         $service = $this->serviceName();
-        if ($this->pm instanceof Pacman && !extension_loaded('mysql')) {
+        if (!$this->pm instanceof Pacman && !extension_loaded('mysql')) {
             $phpVersion = \PhpFpm::getVersion(true);
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
@@ -152,6 +152,7 @@ class Mysql
         $this->cli->runAsUser('mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
             output($output);
         });
+        $this->restart();
     }
 
     /**

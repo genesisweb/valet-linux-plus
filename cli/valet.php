@@ -545,14 +545,14 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Create new database in MySQL.
      */
-    $app->command('db:create [database_name]', function ($databaseName) {
+    $app->command('db:create [databaseName]', function ($databaseName) {
         Mysql::createDatabase($databaseName);
     })->descriptions('Create new database in MySQL/MariaDB');
 
     /**
      * Drop database in MySQL.
      */
-    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $databaseName) {
+    $app->command('db:drop [databaseName] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -569,7 +569,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Reset database in MySQL.
      */
-    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $databaseName) {
+    $app->command('db:reset [databaseName] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -603,7 +603,7 @@ if (is_dir(VALET_HOME_PATH)) {
      *
      * @throws Exception
      */
-    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $databaseName, $dumpFile) {
+    $app->command('db:import [databaseName] [dumpFile]', function (Input $input, $output, $databaseName, $dumpFile) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
         if (!$databaseName) {
@@ -636,7 +636,7 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Export database in MySQL.
      */
-    $app->command('db:export [database_name] [--sql]', function (Input $input, $databaseName) {
+    $app->command('db:export [databaseName] [--sql]', function (Input $input, $databaseName) {
         info('Exporting database...');
         $defaults = $input->getOptions();
         $data = Mysql::exportDatabase($databaseName, $defaults['sql']);

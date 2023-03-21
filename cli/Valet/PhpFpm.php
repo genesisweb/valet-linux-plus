@@ -176,13 +176,7 @@ class PhpFpm
      */
     public function restart($version = null)
     {
-        if (!$version) {
-            $version = $this->getPhpVersion();
-        }
-        $serviceNamePattern = $this->pm->getPhpServicePattern();
-        $serviceName = str_replace('{VERSION}', $version, $serviceNamePattern);
-
-        $this->sm->restart($serviceName);
+        $this->sm->restart($this->fpmServiceName($version));
     }
 
     /**
@@ -253,8 +247,8 @@ class PhpFpm
         if (!$version) {
             $version = $this->getPhpVersion();
         }
-
-        return "php{$version}-fpm";
+        $serviceNamePattern = $this->pm->getPhpServicePattern();
+        return str_replace('{VERSION}', $version, $serviceNamePattern);
     }
 
     /**
