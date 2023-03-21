@@ -44,8 +44,8 @@ class PhpFpm
      */
     public function install()
     {
-        if (!$this->pm->installed("php{$this->version}-fpm")) {
-            $this->pm->ensureInstalled("php{$this->version}-fpm");
+        if (!$this->pm->installed($this->pm->getPhpServicePattern())) {
+            $this->pm->ensureInstalled($this->pm->getPhpServicePattern());
             $this->installExtensions();
             $this->sm->enable($this->fpmServiceName());
         }
