@@ -231,7 +231,7 @@ class PhpFpm
         if (!$real && $this->files->exists(VALET_HOME_PATH.'/use_php_version')) {
             $version = $this->pm instanceof Pacman ? '': $this->files->get(VALET_HOME_PATH.'/use_php_version');
         } else {
-            $version = $version = $this->pm instanceof Pacman ? '': explode('php', basename($this->files->readLink('/usr/bin/php')))[1];
+            $version = explode('php', basename($this->files->readLink('/usr/bin/php')))[1];
         }
 
         return $version;
