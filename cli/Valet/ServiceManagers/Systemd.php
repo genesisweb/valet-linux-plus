@@ -13,7 +13,7 @@ class Systemd implements ServiceManager
     /**
      * Create a new Systemd instance.
      *
-     * @param CommandLine $cli CommandLine object
+     * @param  CommandLine  $cli  CommandLine object
      */
     public function __construct(CommandLine $cli)
     {
@@ -23,7 +23,7 @@ class Systemd implements ServiceManager
     /**
      * Start the given services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -33,14 +33,14 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Starting $service...");
-            $this->cli->quietly('sudo systemctl start '.$this->getRealService($service));
+            $this->cli->quietly('sudo systemctl start ' . $this->getRealService($service));
         }
     }
 
     /**
      * Stop the given services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -50,14 +50,14 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Stopping $service...");
-            $this->cli->quietly('sudo systemctl stop '.$this->getRealService($service));
+            $this->cli->quietly('sudo systemctl stop ' . $this->getRealService($service));
         }
     }
 
     /**
      * Restart the given services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -67,14 +67,14 @@ class Systemd implements ServiceManager
 
         foreach ($services as $service) {
             info("Restarting $service...");
-            $this->cli->quietly('sudo systemctl restart '.$this->getRealService($service));
+            $this->cli->quietly('sudo systemctl restart ' . $this->getRealService($service));
         }
     }
 
     /**
      * Status of the given services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -83,13 +83,13 @@ class Systemd implements ServiceManager
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            $status = $this->cli->run('systemctl status '.$this->getRealService($service).' | grep "Active:"');
+            $status = $this->cli->run('systemctl status ' . $this->getRealService($service) . ' | grep "Active:"');
             $running = strpos(trim($status), 'running');
 
             if ($running) {
-                info(ucfirst($service).' is running...');
+                info(ucfirst($service) . ' is running...');
             } else {
-                warning(ucfirst($service).' is stopped...');
+                warning(ucfirst($service) . ' is stopped...');
             }
         }
     }
@@ -97,19 +97,19 @@ class Systemd implements ServiceManager
     /**
      * Status of the given services.
      *
-     * @param mixed $service Service name
+     * @param  mixed  $service  Service name
      *
      * @return void
      */
     public function status($service)
     {
-        return $this->cli->run('systemctl status '.$this->getRealService($service));
+        return $this->cli->run('systemctl status ' . $this->getRealService($service));
     }
 
     /**
      * Check if service is disabled.
      *
-     * @param mixed $service Service name
+     * @param  mixed  $service  Service name
      *
      * @return void
      */
@@ -123,7 +123,7 @@ class Systemd implements ServiceManager
     /**
      * Enable services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -136,17 +136,17 @@ class Systemd implements ServiceManager
                 $service = $this->getRealService($service);
 
                 if ($this->disabled($service)) {
-                    $this->cli->quietly('sudo systemctl enable '.$service);
-                    info(ucfirst($service).' has been enabled');
+                    $this->cli->quietly('sudo systemctl enable ' . $service);
+                    info(ucfirst($service) . ' has been enabled');
 
                     return true;
                 }
 
-                info(ucfirst($service).' was already enabled');
+                info(ucfirst($service) . ' was already enabled');
 
                 return true;
             } catch (DomainException $e) {
-                warning(ucfirst($service).' unavailable.');
+                warning(ucfirst($service) . ' unavailable.');
 
                 return false;
             }
@@ -156,7 +156,7 @@ class Systemd implements ServiceManager
     /**
      * Disable services.
      *
-     * @param mixed $services Service name
+     * @param  mixed  $services  Service name
      *
      * @return void
      */
@@ -168,18 +168,18 @@ class Systemd implements ServiceManager
             try {
                 $service = $this->getRealService($service);
 
-                if (!$this->disabled($service)) {
-                    $this->cli->quietly('sudo systemctl disable '.$service);
-                    info(ucfirst($service).' has been disabled');
+                if ( ! $this->disabled($service)) {
+                    $this->cli->quietly('sudo systemctl disable ' . $service);
+                    info(ucfirst($service) . ' has been disabled');
 
                     return true;
                 }
 
-                info(ucfirst($service).' was already disabled');
+                info(ucfirst($service) . ' was already disabled');
 
                 return true;
             } catch (DomainException $e) {
-                warning(ucfirst($service).' unavailable.');
+                warning(ucfirst($service) . ' unavailable.');
 
                 return false;
             }
@@ -210,7 +210,7 @@ class Systemd implements ServiceManager
     /**
      * Determine real service name.
      *
-     * @param mixed $service Service name
+     * @param  mixed  $service  Service name
      *
      * @return string
      */
@@ -229,7 +229,7 @@ class Systemd implements ServiceManager
     /**
      * Install Valet DNS services.
      *
-     * @param \Filesystem $files Filesystem object
+     * @param  \Filesystem  $files  Filesystem object
      *
      * @return void
      */

@@ -16,9 +16,12 @@ class Pacman implements PackageManager
 
     const SUPPORTED_PHP_VERSIONS = [
         'php',
+        'php80',
+        'php74',
+        'php54',
     ];
 
-    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
+    const SUPPORTED_PHP_SERVICE_PATTERN = 'php{VERSION}-fpm';
 
     /**
      * Create a new Pacman instance.
