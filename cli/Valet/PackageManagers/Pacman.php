@@ -20,6 +20,10 @@ class Pacman implements PackageManager
 
     const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
 
+    const PHP_EXTENSION_PATTERN_BY_VERSION = [
+        '8.2' => 'php',
+    ];
+
     /**
      * Create a new Pacman instance.
      *
@@ -134,5 +138,11 @@ class Pacman implements PackageManager
     public function getPhpServicePattern()
     {
         return self::SUPPORTED_PHP_SERVICE_PATTERN;
+    }
+
+    public function getPhpExtensionPattern($version)
+    {
+        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
+            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION_WITHOUT_DOT}';
     }
 }

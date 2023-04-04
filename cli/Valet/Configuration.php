@@ -219,6 +219,11 @@ class Configuration
         return array_key_exists($key, $config) ? $config[$key] : $default;
     }
 
+    public function set($key, $value)
+    {
+        return $this->updateKey($key, $value);
+    }
+
     /**
      * Update a specific key in the configuration file.
      *
