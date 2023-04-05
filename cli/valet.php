@@ -514,11 +514,11 @@ if (is_dir(VALET_HOME_PATH)) {
         $installExt = null
     ) {
         info('Changing php-fpm version...');
-        PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
+        PhpFpm::switchVersion($preferedVersion, $updateCli, $installExt);
         info('php-fpm version successfully changed! 🎉');
     })->descriptions(
         'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
-        .PhpFpm::getVersion(true),
+        .PhpFpm::getCurrentVersion(),
         [
             '--update-cli' => 'Updates CLI version as well',
         ]

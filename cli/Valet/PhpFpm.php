@@ -129,7 +129,7 @@ class PhpFpm
 
         $this->stopIfUnused($currentVersion);
 
-        // TODO: Switch php socket file in nginx configuration files.
+        $this->updateNginxConfigFiles($version);
 
         if ($updateCli) {
             $this->cli->run("update-alternatives --set php /usr/bin/php{$version}");
@@ -176,7 +176,7 @@ class PhpFpm
      * @param string|float|null $version
      * @return void
      */
-    public function stopIfUnused($version = null)
+    protected function stopIfUnused($version = null)
     {
         if (!$version) {
             return;
@@ -255,6 +255,44 @@ class PhpFpm
         });
     }
 
+    protected function updateNginxConfigFiles($version) {
+        /*
+         * Action 1
+         * Get all config files. -- Done
+         * Loop through it -- Done
+         * Check for isolated config
+         *  If yes, then skip.
+         *  Else look for valet.sock file and update the config.
+         *
+         * Action 2
+         * Find Nginx's valet.conf file and update php socket to new version. -- Done
+         * */
+        //Action 1: Update all separate secured versions
+        $this->nginx->configuredSites()->map(function($file) use ($version) {
+            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
+            if (!$content) {
+                return;
+
+            }
+            if (strpos($content, '# '.ISOLATED_PHP_VERSION) !== false) {
+                return;
+            }
+            preg_match_all('/unix:(.*?.sock)/m', $content, $matchCount);
+            if (!count($matchCount)) {
+                return;
+            }
+            $content = preg_replace(
+                '/unix:(.*?.sock)/m',
+                'unix:'.VALET_HOME_PATH. '/'.$this->socketFileName($version),
+                $content
+            );
+            $this->files->put(VALET_HOME_PATH.'/Nginx/'.$file, $content);
+        });
+
+        //Action 2: Update NGINX valet.conf for php socket version.
+        $this->nginx->installServer($version);
+    }
+
     protected function installExtensions($version)
     {
         $extArray = [];
@@ -291,7 +329,7 @@ class PhpFpm
      *
      * @return array
      */
-    public function utilizedPhpVersions()
+    protected function utilizedPhpVersions()
     {
         $fpmSockFiles = collect(self::SUPPORTED_PHP_VERSIONS)->map(function ($version) {
             return $this->socketFileName($this->normalizePhpVersion($version));
@@ -322,7 +360,7 @@ class PhpFpm
      * @param string|float|null $version
      * @return string
      */
-    protected function socketFileName($version = null)
+    public function socketFileName($version = null)
     {
         if (!$version) {
             $version = $this->getCurrentVersion();
@@ -418,5 +456,16 @@ class PhpFpm
             'VERSION' => $version,
             'VERSION_WITHOUT_DOT' => $versionWithoutDot,
         ], $prefix);
+    }
+
+    public function getPhpExecutablePath($version = null)
+    {
+        if (!$version) {
+            return \DevTools::getBin('php');
+        }
+
+        $version = $this->normalizePhpVersion($version);
+
+        return \DevTools::getBin('php'.$version);
     }
 }

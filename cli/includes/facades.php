@@ -161,19 +161,19 @@ class Ngrok extends Facade
 /**
  * Class PhpFpm.
  *
- * @method static void   install()
+ * @method static void   install(string $version = null, bool $installExt = true)
  * @method static void   uninstall()
- * @method static void   changeVersion(string $version = null, bool $updateCli = null, bool $installExt = null)
- * @method static void   installConfiguration()
- * @method static void   restart()
- * @method static void   stop()
- * @method static void   status()
- * @method static string getVersion(bool $real = false)
- * @method static string fpmServiceName()
- * @method static string fpmConfigPath()
+ * @method static void   switchVersion(string $version = null, bool $updateCli = null, bool $installExt = null)
+ * @method static void   restart($version = null)
+ * @method static void   stop($version = null)
+ * @method static void   status($version = null)
+ * @method static string getCurrentVersion()
+ * @method static string socketFileName($version = null)
+ * @method static string normalizePhpVersion($version)
  * @method static string isolatedDirectories()
  * @method static string isolateDirectory($site, $phpVersion, $secure = false)
  * @method static string unIsolateDirectory($site)
+ * @method static string getPhpExecutablePath($version = null)
  */
 class PhpFpm extends Facade
 {
@@ -305,8 +305,8 @@ class Mysql extends Facade
 /**
  * Class DevTools.
  *
- * @method static void getBin(string $service)
- * @method static void getService(string $service, bool $locate = false)
+ * @method static false|string getBin(string $service)
+ * @method static false|string getService(string $service, bool $locate = false)
  * @method static void run(string $folder,string $service)
  */
 class DevTools extends Facade

@@ -747,9 +747,9 @@ class Site
     public function getPhpVersion($url)
     {
         $defaultPhpVersion = PHP_VERSION;
-        $phpVersion = PhpFpm::normalizePhpVersion($this->customPhpVersion($url));
+        $phpVersion = \PhpFpm::normalizePhpVersion($this->customPhpVersion($url));
         if (empty($phpVersion)) {
-            $phpVersion = PhpFpm::normalizePhpVersion($defaultPhpVersion);
+            $phpVersion = \PhpFpm::normalizePhpVersion($defaultPhpVersion);
         }
 
         return $phpVersion;
@@ -819,7 +819,7 @@ class Site
 
         // Isolate specific variables
         $siteConf = str_array_replace([
-            'VALET_PHP_FPM_SOCKET'       => PhpFpm::fpmSockName($phpVersion),
+            'VALET_PHP_FPM_SOCKET'       => \PhpFpm::socketFileName($phpVersion),
             'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
         ], $this->files->get($stub));
 
@@ -906,7 +906,7 @@ class Site
      */
     public function replaceSockFile($siteConf, $phpVersion)
     {
-        $sockFile = PhpFpm::fpmSockName($phpVersion);
+        $sockFile = PhpFpm::socketFileName($phpVersion);
 
         $siteConf = preg_replace('/valet[0-9]*.sock/', $sockFile, $siteConf);
         // Remove ISOLATED_PHP_VERSION line from config
@@ -928,7 +928,7 @@ class Site
             $path = data_get($site, 'path').'/.valetphprc';
 
             if ($this->files->exists($path)) {
-                return PhpFpm::normalizePhpVersion(trim($this->files->get($path)));
+                return \PhpFpm::normalizePhpVersion(trim($this->files->get($path)));
             }
         }
     }

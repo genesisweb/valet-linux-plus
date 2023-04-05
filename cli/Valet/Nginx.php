@@ -110,16 +110,16 @@ class Nginx
 
     /**
      * Install the Valet Nginx server configuration file.
-     *
+     * @param string|float|null $phpVersion
      * @return void
      */
-    public function installServer()
+    public function installServer($phpVersion = null)
     {
         $this->files->putAsUser(
             $this->sites_available_conf,
             str_replace(
-                ['VALET_HOME_PATH', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_PORT'],
-                [VALET_HOME_PATH, VALET_SERVER_PATH, VALET_STATIC_PREFIX, $this->configuration->read()['port']],
+                ['VALET_HOME_PATH', 'VALET_FPM_SOCKET_FILE', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_PORT'],
+                [VALET_HOME_PATH, VALET_HOME_PATH. '/'.\PhpFpm::socketFileName($phpVersion), VALET_SERVER_PATH, VALET_STATIC_PREFIX, $this->configuration->read()['port']],
                 $this->files->get(__DIR__.'/../stubs/valet.conf')
             )
         );
