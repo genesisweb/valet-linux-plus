@@ -135,15 +135,19 @@ trait PhpFpmHelper
     private function fpmConfigPath($version = null)
     {
         $version = $version ?: $this->getCurrentVersion();
+        $versionWithoutDot = preg_replace('~[^\d]~', '', $version);
 
         return collect([
             '/etc/php/' . $version . '/fpm/pool.d', // Ubuntu
             '/etc/php' . $version . '/fpm/pool.d', // Ubuntu
             '/etc/php' . $version . '/php-fpm.d', // Manjaro
-            '/etc/php-fpm.d', // Fedora
-            '/etc/php/php-fpm.d', // Arch
+            '/etc/php'.$versionWithoutDot.'/php-fpm.d', // ArchLinux
             '/etc/php7/fpm/php-fpm.d', // openSUSE PHP7
             '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
+            '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
+            '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
+            '/etc/php-fpm.d', // Fedora
+            '/etc/php/php-fpm.d', // Arch
         ])->first(function ($path) {
             return is_dir($path);
         }, function () {

@@ -24,7 +24,7 @@ class PhpFpm
     ];
 
     const COMMON_EXTENSIONS = [
-        'common', 'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'mongodb', 'intl'
+        'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl'
     ];
 
     const FPM_CONFIG_FILE_NAME = 'valet.conf';
@@ -74,7 +74,7 @@ class PhpFpm
         $this->validateVersion($version);
 
         $extensionPrefix = $this->getExtensionPrefix($version);
-        if ($this->pm->installed("{$extensionPrefix}-fpm")) {
+        if (!$this->pm->installed("{$extensionPrefix}-fpm")) {
             $this->pm->ensureInstalled("{$extensionPrefix}-fpm");
             if ($installExt) {
                 $this->installExtensions($version);
@@ -85,6 +85,8 @@ class PhpFpm
         $this->files->ensureDirExists('/var/log', user());
 
         $this->installConfiguration($version);
+
+        $this->restart($version);
     }
 
     /**
