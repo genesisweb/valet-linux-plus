@@ -13,10 +13,7 @@ class Yum implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
-    const SUPPORTED_PHP_VERSIONS = [
-        'php',
-    ];
-    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
+    const PHP_EXTENSION_PATTERN_BY_VERSION = [];
 
     /**
      * Create a new Yum instance.
@@ -114,13 +111,9 @@ class Yum implements PackageManager
         }
     }
 
-    public function supportedPhpVersions()
+    public function getPhpExtensionPattern($version)
     {
-        return collect(static::SUPPORTED_PHP_VERSIONS);
-    }
-
-    public function getPhpServicePattern()
-    {
-        return self::SUPPORTED_PHP_SERVICE_PATTERN;
+        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
+            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION}';
     }
 }

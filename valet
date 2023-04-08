@@ -57,7 +57,7 @@ fi
 # Valet CLI script which is written in PHP. Will use PHP to do it.
 if [[ ! -f "$DIR/cli/valet.php" ]]
 then
-    DIR=$(php -r "echo realpath('$DIR/../laravel/valet');")
+    DIR=$(php -r "echo realpath('$DIR/../genesisweb/valet-linux-plus');")
 fi
 
 # If the command is one of the commands that requires "sudo" privileges

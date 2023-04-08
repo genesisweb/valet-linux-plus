@@ -19,10 +19,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  * Create the application.
  */
 Container::setInstance(new Container());
+const VALET_VERSION = 'v1.6.3';
 
-$version = 'v1.6.3';
-
-$app = new Application('ValetLinux+', $version);
+$app = new Application('ValetLinux+', VALET_VERSION);
 
 /**
  * Detect environment.
@@ -487,10 +486,10 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('update', function () use ($version) {
+    $app->command('update', function () {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
-        if (Valet::onLatestVersion($version)) {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             info('You have the latest version of Valet Linux');
             passthru($script);
         } else {
@@ -508,27 +507,30 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Change the PHP version to the desired one.
      */
-    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function (
+    $app->command('use [preferedversion] [--update-cli] [--install-ext] [--ignore-update]', function (
         $preferedVersion = null,
         $updateCli = null,
-        $installExt = null
+        $installExt = null,
+        $ignoreUpdate = null
     ) {
         info('Changing php-fpm version...');
-        PhpFpm::switchVersion($preferedVersion, $updateCli, $installExt);
+        PhpFpm::switchVersion($preferedVersion, $updateCli, $installExt, $ignoreUpdate);
         info('php-fpm version successfully changed! 🎉');
     })->descriptions(
         'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
         .PhpFpm::getCurrentVersion(),
         [
             '--update-cli' => 'Updates CLI version as well',
+            '--install-ext' => 'Installs extension with selected php version',
+            '--ignore-update' => 'Ignores self package update. Works with --update-cli flag.',
         ]
     );
 
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('is-latest', function () use ($version) {
-        if (Valet::onLatestVersion($version)) {
+    $app->command('is-latest', function () {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             output('YES');
         } else {
             output('NO');

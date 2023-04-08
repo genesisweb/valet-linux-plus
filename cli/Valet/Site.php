@@ -989,7 +989,7 @@ class Site
             $stub = $this->files->get($stub);
             // Isolate specific variables
             return str_array_replace([
-                'VALET_PHP_FPM_SOCKET'       => \PhpFpm::fpmSockName($phpVersion),
+                'VALET_PHP_FPM_SOCKET'       => \PhpFpm::socketFileName($phpVersion),
                 'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
             ], $stub);
         }

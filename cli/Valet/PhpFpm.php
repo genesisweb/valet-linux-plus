@@ -5,9 +5,12 @@ namespace Valet;
 use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\Exceptions\VersionException;
+use Valet\Traits\PhpFpmHelper;
 
 class PhpFpm
 {
+    use PhpFpmHelper;
     protected $config;
     protected $pm;
     protected $sm;
@@ -62,7 +65,7 @@ class PhpFpm
      * @param string|null $version
      * @param bool $installExt
      * @return void
-     * @throws Exception
+     * @throws VersionException
      */
     public function install(string $version = null, bool $installExt = true)
     {
@@ -107,7 +110,7 @@ class PhpFpm
      * @throws Exception
      *
      */
-    public function switchVersion($version = null, bool $updateCli = false, bool $installExt = false)
+    public function switchVersion($version = null, bool $updateCli = false, bool $installExt = false, bool $ignoreUpdate = false)
     {
         $exception = null;
 
@@ -133,6 +136,9 @@ class PhpFpm
 
         if ($updateCli) {
             $this->cli->run("update-alternatives --set php /usr/bin/php{$version}");
+            if (!$ignoreUpdate) {
+                $this->handlePackageUpdate($version);
+            }
         }
 
         if ($exception) {
@@ -168,25 +174,7 @@ class PhpFpm
      */
     public function status($version = null)
     {
-        $this->sm->status($this->serviceName($version));
-    }
-
-    /**
-     * Stop a given PHP version, if that specific version isn't being used globally or by any sites.
-     * @param string|float|null $version
-     * @return void
-     */
-    protected function stopIfUnused($version = null)
-    {
-        if (!$version) {
-            return;
-        }
-
-        $version = $this->normalizePhpVersion($version);
-
-        if (!in_array($version, $this->utilizedPhpVersions())) {
-            $this->stop($version);
-        }
+        $this->sm->printStatus($this->serviceName($version));
     }
 
     /**
@@ -197,7 +185,7 @@ class PhpFpm
      * @param bool   $secure
      *
      * @return void
-     * @throws Exception
+     * @throws VersionException
      */
     public function isolateDirectory($directory, $version, $secure = false)
     {
@@ -255,106 +243,6 @@ class PhpFpm
         });
     }
 
-    protected function updateNginxConfigFiles($version) {
-        /*
-         * Action 1
-         * Get all config files. -- Done
-         * Loop through it -- Done
-         * Check for isolated config
-         *  If yes, then skip.
-         *  Else look for valet.sock file and update the config.
-         *
-         * Action 2
-         * Find Nginx's valet.conf file and update php socket to new version. -- Done
-         * */
-        //Action 1: Update all separate secured versions
-        $this->nginx->configuredSites()->map(function($file) use ($version) {
-            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
-            if (!$content) {
-                return;
-
-            }
-            if (strpos($content, '# '.ISOLATED_PHP_VERSION) !== false) {
-                return;
-            }
-            preg_match_all('/unix:(.*?.sock)/m', $content, $matchCount);
-            if (!count($matchCount)) {
-                return;
-            }
-            $content = preg_replace(
-                '/unix:(.*?.sock)/m',
-                'unix:'.VALET_HOME_PATH. '/'.$this->socketFileName($version),
-                $content
-            );
-            $this->files->put(VALET_HOME_PATH.'/Nginx/'.$file, $content);
-        });
-
-        //Action 2: Update NGINX valet.conf for php socket version.
-        $this->nginx->installServer($version);
-    }
-
-    protected function installExtensions($version)
-    {
-        $extArray = [];
-        $extensionPrefix = $this->getExtensionPrefix($version);
-        foreach (self::COMMON_EXTENSIONS as $ext) {
-            $extArray[] = "{$extensionPrefix}-{$ext}";
-        }
-        $this->pm->ensureInstalled(implode(' ', $extArray));
-    }
-
-    /**
-     * Update the PHP FPM configuration to use the current user.
-     *
-     * @param string|float $version
-     * @return void
-     */
-    protected function installConfiguration($version)
-    {
-        $contents = $this->files->get(__DIR__ . '/../stubs/fpm.conf');
-
-        $this->files->putAsUser(
-            $this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME,
-            str_array_replace([
-                'VALET_USER' => user(),
-                'VALET_GROUP' => group(),
-                'VALET_FPM_SOCKET_FILE' => VALET_HOME_PATH. '/'.$this->socketFileName($version),
-            ], $contents)
-        );
-    }
-
-    /**
-     * Get a list including the global PHP version and all PHP versions currently serving "isolated sites" (sites with
-     * custom Nginx configs pointing them to a specific PHP version).
-     *
-     * @return array
-     */
-    protected function utilizedPhpVersions()
-    {
-        $fpmSockFiles = collect(self::SUPPORTED_PHP_VERSIONS)->map(function ($version) {
-            return $this->socketFileName($this->normalizePhpVersion($version));
-        })->unique();
-
-        $versions = $this->nginx->configuredSites()->map(function ($file) use ($fpmSockFiles) {
-            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
-
-            // Get the normalized PHP version for this config file, if it's defined
-            foreach ($fpmSockFiles as $sock) {
-                if (strpos($content, $sock) !== false) {
-                    // Extract the PHP version number from a custom .sock path and normalize it to, e.g., "php@7.4"
-                    return $this->normalizePhpVersion(str_replace(['valet', '.sock'], '', $sock));
-                }
-            }
-        })->filter()->unique()->values()->toArray();
-
-        // Adding Default version in utilized versions list.
-        if (!in_array($this->getCurrentVersion(), $versions)) {
-            $versions[] = $this->getCurrentVersion();
-        }
-
-        return $versions;
-    }
-
     /**
      * Get FPM socket file name for a given PHP version.
      * @param string|float|null $version
@@ -371,91 +259,20 @@ class PhpFpm
     }
 
     /**
-     * Determine php service name.
-     *
-     * @return string
-     */
-    protected function serviceName($version = null)
-    {
-        if (!$version) {
-            $version = $this->getCurrentVersion();
-        }
-        return $this->getExtensionPrefix($version) . '-fpm';
-    }
-
-    /**
      * Normalize inputs (php-x.x, php@x.x, phpx.x, phpxx) to version (x.x)
      */
-    protected function normalizePhpVersion($version)
+    public function normalizePhpVersion($version)
     {
         return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string)$version), 0, 3);
     }
 
     /**
-     * Get the path to the FPM configuration file for the current PHP version.
-     *
-     * @return string
-     */
-    protected function fpmConfigPath($version = null)
-    {
-        $version = $version ?: $this->getCurrentVersion();
-
-        return collect([
-            '/etc/php/' . $version . '/fpm/pool.d', // Ubuntu
-            '/etc/php' . $version . '/fpm/pool.d', // Ubuntu
-            '/etc/php' . $version . '/php-fpm.d', // Manjaro
-            '/etc/php-fpm.d', // Fedora
-            '/etc/php/php-fpm.d', // Arch
-            '/etc/php7/fpm/php-fpm.d', // openSUSE PHP7
-            '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
-        ])->first(function ($path) {
-            return is_dir($path);
-        }, function () {
-            throw new \DomainException('Unable to determine PHP-FPM configuration folder.');
-        });
-    }
-
-    /**
-     * Validate PHP version
-     * @return void
-     * @throws Exception
-     */
-    protected function validateVersion($version)
-    {
-        if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
-            throw new Exception(
-                "Invalid version [$version] used. Supported versions are :" . implode(self::SUPPORTED_PHP_VERSIONS)
-            );
-        }
-    }
-
-    /**
      * Get installed PHP version.
      * @return string
      */
-    protected function getCurrentVersion()
+    public function getCurrentVersion()
     {
         return $this->config->get('php_version', $this->getDefaultVersion());
-    }
-
-    /**
-     * Get installed PHP version.
-     * @return string
-     */
-    protected function getDefaultVersion()
-    {
-        return $this->normalizePhpVersion(PHP_VERSION);
-    }
-
-    protected function getExtensionPrefix($version = null)
-    {
-        $version = $version ?: $this->getCurrentVersion();
-        $versionWithoutDot = preg_replace('~[^\d]~', '', $version);
-        $prefix = $this->pm->getPhpExtensionPattern($version);
-        return str_array_replace([
-            'VERSION' => $version,
-            'VERSION_WITHOUT_DOT' => $versionWithoutDot,
-        ], $prefix);
     }
 
     public function getPhpExecutablePath($version = null)

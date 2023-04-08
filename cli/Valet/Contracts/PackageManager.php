@@ -50,7 +50,5 @@ interface PackageManager
      */
     public function isAvailable();
 
-    public function supportedPhpVersions();
-
-    public function getPhpServicePattern();
+    public function getPhpExtensionPattern($version);
 }

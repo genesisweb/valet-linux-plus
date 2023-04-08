@@ -14,12 +14,6 @@ class Pacman implements PackageManager
     public $mysqlPackageName = 'mysql';
     public $mariaDBPackageName = 'mariadb';
 
-    const SUPPORTED_PHP_VERSIONS = [
-        'php',
-    ];
-
-    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
-
     const PHP_EXTENSION_PATTERN_BY_VERSION = [
         '8.2' => 'php',
     ];
@@ -128,16 +122,6 @@ class Pacman implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
-    }
-
-    public function supportedPhpVersions()
-    {
-        return collect(static::SUPPORTED_PHP_VERSIONS);
-    }
-
-    public function getPhpServicePattern()
-    {
-        return self::SUPPORTED_PHP_SERVICE_PATTERN;
     }
 
     public function getPhpExtensionPattern($version)
