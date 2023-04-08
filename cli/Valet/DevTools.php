@@ -47,15 +47,15 @@ class DevTools
     /**
      * Create a new DevTools instance.
      *
-     * @param  PackageManager $pm
-     * @param  ServiceManager $sm
-     * @param  CommandLine    $cli
-     * @param  Filesystem     $files
+     * @param PackageManager $pm
+     * @param ServiceManager $sm
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
     {
-
         $this->cli = $cli;
         $this->pm = $pm;
         $this->sm = $sm;
@@ -69,42 +69,45 @@ class DevTools
      */
     public function ensureInstalled($service)
     {
-
         return $this->getBin($service);
     }
 
     /**
      * @param $service
+     *
      * @return false|string
      */
-    public function getBin($service) {
-
+    public function getBin($service)
+    {
         if (!($bin = $this->getService($service))) {
-            $bin = $this->getService($service,true);
+            $bin = $this->getService($service, true);
         }
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
-        foreach($bins as $bin) {
-            if(str_ends_with($bin, "bin/${service}")) {
+        foreach ($bins as $bin) {
+            if (str_ends_with($bin, "bin/${service}")) {
                 $servicePath = $bin;
                 break;
             }
         }
-        if($servicePath) {
+        if ($servicePath) {
             return trim(preg_replace('/\s\s+/', ' ', $servicePath));
         }
+
         return false;
     }
 
     /**
      * @param string $service
-     * @param bool $locate
+     * @param bool   $locate
+     *
      * @return false|string
      */
-    public function getService(string $service, bool $locate = false) {
-
+    public function getService(string $service, bool $locate = false)
+    {
         try {
-            $locator = $locate ? "locate" : "which";
+            $locator = $locate ? 'locate' : 'which';
+
             return $this->cli->run(
                 "$locator $service",
                 function () {
@@ -119,10 +122,11 @@ class DevTools
     /**
      * @param $service
      * @param $folder
+     *
      * @return void
      */
-    public function runService($service, $folder = null) {
-
+    public function runService($service, $folder = null)
+    {
         $bin = $this->getBin($service);
 
         try {
@@ -135,11 +139,13 @@ class DevTools
     /**
      * @param string $folder
      * @param string $service
+     *
      * @return void
      */
-    public function run(string $folder,string  $service) {
+    public function run(string $folder, string $service)
+    {
         if ($this->ensureInstalled($service)) {
-            $this->runService($service,$folder);
+            $this->runService($service, $folder);
         } else {
             warning("$service not available");
         }

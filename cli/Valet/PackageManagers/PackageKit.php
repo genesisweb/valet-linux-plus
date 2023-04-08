@@ -12,6 +12,9 @@ class PackageKit implements PackageManager
     public $redisPackageName = 'redis-server';
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
+
+    const PHP_EXTENSION_PATTERN_BY_VERSION = [];
+
     /**
      * Create a new PackageKit instance.
      *
@@ -123,5 +126,11 @@ class PackageKit implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function getPhpExtensionPattern($version)
+    {
+        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
+            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION}';
     }
 }

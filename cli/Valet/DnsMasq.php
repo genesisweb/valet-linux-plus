@@ -76,14 +76,10 @@ class DnsMasq
     private function _mergeDns()
     {
         $optDir = '/opt/valet-linux';
-        $script = $optDir.'/valet-dns';
-
-        $this->pm->ensureInstalled('inotify-tools');
         $this->files->remove($optDir);
         $this->files->ensureDirExists($optDir);
-        $this->files->put($script, $this->files->get(__DIR__.'/../stubs/valet-dns'));
-        $this->cli->run("chmod +x $script");
-        $this->sm->installValetDns($this->files);
+
+        $this->sm->removeValetDns($this->files);
 
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
@@ -102,10 +98,9 @@ class DnsMasq
     public function install($domain = 'test')
     {
         $this->dnsmasqSetup();
-        $this->fixResolved();
+        $this->stopResolved();
         $this->createCustomConfigFile($domain);
         $this->sm->restart('dnsmasq');
-        $this->sm->restart('valet-dns');
     }
 
     /**
@@ -137,7 +132,10 @@ class DnsMasq
      */
     public function createCustomConfigFile($domain)
     {
-        $this->files->putAsUser($this->configPath, 'address=/.'.$domain.'/127.0.0.1'.PHP_EOL);
+        $this->files->putAsUser(
+            $this->configPath,
+            'address=/.'.$domain.'/127.0.0.1'.PHP_EOL.'server=1.1.1.1'.PHP_EOL.'server=8.8.8.8'.PHP_EOL
+        );
     }
 
     /**
@@ -145,19 +143,12 @@ class DnsMasq
      *
      * @return void
      */
-    public function fixResolved()
+    public function stopResolved()
     {
-        // https://www.freedesktop.org/software/systemd/man/resolved.conf.html#DNSStubListener=
-        // Disable listener on port 53
-        $this->files->ensureDirExists('/etc/systemd/resolved.conf.d');
-        $this->files->putAsUser(
-            '/etc/systemd/resolved.conf.d/valet.conf',
-            $this->files->get(__DIR__.'/../stubs/resolved.conf')
-        );
-        if ($this->sm->disabled('systemd-resolved')) {
-            $this->sm->enable('systemd-resolved');
+        if (!$this->sm->disabled('systemd-resolved')) {
+            $this->sm->disable('systemd-resolved');
         }
-        $this->sm->restart('systemd-resolved');
+        $this->sm->stop('systemd-resolved');
     }
 
     /**
@@ -208,8 +199,7 @@ class DnsMasq
      */
     public function uninstall()
     {
-        $this->sm->stop('valet-dns');
-        $this->sm->disable('valet-dns');
+        $this->sm->removeValetDns($this->files);
 
         $this->cli->passthru('rm -rf /opt/valet-linux');
         $this->files->unlink($this->configPath);

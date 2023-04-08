@@ -53,6 +53,8 @@ class Mailhog
     public function ensureInstalled()
     {
         if (!$this->isAvailable()) {
+            $optDir = '/opt/valet-linux';
+            $this->files->ensureDirExists($optDir);
             $this->cli->run('ln -s '.VALET_BIN_PATH.'/mailhog /opt/valet-linux/mailhog');
         }
     }
@@ -85,8 +87,6 @@ class Mailhog
         $this->sm->enable('mailhog');
 
         $this->updateDomain();
-
-        \Nginx::restart();
     }
 
     /**
@@ -98,7 +98,7 @@ class Mailhog
     {
         $domain = \Configuration::read()['domain'];
 
-        \Site::secure("mailhog.{$domain}", __DIR__.'/../stubs/mailhog.conf');
+        \Site::proxyCreate("mailhog.{$domain}", 'http://localhost:8025', true);
     }
 
     /**

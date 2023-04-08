@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use Tightenco\Collect\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
@@ -109,16 +110,16 @@ class Nginx
 
     /**
      * Install the Valet Nginx server configuration file.
-     *
+     * @param string|float|null $phpVersion
      * @return void
      */
-    public function installServer()
+    public function installServer($phpVersion = null)
     {
         $this->files->putAsUser(
             $this->sites_available_conf,
             str_replace(
-                ['VALET_HOME_PATH', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_PORT'],
-                [VALET_HOME_PATH, VALET_SERVER_PATH, VALET_STATIC_PREFIX, $this->configuration->read()['port']],
+                ['VALET_HOME_PATH', 'VALET_FPM_SOCKET_FILE', 'VALET_SERVER_PATH', 'VALET_STATIC_PREFIX', 'VALET_PORT'],
+                [VALET_HOME_PATH, VALET_HOME_PATH. '/'.\PhpFpm::socketFileName($phpVersion), VALET_SERVER_PATH, VALET_STATIC_PREFIX, $this->configuration->read()['port']],
                 $this->files->get(__DIR__.'/../stubs/valet.conf')
             )
         );
@@ -231,5 +232,18 @@ class Nginx
         if ($this->files->exists('/etc/nginx/sites-available/default')) {
             $this->files->symlink('/etc/nginx/sites-available/default', '/etc/nginx/sites-enabled/default');
         }
+    }
+
+    /**
+     * Return a list of all sites with explicit Nginx configurations.
+     *
+     * @return Collection
+     */
+    public function configuredSites()
+    {
+        return collect($this->files->scandir(VALET_HOME_PATH.'/Nginx'))
+            ->reject(function ($file) {
+                return starts_with($file, '.');
+            });
     }
 }

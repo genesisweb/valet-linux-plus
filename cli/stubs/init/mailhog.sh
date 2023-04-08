@@ -1,16 +1,16 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          valet-dns
+# Provides:          mailhog
 # Required-Start:    $local_fs $network $named $time $syslog
 # Required-Stop:     $local_fs $network $named $time $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: starts Valet DNS Resolution
-# Description:       starts Valet DNS Resolution using start-stop-daemon
+# Short-Description: starts mailhog service
+# Description:       starts mailhog Resolution using start-stop-daemon
 ### END INIT INFO
 
-# Original Author: Carlos Priego
-# Maintainer: Carlos Priego
+# Original Author: Uttam Rabadiya
+# Maintainer: Uttam Rabadiya
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PIDFILE=/opt/valet-linux/mailhog.pid

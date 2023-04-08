@@ -13,6 +13,8 @@ class Apt implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
+    const PHP_EXTENSION_PATTERN_BY_VERSION = [];
+
     /**
      * Create a new Apt instance.
      *
@@ -117,5 +119,11 @@ class Apt implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function getPhpExtensionPattern($version)
+    {
+        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
+            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION}';
     }
 }

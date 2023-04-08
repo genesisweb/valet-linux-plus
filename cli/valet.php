@@ -19,10 +19,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  * Create the application.
  */
 Container::setInstance(new Container());
+const VALET_VERSION = 'v1.6.3';
 
-$version = 'v1.6.0';
-
-$app = new Application('ValetLinux+', $version);
+$app = new Application('ValetLinux+', VALET_VERSION);
 
 /**
  * Detect environment.
@@ -39,10 +38,10 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
-    Nginx::restart();
     Valet::symlinkToUsersBin();
     Mailhog::install();
     ValetRedis::install();
+    Nginx::restart();
     Mysql::install($mariaDB);
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
@@ -66,6 +65,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
             info(Configuration::read()['domain']);
+
             return;
         }
 
@@ -74,7 +74,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
-        Mailhog::updateDomain();
+//        Mailhog::updateDomain();
         PhpFpm::restart();
         Nginx::restart();
 
@@ -212,7 +212,6 @@ if (is_dir(VALET_HOME_PATH)) {
         $url = ($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'];
 
         Site::secure($url);
-        PhpFpm::restart();
         Nginx::restart();
 
         info('The ['.$url.'] site has been secured with a fresh TLS certificate.');
@@ -224,8 +223,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('unsecure [domain]', function ($domain = null) {
         $url = ($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'];
 
-        Site::unsecure($url);
-        PhpFpm::restart();
+        Site::unsecure($url, true);
         Nginx::restart();
 
         info('The ['.$url.'] site will now serve traffic over HTTP.');
@@ -305,7 +303,10 @@ if (is_dir(VALET_HOME_PATH)) {
      * Generate a publicly accessible URL for your project.
      */
     $app->command('share', function () {
-        warning('It looks like you are running `cli/valet.php` directly, please use the `valet` script in the project root instead.');
+        warning(
+            'It looks like you are running `cli/valet.php` directly,
+            please use the `valet` script in the project root instead.'
+        );
     })->descriptions('Generate a publicly accessible URL for your project');
 
     /**
@@ -355,7 +356,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::restart();
                     break;
-
+                default:
+                    break;
             }
         }
 
@@ -403,7 +405,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::restart();
                     break;
-
+                default:
+                    break;
 //                case 'elasticsearch': {
 //                    Elasticsearch::restart();
 //                    break;
@@ -458,7 +461,8 @@ if (is_dir(VALET_HOME_PATH)) {
                 case 'redis':
                     ValetRedis::stop();
                     break;
-
+                default:
+                    break;
             }
         }
 
@@ -482,10 +486,10 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('update', function () use ($version) {
+    $app->command('update', function () {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
-        if (Valet::onLatestVersion($version)) {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             info('You have the latest version of Valet Linux');
             passthru($script);
         } else {
@@ -503,19 +507,30 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Change the PHP version to the desired one.
      */
-    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function ($preferedVersion = null, $updateCli = null, $installExt = null) {
+    $app->command('use [preferedversion] [--update-cli] [--install-ext] [--ignore-update]', function (
+        $preferedVersion = null,
+        $updateCli = null,
+        $installExt = null,
+        $ignoreUpdate = null
+    ) {
         info('Changing php-fpm version...');
-        PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
+        PhpFpm::switchVersion($preferedVersion, $updateCli, $installExt, $ignoreUpdate);
         info('php-fpm version successfully changed! 🎉');
-    })->descriptions('Set the PHP-fpm version to use, enter "default" or leave empty to use version: '.PhpFpm::getVersion(true), [
-        '--update-cli' => 'Updates CLI version as well',
-    ]);
+    })->descriptions(
+        'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
+        .PhpFpm::getCurrentVersion(),
+        [
+            '--update-cli' => 'Updates CLI version as well',
+            '--install-ext' => 'Installs extension with selected php version',
+            '--ignore-update' => 'Ignores self package update. Works with --update-cli flag.',
+        ]
+    );
 
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('is-latest', function () use ($version) {
-        if (Valet::onLatestVersion($version)) {
+    $app->command('is-latest', function () {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             output('YES');
         } else {
             output('NO');
@@ -532,14 +547,14 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Create new database in MySQL.
      */
-    $app->command('db:create [database_name]', function ($database_name) {
-        Mysql::createDatabase($database_name);
+    $app->command('db:create [databaseName]', function ($databaseName) {
+        Mysql::createDatabase($databaseName);
     })->descriptions('Create new database in MySQL/MariaDB');
 
     /**
      * Drop database in MySQL.
      */
-    $app->command('db:drop [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
+    $app->command('db:drop [databaseName] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -550,13 +565,13 @@ if (is_dir(VALET_HOME_PATH)) {
                 return;
             }
         }
-        Mysql::dropDatabase($database_name);
+        Mysql::dropDatabase($databaseName);
     })->descriptions('Drop given database from MySQL/MariaDB');
 
     /**
      * Reset database in MySQL.
      */
-    $app->command('db:reset [database_name] [-y|--yes]', function (Input $input, $output, $database_name) {
+    $app->command('db:reset [databaseName] [-y|--yes]', function (Input $input, $output, $databaseName) {
         $helper = $this->getHelperSet()->get('question');
         $defaults = $input->getOptions();
         if (!$defaults['yes']) {
@@ -567,14 +582,14 @@ if (is_dir(VALET_HOME_PATH)) {
                 return;
             }
         }
-        $dropDB = Mysql::dropDatabase($database_name);
+        $dropDB = Mysql::dropDatabase($databaseName);
         if (!$dropDB) {
             warning('Error resetting database');
 
             return;
         }
 
-        $databaseName = Mysql::createDatabase($database_name);
+        $databaseName = Mysql::createDatabase($databaseName);
 
         if (!$databaseName) {
             warning('Error resetting database');
@@ -582,51 +597,56 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        info("Database [{$database_name}] reset successfully");
+        info("Database [{$databaseName}] reset successfully");
     })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
      * Import database in MySQL.
+     *
      * @throws Exception
      */
-    $app->command('db:import [database_name] [dump_file]', function (Input $input, $output, $database_name, $dump_file) {
+    $app->command('db:import [databaseName] [dumpFile]', function (Input $input, $output, $databaseName, $dumpFile) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
-        if (!$database_name) {
+        if (!$databaseName) {
             throw new Exception('Please provide database name');
         }
-        if (!$dump_file) {
+        if (!$dumpFile) {
             throw new Exception('Please provide a dump file');
         }
-        if (!file_exists($dump_file)) {
-            throw new Exception("Unable to locate [$dump_file]");
+        if (!file_exists($dumpFile)) {
+            throw new Exception("Unable to locate [$dumpFile]");
         }
         $isExistsDatabase = false;
         // check if database already exists.
-        if (Mysql::isDatabaseExists($database_name)) {
-            $question = new ConfirmationQuestion('Database already exists are you sure you want to continue? [y/N] ', false);
+        if (Mysql::isDatabaseExists($databaseName)) {
+            $question = new ConfirmationQuestion(
+                'Database already exists are you sure you want to continue? [y/N] ',
+                false
+            );
             if (!$helper->ask($input, $output, $question)) {
                 warning('Aborted');
+
                 return;
             }
             $isExistsDatabase = true;
         }
 
-        Mysql::importDatabase($dump_file, $database_name, $isExistsDatabase);
+        Mysql::importDatabase($dumpFile, $databaseName, $isExistsDatabase);
     })->descriptions('Import dump file for selected database in MySQL/MariaDB');
 
     /**
      * Export database in MySQL.
      */
-    $app->command('db:export [database_name] [--sql]', function (Input $input, $database_name) {
+    $app->command('db:export [databaseName] [--sql]', function (Input $input, $databaseName) {
         info('Exporting database...');
         $defaults = $input->getOptions();
-        $data = Mysql::exportDatabase($database_name, $defaults['sql']);
+        $data = Mysql::exportDatabase($databaseName, $defaults['sql']);
         info("Database [{$data['database']}] exported into file {$data['filename']}");
     })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
-     * Configure valet database user for MySQL/MariaDB
+     * Configure valet database user for MySQL/MariaDB.
      */
     $app->command('db:configure [--force]', function ($force) {
         Mysql::configure($force);
@@ -637,7 +657,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('code [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::VS_CODE);
+        DevTools::run($folder, \Valet\DevTools::VS_CODE);
     })->descriptions('Open project in Visual Studio Code');
 
     /**
@@ -645,7 +665,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('ps [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::PHP_STORM);
+        DevTools::run($folder, \Valet\DevTools::PHP_STORM);
     })->descriptions('Open project in PHPStorm');
 
     /**
@@ -653,7 +673,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('atom [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::ATOM);
+        DevTools::run($folder, \Valet\DevTools::ATOM);
     })->descriptions('Open project in Atom');
 
     /**
@@ -661,18 +681,96 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('subl [folder]', function ($folder) {
         $folder = $folder ?: getcwd();
-        DevTools::run($folder,\Valet\DevTools::SUBLIME);
+        DevTools::run($folder, \Valet\DevTools::SUBLIME);
     })->descriptions('Open project in Sublime');
 
     /**
-     * Set authentication token in Ngrok
+     * Set authentication token in Ngrok.
      */
     $app->command('ngrok-auth [authtoken]', function ($authtoken) {
-        if(!$authtoken) {
+        if (!$authtoken) {
             throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
         }
         Ngrok::setAuthToken($authtoken);
     })->descriptions('Set authentication token for ngrok');
+
+    /**
+     * Allow the user to change the version of PHP Valet uses to serve the current site.
+     */
+    $app->command('isolate [phpVersion] [--site=] [--secure]', function ($phpVersion, $site = null, $secure) {
+        if (!$site) {
+            $site = basename(getcwd());
+        }
+
+        if (is_null($phpVersion) && $phpVersion = Site::phpRcVersion($site)) {
+            info("Found '{$site}/.valetphprc' specifying version: {$phpVersion}");
+        }
+
+        PhpFpm::isolateDirectory($site, $phpVersion, $secure);
+    })->descriptions('Change the version of PHP used by Valet to serve the current working directory', [
+        'phpVersion' => 'The PHP version you want to use; e.g php@8.1',
+        '--site'     => 'Specify the site to isolate (e.g. if the site isn\'t linked as its directory name)',
+        '--secure'   => 'Create a isolated site with a trusted TLS certificate',
+    ]);
+
+    /**
+     * Allow the user to un-do specifying the version of PHP Valet uses to serve the current site.
+     */
+    $app->command('unisolate [--site=]', function ($site = null) {
+        if (!$site) {
+            $site = basename(getcwd());
+        }
+
+        PhpFpm::unIsolateDirectory($site);
+    })->descriptions('Stop customizing the version of PHP used by Valet to serve the current working directory', [
+        '--site' => 'Specify the site to un-isolate (e.g. if the site isn\'t linked as its directory name)',
+    ]);
+
+    /**
+     * List isolated sites.
+     */
+    $app->command('isolated', function () {
+        $sites = PhpFpm::isolatedDirectories();
+
+        table(['Path', 'PHP Version'], $sites->all());
+    })->descriptions('List all sites using isolated versions of PHP.');
+
+    /**
+     * Get the PHP executable path for a site.
+     */
+    $app->command('which-php [site]', function ($site) {
+        $phpVersion = Site::customPhpVersion(
+            Site::host($site ?: getcwd()).'.'.Configuration::read()['domain']
+        );
+
+        if (!$phpVersion) {
+            $phpVersion = Site::phpRcVersion($site ?: basename(getcwd()));
+        }
+
+        info(PhpFpm::getPhpExecutablePath($phpVersion));
+    })->descriptions('Get the PHP executable path for a given site', [
+        'site' => 'The site to get the PHP executable path for',
+    ]);
+
+    /**
+     * Proxy commands through to an isolated site's version of PHP.
+     */
+    $app->command('php [--site=] [command]', function () {
+        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+    })->descriptions("Proxy PHP commands with isolated site's PHP executable", [
+        'command' => "Command to run with isolated site's PHP executable",
+        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+    ]);
+
+    /**
+     * Proxy commands through to an isolated site's version of Composer.
+     */
+    $app->command('composer [--site=] [command]', function () {
+        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+    })->descriptions("Proxy Composer commands with isolated site's PHP executable", [
+        'command' => "Composer command to run with isolated site's PHP executable",
+        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+    ]);
 }
 
 /**

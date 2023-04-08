@@ -1,17 +1,15 @@
-name: PHP Test
+name: CI-Ubuntu
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build & Test on Ubuntu 22.04
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'master'
     strategy:
       matrix:
         php:
-          - 7.1
-          - 7.2
-          - 7.3
-          - 7.4
           - 8.0
           - 8.1
     steps:
@@ -21,6 +19,11 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y network-manager libnss3-tools jq xsel
+          composer install --no-interaction --prefer-dist
       - name: Test
         run: vendor/bin/phpunit
+      - name: Test install command
+        run: ./valet install

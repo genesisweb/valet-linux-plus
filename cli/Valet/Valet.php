@@ -4,6 +4,7 @@ namespace Valet;
 
 use DomainException;
 use Exception;
+use Httpful\Request;
 use Illuminate\Container\Container;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -91,9 +92,12 @@ class Valet
      */
     public function onLatestVersion($currentVersion)
     {
-        $response = \Httpful\Request::get($this->github)->send();
+        $response = Request::get($this->github)->send();
+        $currentVersion = str_replace('v', '', $currentVersion);
+        $latestVersion = isset($response->body->tag_name) ? trim($response->body->tag_name) : 'v1.0.0';
+        $latestVersion = str_replace('v', '', $latestVersion);
 
-        return version_compare($currentVersion, (isset($response->body->tag_name) ? trim($response->body->tag_name) : 'v1.0.0'), '>=');
+        return version_compare($currentVersion, $latestVersion, '>=');
     }
 
     /**
@@ -105,7 +109,7 @@ class Valet
      */
     public function getLatestVersion()
     {
-        $response = \Httpful\Request::get($this->github)->send();
+        $response = Request::get($this->github)->send();
 
         return isset($response->body->tag_name) ? trim($response->body->tag_name) : false;
     }

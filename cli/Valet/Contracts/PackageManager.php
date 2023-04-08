@@ -49,4 +49,6 @@ interface PackageManager
      * @return bool
      */
     public function isAvailable();
+
+    public function getPhpExtensionPattern($version);
 }

@@ -2,59 +2,89 @@
 
 namespace Valet;
 
-use DomainException;
 use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use Valet\PackageManagers\Pacman;
+use Valet\Exceptions\VersionException;
+use Valet\Traits\PhpFpmHelper;
 
 class PhpFpm
 {
-    public $pm;
-    public $sm;
-    public $cli;
-    public $files;
-    public $version;
+    use PhpFpmHelper;
+    protected $config;
+    protected $pm;
+    protected $sm;
+    protected $cli;
+    protected $files;
+    protected $site;
+    protected $nginx;
 
-    protected $commonExt = ['common', 'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'mongodb', 'intl'];
+    const SUPPORTED_PHP_VERSIONS = [
+        '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2'
+    ];
+
+    const COMMON_EXTENSIONS = [
+        'common', 'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'mongodb', 'intl'
+    ];
+
+    const FPM_CONFIG_FILE_NAME = 'valet.conf';
 
     /**
      * Create a new PHP FPM class instance.
-     *
+     * @param Configuration $config
      * @param PackageManager $pm
      * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
+     * @param CommandLine $cli
+     * @param Filesystem $files
+     * @param Site $site
+     * @param Nginx $nginx
      *
      * @return void
      */
-    public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
+    public function __construct(
+        Configuration  $config,
+        PackageManager $pm,
+        ServiceManager $sm,
+        CommandLine    $cli,
+        Filesystem     $files,
+        Site           $site,
+        Nginx          $nginx
+    )
     {
+        $this->config = $config;
         $this->cli = $cli;
         $this->pm = $pm;
         $this->sm = $sm;
         $this->files = $files;
-        $this->version = $this->getVersion();
+        $this->site = $site;
+        $this->nginx = $nginx;
     }
 
     /**
      * Install and configure PHP FPM.
-     *
+     * @param string|null $version
+     * @param bool $installExt
      * @return void
+     * @throws VersionException
      */
-    public function install()
+    public function install(string $version = null, bool $installExt = true)
     {
-        if (!$this->pm->installed("php{$this->version}-fpm")) {
-            $this->pm->ensureInstalled("php{$this->version}-fpm");
-            $this->installExtensions();
-            $this->sm->enable($this->fpmServiceName());
+        $version = $version ?: $this->getCurrentVersion();
+        $version = $this->normalizePhpVersion($version);
+        $this->validateVersion($version);
+
+        $extensionPrefix = $this->getExtensionPrefix($version);
+        if ($this->pm->installed("{$extensionPrefix}-fpm")) {
+            $this->pm->ensureInstalled("{$extensionPrefix}-fpm");
+            if ($installExt) {
+                $this->installExtensions($version);
+            }
+            $this->sm->enable($this->serviceName($version));
         }
 
         $this->files->ensureDirExists('/var/log', user());
 
-        $this->installConfiguration();
-
-        $this->restart();
+        $this->installConfiguration($version);
     }
 
     /**
@@ -64,100 +94,57 @@ class PhpFpm
      */
     public function uninstall()
     {
-        if ($this->files->exists($this->fpmConfigPath().'/valet.conf')) {
-            $this->files->unlink($this->fpmConfigPath().'/valet.conf');
+        if ($this->files->exists($this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME)) {
+            $this->files->unlink($this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME);
             $this->stop();
         }
-    }
-
-    public function installExtensions()
-    {
-        if ($this->pm instanceof Pacman) {
-            warning('PHP Extension install is not supported for Pacman package manager');
-            return;
-        }
-        $extArray = [];
-        foreach ($this->commonExt as $ext) {
-            $extArray[] = "php{$this->version}-{$ext}";
-        }
-        $this->pm->ensureInstalled(implode(' ', $extArray));
     }
 
     /**
      * Change the php-fpm version.
      *
      * @param string|float|int $version
-     * @param bool|null        $updateCli
-     * @param bool|null        $installExt
-     *
+     * @param bool|null $updateCli
+     * @param bool|null $installExt
+     * @return void
      * @throws Exception
      *
-     * @return void
      */
-    public function changeVersion($version = null, bool $updateCli = null, bool $installExt = null)
+    public function switchVersion($version = null, bool $updateCli = false, bool $installExt = false, bool $ignoreUpdate = false)
     {
-        $oldVersion = $this->version;
         $exception = null;
 
-        $this->stop();
-        info('Disabling php'.$this->version.'-fpm...');
-        $this->sm->disable($this->fpmServiceName());
-
-        if (!isset($version) || strtolower($version) === 'default') {
-            $version = $this->getVersion(true);
-            $this->version = $version;
-        }
-
-        $this->version = $version;
-
+        $currentVersion = $this->getCurrentVersion();
+        // Validate if in use
+        $version = $this->normalizePhpVersion($version);
         try {
-            $this->install();
-        } catch (DomainException $e) {
-            $this->version = $oldVersion;
+            $this->install($version, $installExt);
+        } catch (\Exception $e) {
+            $version = $currentVersion;
             $exception = $e;
         }
 
-        if ($this->sm->disabled($this->fpmServiceName())) {
-            info('Enabling php'.$this->version.'-fpm...');
-            $this->sm->enable($this->fpmServiceName());
+        if ($this->sm->disabled($this->serviceName())) {
+            $this->sm->enable($this->serviceName());
         }
 
-        if ($this->version !== $this->getVersion(true)) {
-            $this->files->putAsUser(VALET_HOME_PATH.'/use_php_version', $this->version);
-        } else {
-            $this->files->unlink(VALET_HOME_PATH.'/use_php_version');
-        }
+        $this->config->set('php_version', $version);
+
+        $this->stopIfUnused($currentVersion);
+
+        $this->updateNginxConfigFiles($version);
+
         if ($updateCli) {
-            $this->cli->run("update-alternatives --set php /usr/bin/php{$this->version}");
-        }
-        if ($installExt) {
-            $this->installExtensions();
+            $this->cli->run("update-alternatives --set php /usr/bin/php{$version}");
+            if (!$ignoreUpdate) {
+                $this->handlePackageUpdate($version);
+            }
         }
 
         if ($exception) {
-            info('Changing version failed');
-
+            warning('Changing version failed');
             throw $exception;
         }
-    }
-
-    /**
-     * Update the PHP FPM configuration to use the current user.
-     *
-     * @return void
-     */
-    public function installConfiguration()
-    {
-        $contents = $this->files->get(__DIR__.'/../stubs/fpm.conf');
-
-        $this->files->putAsUser(
-            $this->fpmConfigPath().'/valet.conf',
-            str_array_replace([
-                'VALET_USER'      => user(),
-                'VALET_GROUP'     => group(),
-                'VALET_HOME_PATH' => VALET_HOME_PATH,
-            ], $contents)
-        );
     }
 
     /**
@@ -165,9 +152,9 @@ class PhpFpm
      *
      * @return void
      */
-    public function restart()
+    public function restart($version = null)
     {
-        $this->sm->restart($this->fpmServiceName());
+        $this->sm->restart($this->serviceName($version));
     }
 
     /**
@@ -175,9 +162,9 @@ class PhpFpm
      *
      * @return void
      */
-    public function stop()
+    public function stop($version = null)
     {
-        $this->sm->stop($this->fpmServiceName());
+        $this->sm->stop($this->serviceName($version));
     }
 
     /**
@@ -185,65 +172,117 @@ class PhpFpm
      *
      * @return void
      */
-    public function status()
+    public function status($version = null)
     {
-        $this->sm->printStatus($this->fpmServiceName());
+        $this->sm->printStatus($this->serviceName($version));
+    }
+
+    /**
+     * Isolate a given directory to use a specific version of PHP.
+     *
+     * @param string $directory
+     * @param string $version
+     * @param bool   $secure
+     *
+     * @return void
+     * @throws VersionException
+     */
+    public function isolateDirectory($directory, $version, $secure = false)
+    {
+        $site = $this->site->getSiteUrl($directory);
+
+        $version = $this->normalizePhpVersion($version);
+        $this->validateVersion($version);
+
+        $extensionPrefix = $this->getExtensionPrefix($version);
+        if (!$this->pm->installed("{$extensionPrefix}-fpm")) {
+            $this->install($version);
+        }
+
+        $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
+
+        $this->site->isolate($site, $version, $secure);
+
+        if ($oldCustomPhpVersion) {
+            $this->stopIfUnused($oldCustomPhpVersion);
+        }
+        $this->restart($version);
+        $this->nginx->restart();
+
+        info(sprintf('The site [%s] is now using %s.', $site, $version));
+    }
+
+    /**
+     * Remove PHP version isolation for a given directory.
+     *
+     * @param string $directory
+     *
+     * @return void
+     */
+    public function unIsolateDirectory(string $directory)
+    {
+        $site = $this->site->getSiteUrl($directory);
+
+        $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
+
+        $this->site->removeIsolation($site);
+        if ($oldCustomPhpVersion) {
+            $this->stopIfUnused($oldCustomPhpVersion);
+        }
+        $this->nginx->restart();
+
+        info(sprintf('The site [%s] is now using the default PHP version.', $site));
+    }
+
+    public function isolatedDirectories()
+    {
+        return $this->nginx->configuredSites()->filter(function ($item) {
+            return strpos($this->files->get(VALET_HOME_PATH.'/Nginx/'.$item), ISOLATED_PHP_VERSION) !== false;
+        })->map(function ($item) {
+            return ['url' => $item, 'version' => $this->normalizePhpVersion($this->site->customPhpVersion($item))];
+        });
+    }
+
+    /**
+     * Get FPM socket file name for a given PHP version.
+     * @param string|float|null $version
+     * @return string
+     */
+    public function socketFileName($version = null)
+    {
+        if (!$version) {
+            $version = $this->getCurrentVersion();
+        }
+        $version = preg_replace('~[^\d]~', '', $version);
+
+        return "valet{$version}.sock";
+    }
+
+    /**
+     * Normalize inputs (php-x.x, php@x.x, phpx.x, phpxx) to version (x.x)
+     */
+    public function normalizePhpVersion($version)
+    {
+        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string)$version), 0, 3);
     }
 
     /**
      * Get installed PHP version.
-     *
-     * @param bool $real force getting version from /usr/bin/php.
-     *
      * @return string
      */
-    public function getVersion($real = false)
+    public function getCurrentVersion()
     {
-        if (!$real && $this->files->exists(VALET_HOME_PATH.'/use_php_version')) {
-            $version = $this->files->get(VALET_HOME_PATH.'/use_php_version');
-        } else {
-            $version = explode('php', basename($this->files->readLink('/usr/bin/php')))[1];
-        }
-
-        return $version;
+        return $this->config->get('php_version', $this->getDefaultVersion());
     }
 
-    /**
-     * Determine php service name.
-     *
-     * @return string
-     */
-    public function fpmServiceName()
+    public function getPhpExecutablePath($version = null)
     {
-        $service = 'php'.$this->version.'-fpm';
-        $status = $this->sm->status($service);
-
-        if (strpos($status, 'not-found') || strpos($status, 'not be found')) {
-            return new DomainException('Unable to determine PHP service name.');
+        if (!$version) {
+            return \DevTools::getBin('php');
         }
 
-        return $service;
-    }
+        $version = $this->normalizePhpVersion($version);
 
-    /**
-     * Get the path to the FPM configuration file for the current PHP version.
-     *
-     * @return string
-     */
-    public function fpmConfigPath()
-    {
-        return collect([
-            '/etc/php/' . $this->version . '/fpm/pool.d', // Ubuntu
-            '/etc/php' . $this->version . '/fpm/pool.d', // Ubuntu
-            '/etc/php' . $this->version . '/php-fpm.d', // Manjaro
-            '/etc/php-fpm.d', // Fedora
-            '/etc/php/php-fpm.d', // Arch
-            '/etc/php7/fpm/php-fpm.d', // openSUSE PHP7
-            '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
-        ])->first(function ($path) {
-            return is_dir($path);
-        }, function () {
-            throw new DomainException('Unable to determine PHP-FPM configuration folder.');
-        });
+        return \DevTools::getBin('php'.$version);
     }
 }

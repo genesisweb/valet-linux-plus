@@ -11,6 +11,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\PackageManagers\Dnf;
 use Valet\PackageManagers\Pacman;
 
 class Mysql
@@ -67,23 +68,28 @@ class Mysql
      */
     public function install($useMariaDB = false)
     {
-        $package = $useMariaDB ? $this->pm->mariaDBPackageName: $this->pm->mysqlPackageName;
+        if ($this->pm instanceof Pacman || $this->pm instanceof Dnf) {
+            $useMariaDB = true;
+        }
+        $package = $useMariaDB ? $this->pm->mariaDBPackageName : $this->pm->mysqlPackageName;
         $this->currentPackage = $package;
         $service = $this->serviceName();
-        if (!extension_loaded('mysql')) {
-            $phpVersion = \PhpFpm::getVersion(true);
+        if (!$this->pm instanceof Pacman && !extension_loaded('mysql')) {
+            $phpVersion = \PhpFpm::getCurrentVersion();
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
 
         if ($package === $this->pm->mariaDBPackageName) {
             if ($this->pm->installed($this->pm->mysqlPackageName)) {
                 warning('MySQL is already installed, please remove --mariadb flag and try again!');
+
                 return;
             }
         }
         if ($package === $this->pm->mysqlPackageName) {
             if ($this->pm->installed($this->pm->mariaDBPackageName)) {
                 warning('MariaDB is already installed, please add --mariadb flag and try again!');
+
                 return;
             }
         }
@@ -94,13 +100,17 @@ class Mysql
                 $config['mysql'] = [];
             }
             if (!isset($config['mysql']['password'])) {
-                info("Looks like MySQL/MariaDB already installed to your system");
+                info('Looks like MySQL/MariaDB already installed to your system');
                 $this->configure();
             }
         } else {
             $this->pm->installOrFail($package);
             $this->sm->enable($service);
             $this->stop();
+            if ($this->pm instanceof Pacman) {
+                // Configure data directory.
+                $this->configureDataDirectory();
+            }
             $this->restart();
             $input = new ArgvInput();
             $output = new ConsoleOutput();
@@ -137,9 +147,19 @@ class Mysql
         $this->stop();
     }
 
+    public function configureDataDirectory()
+    {
+        $this->cli->run('sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
+            output($output);
+        });
+        $this->restart();
+    }
+
     /**
-     * Configure Database user for Valet
+     * Configure Database user for Valet.
+     *
      * @param bool $force
+     *
      * @return void
      */
     public function configure(bool $force = false)
@@ -151,11 +171,12 @@ class Mysql
 
         if (!$force && isset($config['mysql']['password'])) {
             info('Valet database user is already configured. Use --force to reconfigure database user.');
+
             return;
         }
         $input = new ArgvInput();
         $output = new ConsoleOutput();
-        if(empty($config['mysql']['user'])) {
+        if (empty($config['mysql']['user'])) {
             $question = new Question('Please enter MySQL/MariaDB user: ');
         } else {
             $question = new Question('Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ', $config['mysql']['user']);
@@ -174,26 +195,34 @@ class Mysql
             $question = new ConfirmationQuestion('Would you like to try again? [Y/n] ', true);
             if (!$helper->ask($input, $output, $question)) {
                 warning('Valet database user is not configured!');
+
                 return;
             } else {
                 $this->configure($force);
+
                 return;
             }
         }
         $config['mysql']['user'] = $user;
         $config['mysql']['password'] = $password;
         $this->configuration->write($config);
-        info("Database user configured successfully!");
+        info('Database user configured successfully!');
     }
-    private function serviceName() {
+
+    private function serviceName()
+    {
         if ($this->isMariaDB()) {
             return 'mariadb';
         }
+
         return 'mysql';
     }
-    private function isMariaDB() {
+
+    private function isMariaDB()
+    {
         return $this->currentPackage === $this->pm->mariaDBPackageName;
     }
+
     /**
      * Set root password of Mysql.
      *
@@ -293,8 +322,10 @@ class Mysql
 
     /**
      * Validate Username & Password.
+     *
      * @param $username
      * @param $password
+     *
      * @return bool
      */
     protected function validateCredentials($username, $password)
@@ -307,15 +338,18 @@ class Mysql
                 $password
             );
             $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
             return true;
         } catch (\PDOException $e) {
             warning('Connection failed due to `'.$e->getMessage().'`');
+
             return false;
         }
     }
 
     /**
      * Return Mysql connection.
+     *
      * @return bool|PDO
      */
     protected function getConnection()
@@ -357,7 +391,7 @@ class Mysql
      *
      * @param string $file
      * @param string $database
-     * @param bool $isDatabaseExists
+     * @param bool   $isDatabaseExists
      */
     public function importDatabase(string $file, string $database, bool $isDatabaseExists)
     {

@@ -12,6 +12,8 @@ class Dnf implements PackageManager
     public $redisPackageName = 'redis';
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
+
+    const PHP_EXTENSION_PATTERN_BY_VERSION = [];
     /**
      * Create a new Apt instance.
      *
@@ -106,5 +108,11 @@ class Dnf implements PackageManager
         } catch (DomainException $e) {
             return false;
         }
+    }
+
+    public function getPhpExtensionPattern($version)
+    {
+        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
+            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION}';
     }
 }
