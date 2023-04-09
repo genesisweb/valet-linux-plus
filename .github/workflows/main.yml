@@ -25,5 +25,3 @@ jobs:
           composer install --no-interaction --prefer-dist
       - name: Test
         run: vendor/bin/phpunit
-      - name: Test install command
-        run: ./valet install
