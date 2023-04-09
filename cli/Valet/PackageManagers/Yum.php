@@ -13,7 +13,7 @@ class Yum implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
-    const PHP_EXTENSION_PATTERN_BY_VERSION = [];
+    const PHP_FPM_PATTERN_BY_VERSION = [];
 
     /**
      * Create a new Yum instance.
@@ -66,7 +66,7 @@ class Yum implements PackageManager
      */
     public function installOrFail($package)
     {
-        output('<info>['.$package.'] is not installed, installing it now via Yum...</info> 🍻');
+        output('<info>['.$package.'] is not installed, installing it now via Yum</info>');
 
         $this->cli->run(trim('yum install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
             output($errorOutput);
@@ -111,9 +111,25 @@ class Yum implements PackageManager
         }
     }
 
+    /**
+     * Determine php fpm package name.
+     *
+     * @return string
+     */
+    public function getPhpFpmName($version)
+    {
+        $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
+            ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION}-fpm';
+        return str_replace('{VERSION}', $version, $pattern);
+    }
+
+    /**
+     * Determine php extension pattern.
+     *
+     * @return string
+     */
     public function getPhpExtensionPattern($version)
     {
-        return !empty(self::PHP_EXTENSION_PATTERN_BY_VERSION[$version])
-            ? self::PHP_EXTENSION_PATTERN_BY_VERSION[$version] : 'php{VERSION}';
+        return 'php{VERSION}';
     }
 }

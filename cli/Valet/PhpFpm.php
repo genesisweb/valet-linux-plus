@@ -3,6 +3,7 @@
 namespace Valet;
 
 use Exception;
+use Tightenco\Collect\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Exceptions\VersionException;
@@ -24,7 +25,7 @@ class PhpFpm
     ];
 
     const COMMON_EXTENSIONS = [
-        'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl'
+        'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl', 'posix'
     ];
 
     const FPM_CONFIG_FILE_NAME = 'valet.conf';
@@ -73,9 +74,9 @@ class PhpFpm
         $version = $this->normalizePhpVersion($version);
         $this->validateVersion($version);
 
-        $extensionPrefix = $this->getExtensionPrefix($version);
-        if (!$this->pm->installed("{$extensionPrefix}-fpm")) {
-            $this->pm->ensureInstalled("{$extensionPrefix}-fpm");
+        $packageName = $this->pm->getPhpFpmName($version);
+        if (!$this->pm->installed($packageName)) {
+            $this->pm->ensureInstalled($packageName);
             if ($installExt) {
                 $this->installExtensions($version);
             }
@@ -107,12 +108,13 @@ class PhpFpm
      *
      * @param string|float|int $version
      * @param bool|null $updateCli
-     * @param bool|null $installExt
+     * @param bool|null $ignoreExt
+     * @param bool|null $ignoreUpdate
      * @return void
      * @throws Exception
      *
      */
-    public function switchVersion($version = null, bool $updateCli = false, bool $installExt = false, bool $ignoreUpdate = false)
+    public function switchVersion($version = null, bool $updateCli = false, bool $ignoreExt = false, bool $ignoreUpdate = false)
     {
         $exception = null;
 
@@ -120,8 +122,8 @@ class PhpFpm
         // Validate if in use
         $version = $this->normalizePhpVersion($version);
         try {
-            $this->install($version, $installExt);
-        } catch (\Exception $e) {
+            $this->install($version, !$ignoreExt);
+        } catch (Exception $e) {
             $version = $currentVersion;
             $exception = $e;
         }
@@ -135,9 +137,10 @@ class PhpFpm
         $this->stopIfUnused($currentVersion);
 
         $this->updateNginxConfigFiles($version);
-
+        $this->nginx->restart();
+        $this->status($version);
         if ($updateCli) {
-            $this->cli->run("update-alternatives --set php /usr/bin/php{$version}");
+            $this->cli->run("update-alternatives --set php /usr/bin/php$version");
             if (!$ignoreUpdate) {
                 $this->handlePackageUpdate($version);
             }
@@ -196,8 +199,8 @@ class PhpFpm
         $version = $this->normalizePhpVersion($version);
         $this->validateVersion($version);
 
-        $extensionPrefix = $this->getExtensionPrefix($version);
-        if (!$this->pm->installed("{$extensionPrefix}-fpm")) {
+        $fpmName = $this->pm->getPhpFpmName($version);
+        if (!$this->pm->installed($fpmName)) {
             $this->install($version);
         }
 
@@ -236,6 +239,11 @@ class PhpFpm
         info(sprintf('The site [%s] is now using the default PHP version.', $site));
     }
 
+    /**
+     * List isolated directories with version.
+     *
+     * @return Collection
+     */
     public function isolatedDirectories()
     {
         return $this->nginx->configuredSites()->filter(function ($item) {
@@ -277,6 +285,11 @@ class PhpFpm
         return $this->config->get('php_version', $this->getDefaultVersion());
     }
 
+    /**
+     * Get executable php path.
+     * @param $version
+     * @return false|string
+     */
     public function getPhpExecutablePath($version = null)
     {
         if (!$version) {

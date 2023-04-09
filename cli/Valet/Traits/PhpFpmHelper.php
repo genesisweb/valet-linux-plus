@@ -35,7 +35,7 @@ trait PhpFpmHelper
         if (!$version) {
             $version = $this->getCurrentVersion();
         }
-        return $this->getExtensionPrefix($version) . '-fpm';
+        return $this->pm->getPhpFpmName($version);
     }
 
     private function updateNginxConfigFiles($version) {
@@ -86,7 +86,7 @@ trait PhpFpmHelper
         $contents = $this->files->get(__DIR__ . '/../../stubs/fpm.conf');
 
         $this->files->putAsUser(
-            $this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME,
+            $this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME,
             str_array_replace([
                 'VALET_USER' => user(),
                 'VALET_GROUP' => group(),

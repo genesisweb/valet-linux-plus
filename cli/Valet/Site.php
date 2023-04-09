@@ -83,7 +83,7 @@ class Site
     /**
      * Get all sites which are proxies (not Links, and contain proxy_pass directive).
      *
-     * @return \Tightenco\Collect\Support\Collection
+     * @return Collection
      */
     public function proxies()
     {
@@ -94,7 +94,7 @@ class Site
         if (!$this->files->exists($dir)) {
             return collect();
         }
-        $proxies = collect($this->files->scandir($dir))
+        return collect($this->files->scandir($dir))
             ->filter(function ($site) use ($domain) {
                 // keep sites that match our TLD
 
@@ -121,8 +121,6 @@ class Site
                     'path'    => $host,
                 ];
             });
-
-        return $proxies;
     }
 
     /**
