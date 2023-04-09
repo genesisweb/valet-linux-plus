@@ -128,10 +128,10 @@ class Configuration
     {
         if (!$this->files->exists($this->path())) {
             $this->write([
-                'domain' => 'test',
-                'paths' => [],
-                'port' => '80',
-                'installed_php_version' => PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION
+                'domain'                => 'test',
+                'paths'                 => [],
+                'port'                  => '80',
+                'installed_php_version' => PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION,
             ]);
         }
     }

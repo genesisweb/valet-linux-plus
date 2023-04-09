@@ -21,37 +21,37 @@ class PhpFpm
     protected $nginx;
 
     const SUPPORTED_PHP_VERSIONS = [
-        '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2'
+        '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2',
     ];
 
     const COMMON_EXTENSIONS = [
-        'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl', 'posix'
+        'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl', 'posix',
     ];
 
     const FPM_CONFIG_FILE_NAME = 'valet.conf';
 
     /**
      * Create a new PHP FPM class instance.
-     * @param Configuration $config
+     *
+     * @param Configuration  $config
      * @param PackageManager $pm
      * @param ServiceManager $sm
-     * @param CommandLine $cli
-     * @param Filesystem $files
-     * @param Site $site
-     * @param Nginx $nginx
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
+     * @param Site           $site
+     * @param Nginx          $nginx
      *
      * @return void
      */
     public function __construct(
-        Configuration  $config,
+        Configuration $config,
         PackageManager $pm,
         ServiceManager $sm,
-        CommandLine    $cli,
-        Filesystem     $files,
-        Site           $site,
-        Nginx          $nginx
-    )
-    {
+        CommandLine $cli,
+        Filesystem $files,
+        Site $site,
+        Nginx $nginx
+    ) {
         $this->config = $config;
         $this->cli = $cli;
         $this->pm = $pm;
@@ -63,10 +63,13 @@ class PhpFpm
 
     /**
      * Install and configure PHP FPM.
+     *
      * @param string|null $version
-     * @param bool $installExt
-     * @return void
+     * @param bool        $installExt
+     *
      * @throws VersionException
+     *
+     * @return void
      */
     public function install(string $version = null, bool $installExt = true)
     {
@@ -97,8 +100,8 @@ class PhpFpm
      */
     public function uninstall()
     {
-        if ($this->files->exists($this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME)) {
-            $this->files->unlink($this->fpmConfigPath() . '/' . self::FPM_CONFIG_FILE_NAME);
+        if ($this->files->exists($this->fpmConfigPath().'/'.self::FPM_CONFIG_FILE_NAME)) {
+            $this->files->unlink($this->fpmConfigPath().'/'.self::FPM_CONFIG_FILE_NAME);
             $this->stop();
         }
     }
@@ -107,12 +110,13 @@ class PhpFpm
      * Change the php-fpm version.
      *
      * @param string|float|int $version
-     * @param bool|null $updateCli
-     * @param bool|null $ignoreExt
-     * @param bool|null $ignoreUpdate
-     * @return void
+     * @param bool|null        $updateCli
+     * @param bool|null        $ignoreExt
+     * @param bool|null        $ignoreUpdate
+     *
      * @throws Exception
      *
+     * @return void
      */
     public function switchVersion($version = null, bool $updateCli = false, bool $ignoreExt = false, bool $ignoreUpdate = false)
     {
@@ -121,6 +125,7 @@ class PhpFpm
         $currentVersion = $this->getCurrentVersion();
         // Validate if in use
         $version = $this->normalizePhpVersion($version);
+
         try {
             $this->install($version, !$ignoreExt);
         } catch (Exception $e) {
@@ -148,6 +153,7 @@ class PhpFpm
 
         if ($exception) {
             warning('Changing version failed');
+
             throw $exception;
         }
     }
@@ -189,8 +195,9 @@ class PhpFpm
      * @param string $version
      * @param bool   $secure
      *
-     * @return void
      * @throws VersionException
+     *
+     * @return void
      */
     public function isolateDirectory($directory, $version, $secure = false)
     {
@@ -255,7 +262,9 @@ class PhpFpm
 
     /**
      * Get FPM socket file name for a given PHP version.
+     *
      * @param string|float|null $version
+     *
      * @return string
      */
     public function socketFileName($version = null)
@@ -269,15 +278,16 @@ class PhpFpm
     }
 
     /**
-     * Normalize inputs (php-x.x, php@x.x, phpx.x, phpxx) to version (x.x)
+     * Normalize inputs (php-x.x, php@x.x, phpx.x, phpxx) to version (x.x).
      */
     public function normalizePhpVersion($version)
     {
-        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string)$version), 0, 3);
+        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string) $version), 0, 3);
     }
 
     /**
      * Get installed PHP version.
+     *
      * @return string
      */
     public function getCurrentVersion()
@@ -287,7 +297,9 @@ class PhpFpm
 
     /**
      * Get executable php path.
+     *
      * @param $version
+     *
      * @return false|string
      */
     public function getPhpExecutablePath($version = null)

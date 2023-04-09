@@ -161,18 +161,18 @@ class Ngrok extends Facade
 /**
  * Class PhpFpm.
  *
- * @method static void   install(string $version = null, bool $installExt = true)
- * @method static void   uninstall()
- * @method static void   switchVersion(string $version = null, bool $updateCli = null, bool $ignoreExt = null, bool $ignoreUpdate = null)
- * @method static void   restart($version = null)
- * @method static void   stop($version = null)
- * @method static void   status($version = null)
- * @method static string getCurrentVersion()
- * @method static string socketFileName($version = null)
- * @method static string normalizePhpVersion($version)
- * @method static Collection isolatedDirectories()
- * @method static void isolateDirectory($site, $phpVersion, $secure = false)
- * @method static void unIsolateDirectory($site)
+ * @method static void         install(string $version = null, bool $installExt = true)
+ * @method static void         uninstall()
+ * @method static void         switchVersion(string $version = null, bool $updateCli = null, bool $ignoreExt = null, bool $ignoreUpdate = null)
+ * @method static void         restart($version = null)
+ * @method static void         stop($version = null)
+ * @method static void         status($version = null)
+ * @method static string       getCurrentVersion()
+ * @method static string       socketFileName($version = null)
+ * @method static string       normalizePhpVersion($version)
+ * @method static Collection   isolatedDirectories()
+ * @method static void         isolateDirectory($site, $phpVersion, $secure = false)
+ * @method static void         unIsolateDirectory($site)
  * @method static false|string getPhpExecutablePath($version = null)
  */
 class PhpFpm extends Facade
@@ -296,7 +296,7 @@ class Mysql extends Facade
  *
  * @method static false|string getBin(string $service)
  * @method static false|string getService(string $service, bool $locate = false)
- * @method static void run(string $folder,string $service)
+ * @method static void         run(string $folder,string $service)
  */
 class DevTools extends Facade
 {
