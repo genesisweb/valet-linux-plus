@@ -75,7 +75,7 @@ class Mysql
         $this->currentPackage = $package;
         $service = $this->serviceName();
         if (!$this->pm instanceof Pacman && !extension_loaded('mysql')) {
-            $phpVersion = \PhpFpm::getVersion(true);
+            $phpVersion = \PhpFpm::getCurrentVersion();
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
 
@@ -149,7 +149,7 @@ class Mysql
 
     public function configureDataDirectory()
     {
-        $this->cli->runAsUser('mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
+        $this->cli->run('sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
             output($output);
         });
         $this->restart();

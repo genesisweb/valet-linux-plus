@@ -11,8 +11,8 @@ if (PHP_OS != 'Linux' && !$inTestingEnvironment) {
     exit(1);
 }
 
-if (version_compare(PHP_VERSION, '5.6', '<')) {
-    echo 'Valet requires PHP 5.6 or later.';
+if (version_compare(PHP_VERSION, '7.1', '<')) {
+    echo 'Valet requires PHP 7.1 or later.';
 
     exit(1);
 }

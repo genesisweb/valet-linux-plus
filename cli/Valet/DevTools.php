@@ -85,7 +85,7 @@ class DevTools
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (str_ends_with($bin, "bin/${service}")) {
+            if (ends_with($bin, "bin/${service}")) {
                 $servicePath = $bin;
                 break;
             }

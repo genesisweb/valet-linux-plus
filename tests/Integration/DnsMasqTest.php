@@ -38,7 +38,7 @@ class DnsMasqTest extends TestCase
 
         $dnsMasq->createCustomConfigFile('test');
 
-        $this->assertSame('address=/.test/127.0.0.1'.PHP_EOL, file_get_contents(__DIR__.'/output/valet'));
+        $this->assertSame('address=/.test/127.0.0.1'.PHP_EOL.'server=1.1.1.1'.PHP_EOL.'server=8.8.8.8'.PHP_EOL, file_get_contents(__DIR__.'/output/valet'));
     }
 
     public function test_update_domain_removes_old_resolver_and_reinstalls()

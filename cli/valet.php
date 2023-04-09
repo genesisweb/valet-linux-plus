@@ -14,15 +14,16 @@ use Illuminate\Container\Container;
 use Silly\Application;
 use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Valet\Exceptions\DatabaseException;
+use Valet\Exceptions\NgrokException;
 
 /**
  * Create the application.
  */
 Container::setInstance(new Container());
+const VALET_VERSION = 'v1.6.3';
 
-$version = 'v1.6.3';
-
-$app = new Application('ValetLinux+', $version);
+$app = new Application('ValetLinux+', VALET_VERSION);
 
 /**
  * Detect environment.
@@ -75,7 +76,6 @@ if (is_dir(VALET_HOME_PATH)) {
 
         Configuration::updateKey('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
-//        Mailhog::updateDomain();
         PhpFpm::restart();
         Nginx::restart();
 
@@ -108,7 +108,7 @@ if (is_dir(VALET_HOME_PATH)) {
         PhpFpm::restart();
 
         $protocol = $https ? 'HTTPS' : 'HTTP';
-        info("Your Nginx {$protocol} port has been updated to [{$port}].");
+        info("Your Nginx $protocol port has been updated to [$port].");
     })->descriptions('Get or set the port number used for Valet sites');
 
     /**
@@ -116,12 +116,12 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('secured [site]', function ($site) {
         if (Site::secured()->contains($site)) {
-            info("{$site} is secured.");
+            info("$site is secured.");
 
             return 1;
         }
 
-        info("{$site} is not secured.");
+        info("$site is not secured.");
 
         return 0;
     })->descriptions('Determine if the site is secured or not');
@@ -159,7 +159,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('park [path]', function ($path = null) {
         Configuration::addPath($path ?: getcwd());
 
-        info(($path === null ? 'This' : "The [{$path}]")." directory has been added to Valet's paths.");
+        info(($path === null ? 'This' : "The [$path]")." directory has been added to Valet's paths.");
     })->descriptions('Register the current working (or specified) directory with Valet');
 
     /**
@@ -168,7 +168,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('forget [path]', function ($path = null) {
         Configuration::removePath($path ?: getcwd());
 
-        info(($path === null ? 'This' : "The [{$path}]")." directory has been removed from Valet's paths.");
+        info(($path === null ? 'This' : "The [$path]")." directory has been removed from Valet's paths.");
     })->descriptions('Remove the current working (or specified) directory from Valet\'s list of paths');
 
     /**
@@ -194,7 +194,7 @@ if (is_dir(VALET_HOME_PATH)) {
     $app->command('links', function () {
         $links = Site::links();
 
-        table(['Site', 'SSL', 'URL', 'Path'], $links->all());
+        table(['Site', 'SSL', 'URL', 'Path', 'PHP Version'], $links->all());
     })->descriptions('Display all of the registered Valet links');
 
     /**
@@ -408,18 +408,6 @@ if (is_dir(VALET_HOME_PATH)) {
                     break;
                 default:
                     break;
-//                case 'elasticsearch': {
-//                    Elasticsearch::restart();
-//                    break;
-//                }
-//                case 'rabbitmq': {
-//                    RabbitMq::restart();
-//                    break;
-//                }
-//                case 'varnish': {
-//                    Varnish::restart();
-//                    break;
-//                }
             }
         }
 
@@ -487,10 +475,10 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('update', function () use ($version) {
+    $app->command('update', function () {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
-        if (Valet::onLatestVersion($version)) {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             info('You have the latest version of Valet Linux');
             passthru($script);
         } else {
@@ -508,27 +496,30 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Change the PHP version to the desired one.
      */
-    $app->command('use [preferedversion] [--update-cli] [--install-ext]', function (
+    $app->command('use [preferedversion] [--update-cli] [--ignore-ext] [--ignore-update]', function (
         $preferedVersion = null,
         $updateCli = null,
-        $installExt = null
+        $ignoreExt = null,
+        $ignoreUpdate = null
     ) {
-        info('Changing php-fpm version...');
-        PhpFpm::changeVersion($preferedVersion, $updateCli, $installExt);
-        info('php-fpm version successfully changed! 🎉');
+        info('Changing php version...');
+        PhpFpm::switchVersion($preferedVersion, $updateCli, $ignoreExt, $ignoreUpdate);
+        info('php version successfully changed!');
     })->descriptions(
-        'Set the PHP-fpm version to use, enter "default" or leave empty to use version: '
-        .PhpFpm::getVersion(true),
+        'Set the PHP version to use, enter "default" or leave empty to use version: '
+        .PhpFpm::getCurrentVersion(),
         [
-            '--update-cli' => 'Updates CLI version as well',
+            '--update-cli'    => 'Updates CLI version as well',
+            '--ignore-ext'    => 'Installs extension with selected php version',
+            '--ignore-update' => 'Ignores self package update. Works with --update-cli flag.',
         ]
     );
 
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('is-latest', function () use ($version) {
-        if (Valet::onLatestVersion($version)) {
+    $app->command('is-latest', function () {
+        if (Valet::onLatestVersion(VALET_VERSION)) {
             output('YES');
         } else {
             output('NO');
@@ -595,7 +586,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        info("Database [{$databaseName}] reset successfully");
+        info("Database [$databaseName] reset successfully");
     })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
@@ -607,13 +598,13 @@ if (is_dir(VALET_HOME_PATH)) {
         $helper = $this->getHelperSet()->get('question');
         info('Importing database...');
         if (!$databaseName) {
-            throw new Exception('Please provide database name');
+            throw new DatabaseException('Please provide database name');
         }
         if (!$dumpFile) {
-            throw new Exception('Please provide a dump file');
+            throw new DatabaseException('Please provide a dump file');
         }
         if (!file_exists($dumpFile)) {
-            throw new Exception("Unable to locate [$dumpFile]");
+            throw new DatabaseException("Unable to locate [$dumpFile]");
         }
         $isExistsDatabase = false;
         // check if database already exists.
@@ -687,7 +678,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('ngrok-auth [authtoken]', function ($authtoken) {
         if (!$authtoken) {
-            throw new Exception('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
+            throw new NgrokException('Missing arguments to authenticate ngrok. Use: "valet ngrok-auth [authtoken]"');
         }
         Ngrok::setAuthToken($authtoken);
     })->descriptions('Set authentication token for ngrok');
@@ -695,13 +686,13 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Allow the user to change the version of PHP Valet uses to serve the current site.
      */
-    $app->command('isolate [phpVersion] [--site=] [--secure]', function ($phpVersion, $site = null, $secure) {
+    $app->command('isolate [phpVersion] [--site=] [--secure]', function ($phpVersion, $site, $secure) {
         if (!$site) {
             $site = basename(getcwd());
         }
 
         if (is_null($phpVersion) && $phpVersion = Site::phpRcVersion($site)) {
-            info("Found '{$site}/.valetphprc' specifying version: {$phpVersion}");
+            info("Found '$site/.valetphprc' specifying version: $phpVersion");
         }
 
         PhpFpm::isolateDirectory($site, $phpVersion, $secure);
@@ -754,20 +745,24 @@ if (is_dir(VALET_HOME_PATH)) {
      * Proxy commands through to an isolated site's version of PHP.
      */
     $app->command('php [--site=] [command]', function () {
-        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+        warning(
+            'It looks like you are running `cli/valet.php` directly;
+            please use the `valet` script in the project root instead.'
+        );
     })->descriptions("Proxy PHP commands with isolated site's PHP executable", [
         'command' => "Command to run with isolated site's PHP executable",
-        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+        '--site'  => 'Specify the site to use to get the PHP version',
     ]);
 
     /**
      * Proxy commands through to an isolated site's version of Composer.
      */
     $app->command('composer [--site=] [command]', function () {
-        warning('It looks like you are running `cli/valet.php` directly; please use the `valet` script in the project root instead.');
+        warning('It looks like you are running `cli/valet.php` directly;
+        please use the `valet` script in the project root instead.');
     })->descriptions("Proxy Composer commands with isolated site's PHP executable", [
         'command' => "Composer command to run with isolated site's PHP executable",
-        '--site'  => 'Specify the site to use to get the PHP version (e.g. if the site isn\'t linked as its directory name)',
+        '--site'  => 'Specify the site to use to get the PHP version',
     ]);
 }
 

@@ -177,20 +177,6 @@ if (!function_exists('retry')) {
     }
 }
 
-/**
- * Verify that the script is currently running as "sudo".
- *
- * @throws Exception
- *
- * @return void
- */
-function should_be_sudo()
-{
-    if (!isset($_SERVER['SUDO_USER'])) {
-        throw new Exception('This command must be run with sudo.');
-    }
-}
-
 if (!function_exists('tap')) {
     /**
      * Tap the given value.
@@ -205,27 +191,6 @@ if (!function_exists('tap')) {
         $callback($value);
 
         return $value;
-    }
-}
-
-if (!function_exists('ends_with')) {
-    /**
-     * Determine if a given string ends with a given substring.
-     *
-     * @param string       $haystack
-     * @param string|array $needles
-     *
-     * @return bool
-     */
-    function ends_with($haystack, $needles)
-    {
-        foreach ((array) $needles as $needle) {
-            if (substr($haystack, -strlen($needle)) === (string) $needle) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
 
@@ -264,44 +229,4 @@ function group()
 function str_array_replace($searchAndReplace, $subject)
 {
     return str_replace(array_keys($searchAndReplace), array_values($searchAndReplace), $subject);
-}
-
-/**
- * Get user input from cli.
- *
- * @param $question
- * @param $suggestion
- * @param $default
- *
- * @return string
- */
-function ask($question, $suggestion = null, $default = null)
-{
-    return CliPrompt::prompt($question, false, $suggestion, $default);
-}
-
-/**
- * Get user hidden input from cli.
- *
- * @param $question
- * @param $suggestion
- * @param $default
- *
- * @return string
- */
-function ask_secret($question, $suggestion = null, $default = null)
-{
-    return CliPrompt::prompt($question, true, $suggestion, $default);
-}
-
-if (!function_exists('str_ends_with')) {
-    function str_ends_with($haystack, $needle)
-    {
-        $length = strlen($needle);
-        if (!$length) {
-            return true;
-        }
-
-        return substr($haystack, -$length) === $needle;
-    }
 }

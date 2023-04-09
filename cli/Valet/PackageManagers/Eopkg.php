@@ -13,11 +13,7 @@ class Eopkg implements PackageManager
     public $mysqlPackageName = 'mysql-server';
     public $mariaDBPackageName = 'mariadb-server';
 
-    const SUPPORTED_PHP_VERSIONS = [
-        'php',
-    ];
-
-    const SUPPORTED_PHP_SERVICE_PATTERN = 'php-fpm';
+    const PHP_FPM_PATTERN_BY_VERSION = [];
 
     /**
      * Create a new Eopkg instance.
@@ -80,7 +76,7 @@ class Eopkg implements PackageManager
      */
     public function installOrFail($package)
     {
-        output('<info>['.$package.'] is not installed, installing it now via Eopkg...</info> 🍻');
+        output('<info>['.$package.'] is not installed, installing it now via Eopkg</info>');
 
         $this->cli->run(trim('eopkg install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
             output($errorOutput);
@@ -125,13 +121,26 @@ class Eopkg implements PackageManager
         }
     }
 
-    public function supportedPhpVersions()
+    /**
+     * Determine php fpm package name.
+     *
+     * @return string
+     */
+    public function getPhpFpmName($version)
     {
-        return collect(static::SUPPORTED_PHP_VERSIONS);
+        $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
+            ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION}-fpm';
+
+        return str_replace('{VERSION}', $version, $pattern);
     }
 
-    public function getPhpServicePattern()
+    /**
+     * Determine php extension pattern.
+     *
+     * @return string
+     */
+    public function getPhpExtensionPattern($version)
     {
-        return self::SUPPORTED_PHP_SERVICE_PATTERN;
+        return 'php{VERSION}';
     }
 }
