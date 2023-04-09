@@ -366,8 +366,15 @@ class Site
             $secured = $certs->has($site);
 
             $url = ($secured ? 'https' : 'http').'://'.$site.'.'.$config['domain'].($secured ? $httpsPort : $httpPort);
+            $phpVersion = $this->getPhpVersion($site.'.'.$config['domain']);
 
-            return [$site, $secured ? ' X' : '', $url, $path];
+            return [
+                'site' => $site,
+                'secured' => $secured ? ' X' : '',
+                'url' => $url,
+                'path' => $path,
+                'phpVersion' => $phpVersion
+            ];
         });
     }
 
