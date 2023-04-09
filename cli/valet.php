@@ -509,8 +509,8 @@ if (is_dir(VALET_HOME_PATH)) {
         'Set the PHP version to use, enter "default" or leave empty to use version: '
         .PhpFpm::getCurrentVersion(),
         [
-            '--update-cli' => 'Updates CLI version as well',
-            '--ignore-ext' => 'Installs extension with selected php version',
+            '--update-cli'    => 'Updates CLI version as well',
+            '--ignore-ext'    => 'Installs extension with selected php version',
             '--ignore-update' => 'Ignores self package update. Works with --update-cli flag.',
         ]
     );

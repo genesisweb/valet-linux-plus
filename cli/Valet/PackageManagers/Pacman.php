@@ -132,6 +132,7 @@ class Pacman implements PackageManager
         $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
             ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION_WITHOUT_DOT}-fpm';
         $version = preg_replace('~[^\d]~', '', $version);
+
         return str_replace('{VERSION_WITHOUT_DOT}', $version, $pattern);
     }
 

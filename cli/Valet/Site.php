@@ -94,6 +94,7 @@ class Site
         if (!$this->files->exists($dir)) {
             return collect();
         }
+
         return collect($this->files->scandir($dir))
             ->filter(function ($site) use ($domain) {
                 // keep sites that match our TLD
@@ -369,11 +370,11 @@ class Site
             $phpVersion = $this->getPhpVersion($site.'.'.$config['domain']);
 
             return [
-                'site' => $site,
-                'secured' => $secured ? ' X' : '',
-                'url' => $url,
-                'path' => $path,
-                'phpVersion' => $phpVersion
+                'site'       => $site,
+                'secured'    => $secured ? ' X' : '',
+                'url'        => $url,
+                'path'       => $path,
+                'phpVersion' => $phpVersion,
             ];
         });
     }

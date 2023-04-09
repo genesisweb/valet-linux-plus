@@ -130,6 +130,7 @@ class Eopkg implements PackageManager
     {
         $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
             ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION}-fpm';
+
         return str_replace('{VERSION}', $version, $pattern);
     }
 

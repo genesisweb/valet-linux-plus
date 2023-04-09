@@ -14,6 +14,7 @@ class Dnf implements PackageManager
     public $mariaDBPackageName = 'mariadb-server';
 
     const PHP_FPM_PATTERN_BY_VERSION = [];
+
     /**
      * Create a new Apt instance.
      *
@@ -119,6 +120,7 @@ class Dnf implements PackageManager
     {
         $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
             ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION}-fpm';
+
         return str_replace('{VERSION}', $version, $pattern);
     }
 
