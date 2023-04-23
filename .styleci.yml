@@ -1,8 +1,6 @@
-php:
-  risky: false
-  version: 7.1
-  preset: recommended
-  monolithic: true
-  tab-width: 4
-  use-tabs: false
-
+risky: false
+version: 7.1
+preset: recommended
+monolithic: true
+tab-width: 4
+use-tabs: false
