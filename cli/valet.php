@@ -21,7 +21,7 @@ use Valet\Exceptions\NgrokException;
  * Create the application.
  */
 Container::setInstance(new Container());
-const VALET_VERSION = 'v1.6.4';
+const VALET_VERSION = 'v1.6.5';
 
 $app = new Application('ValetLinux+', VALET_VERSION);
 
@@ -41,7 +41,7 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
     Valet::symlinkToUsersBin();
-    Mailhog::install();
+    Mailpit::install();
     ValetRedis::install();
     Nginx::restart();
     Mysql::install($mariaDB);

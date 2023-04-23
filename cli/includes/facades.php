@@ -168,6 +168,7 @@ class Ngrok extends Facade
  * @method static void         stop($version = null)
  * @method static void         status($version = null)
  * @method static string       getCurrentVersion()
+ * @method static string       fpmSocketFile($version)
  * @method static string       socketFileName($version = null)
  * @method static string       normalizePhpVersion($version)
  * @method static Collection   isolatedDirectories()
@@ -246,7 +247,7 @@ class Requirements extends Facade
  * @method static void status()
  * @method static void uninstall()
  */
-class Mailhog extends Facade
+class Mailpit extends Facade
 {
 }
 
