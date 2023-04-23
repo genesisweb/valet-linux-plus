@@ -1,9 +1,8 @@
 php:
-  preset: laravel
-  disabled:
-    - no_unused_imports
-  finder:
-    not-name:
-      - index.php
-js: true
-css: true
+  risky: false
+  version: 7.1
+  preset: recommended
+  monolithic: true
+  tab-width: 4
+  use-tabs: false
+
