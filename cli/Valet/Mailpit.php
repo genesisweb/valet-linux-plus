@@ -20,8 +20,8 @@ class Mailpit
      *
      * @param PackageManager $pm
      * @param ServiceManager $sm
-     * @param CommandLine $cli
-     * @param Filesystem $files
+     * @param CommandLine    $cli
+     * @param Filesystem     $files
      *
      * @return void
      */
@@ -52,7 +52,7 @@ class Mailpit
                 $this->files->remove('/opt/valet-linux/mailhog');
             }
             $domain = \Configuration::get('domain');
-            if ($this->files->exists(VALET_HOME_PATH . "/Nginx/mailhog.$domain")) {
+            if ($this->files->exists(VALET_HOME_PATH."/Nginx/mailhog.$domain")) {
                 \Site::proxyDelete("mailhog.$domain");
             }
         }
@@ -78,12 +78,12 @@ class Mailpit
         info('Installing Mailpit service...');
 
         $servicePath = '/etc/init.d/mailpit';
-        $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit.sh';
+        $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit.sh';
         $hasSystemd = $this->sm->_hasSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/mailpit.service';
-            $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit';
+            $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit';
         }
 
         $this->files->put(

@@ -171,8 +171,8 @@ class Site
     /**
      * Build the Nginx proxy config for the specified domain.
      *
-     * @param string $url    The domain name to serve
-     * @param string $host   The URL to proxy to, eg: http://127.0.0.1:8080
+     * @param string $url  The domain name to serve
+     * @param string $host The URL to proxy to, eg: http://127.0.0.1:8080
      * @param bool   $secure
      *
      * @return string
@@ -314,7 +314,7 @@ class Site
     }
 
     /**
-     * @param $site
+     * @param      $site
      * @param null $suffix
      *
      * @return string|null
@@ -624,15 +624,15 @@ class Site
 
         return str_array_replace(
             [
-                'VALET_HOME_PATH'     => $this->valetHomePath(),
-                'VALET_SERVER_PATH'   => VALET_SERVER_PATH,
-                'VALET_STATIC_PREFIX' => VALET_STATIC_PREFIX,
-                'VALET_SITE'          => $url,
-                'VALET_CERT'          => $path.'/'.$url.'.crt',
-                'VALET_KEY'           => $path.'/'.$url.'.key',
-                'VALET_HTTP_PORT'     => $this->config->get('port', 80),
-                'VALET_HTTPS_PORT'    => $this->config->get('https_port', 443),
-                'VALET_REDIRECT_PORT' => $this->httpsSuffix(),
+                'VALET_HOME_PATH'       => $this->valetHomePath(),
+                'VALET_SERVER_PATH'     => VALET_SERVER_PATH,
+                'VALET_STATIC_PREFIX'   => VALET_STATIC_PREFIX,
+                'VALET_SITE'            => $url,
+                'VALET_CERT'            => $path.'/'.$url.'.crt',
+                'VALET_KEY'             => $path.'/'.$url.'.key',
+                'VALET_HTTP_PORT'       => $this->config->get('port', 80),
+                'VALET_HTTPS_PORT'      => $this->config->get('https_port', 443),
+                'VALET_REDIRECT_PORT'   => $this->httpsSuffix(),
                 'VALET_FPM_SOCKET_FILE' => \PhpFpm::fpmSocketFile(\PhpFpm::getCurrentVersion()),
             ],
             $stub
@@ -826,7 +826,7 @@ class Site
 
         // Isolate specific variables
         $siteConf = str_array_replace([
-            'VALET_FPM_SOCKET_FILE'       => \PhpFpm::fpmSocketFile($phpVersion),
+            'VALET_FPM_SOCKET_FILE'      => \PhpFpm::fpmSocketFile($phpVersion),
             'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
         ], $this->files->get($stub));
 
@@ -995,7 +995,7 @@ class Site
             $stub = $this->files->get($stub);
             // Isolate specific variables
             return str_array_replace([
-                'VALET_FPM_SOCKET_FILE'       => \PhpFpm::fpmSocketFile($phpVersion),
+                'VALET_FPM_SOCKET_FILE'      => \PhpFpm::fpmSocketFile($phpVersion),
                 'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
             ], $stub);
         }

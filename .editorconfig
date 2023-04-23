@@ -7,6 +7,10 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 trim_trailing_whitespace = true
+ij_php_align_key_value_pairs = true
+ij_php_align_phpdoc_param_names = true
+ij_php_align_phpdoc_comments = true
+ij_php_concat_spaces = false
 
 [*.md]
 trim_trailing_whitespace = false
