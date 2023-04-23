@@ -77,6 +77,11 @@ trait PhpFpmHelper
         $this->pm->ensureInstalled(implode(' ', $extArray));
     }
 
+    public function fpmSocketFile($version)
+    {
+        return VALET_HOME_PATH.'/'.$this->socketFileName($version);
+    }
+
     /**
      * Update the PHP FPM configuration to use the current user.
      *
@@ -93,7 +98,7 @@ trait PhpFpmHelper
             str_array_replace([
                 'VALET_USER'            => user(),
                 'VALET_GROUP'           => group(),
-                'VALET_FPM_SOCKET_FILE' => VALET_HOME_PATH.'/'.$this->socketFileName($version),
+                'VALET_FPM_SOCKET_FILE' => $this->fpmSocketFile($version),
             ], $contents)
         );
     }

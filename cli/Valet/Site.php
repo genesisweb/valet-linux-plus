@@ -633,6 +633,7 @@ class Site
                 'VALET_HTTP_PORT'     => $this->config->get('port', 80),
                 'VALET_HTTPS_PORT'    => $this->config->get('https_port', 443),
                 'VALET_REDIRECT_PORT' => $this->httpsSuffix(),
+                'VALET_FPM_SOCKET_FILE' => \PhpFpm::fpmSocketFile(\PhpFpm::getCurrentVersion()),
             ],
             $stub
         );
@@ -752,7 +753,7 @@ class Site
      */
     public function getPhpVersion($url)
     {
-        $defaultPhpVersion = PHP_VERSION;
+        $defaultPhpVersion = \PhpFpm::getCurrentVersion();
         $phpVersion = \PhpFpm::normalizePhpVersion($this->customPhpVersion($url));
         if (empty($phpVersion)) {
             $phpVersion = \PhpFpm::normalizePhpVersion($defaultPhpVersion);
@@ -825,7 +826,7 @@ class Site
 
         // Isolate specific variables
         $siteConf = str_array_replace([
-            'VALET_PHP_FPM_SOCKET'       => \PhpFpm::socketFileName($phpVersion),
+            'VALET_FPM_SOCKET_FILE'       => \PhpFpm::fpmSocketFile($phpVersion),
             'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
         ], $this->files->get($stub));
 
@@ -848,8 +849,7 @@ class Site
         // If a site has an SSL certificate, we need to keep its custom config file, but we can
         // just re-generate it without defining a custom `valet.sock` file
         if ($this->files->exists($this->certificatesPath().'/'.$valetSite.'.crt')) {
-            $siteConf = $this->buildSecureNginxServer($valetSite);
-            $this->files->putAsUser($this->nginxPath($valetSite), $siteConf);
+            $this->createSecureNginxServer($valetSite);
         } else {
             // When site doesn't have SSL, we can remove the custom nginx config file to remove isolation
             $this->files->unlink($this->nginxPath($valetSite));
@@ -995,7 +995,7 @@ class Site
             $stub = $this->files->get($stub);
             // Isolate specific variables
             return str_array_replace([
-                'VALET_PHP_FPM_SOCKET'       => \PhpFpm::socketFileName($phpVersion),
+                'VALET_FPM_SOCKET_FILE'       => \PhpFpm::fpmSocketFile($phpVersion),
                 'VALET_ISOLATED_PHP_VERSION' => $phpVersion,
             ], $stub);
         }
