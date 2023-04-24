@@ -325,7 +325,7 @@ if (is_dir(VALET_HOME_PATH)) {
             DnsMasq::restart();
             PhpFpm::restart();
             Nginx::restart();
-            Mailhog::restart();
+            Mailpit::restart();
             Mysql::restart();
             ValetRedis::restart();
             info('Valet services have been started.');
@@ -342,8 +342,8 @@ if (is_dir(VALET_HOME_PATH)) {
                     PhpFpm::restart();
                     break;
 
-                case 'mailhog':
-                    Mailhog::restart();
+                case 'mailpit':
+                    Mailpit::restart();
                     break;
 
                 case 'dnsmasq':
@@ -373,7 +373,7 @@ if (is_dir(VALET_HOME_PATH)) {
             DnsMasq::restart();
             PhpFpm::restart();
             Nginx::restart();
-            Mailhog::restart();
+            Mailpit::restart();
             Mysql::restart();
             ValetRedis::restart();
             info('Valet services have been restarted.');
@@ -391,8 +391,8 @@ if (is_dir(VALET_HOME_PATH)) {
                     PhpFpm::restart();
                     break;
 
-                case 'mailhog':
-                    Mailhog::restart();
+                case 'mailpit':
+                    Mailpit::restart();
                     break;
 
                 case 'dnsmasq':
@@ -421,7 +421,7 @@ if (is_dir(VALET_HOME_PATH)) {
         if (empty($services)) {
             PhpFpm::stop();
             Nginx::stop();
-            Mailhog::stop();
+            Mailpit::stop();
             Mysql::stop();
             ValetRedis::stop();
             info('Valet services have been stopped.');
@@ -439,8 +439,8 @@ if (is_dir(VALET_HOME_PATH)) {
                     PhpFpm::stop();
                     break;
 
-                case 'mailhog':
-                    Mailhog::stop();
+                case 'mailpit':
+                    Mailpit::stop();
                     break;
 
                 case 'mysql':
@@ -465,7 +465,7 @@ if (is_dir(VALET_HOME_PATH)) {
         Nginx::uninstall();
         PhpFpm::uninstall();
         DnsMasq::uninstall();
-        Mailhog::uninstall();
+        Mailpit::uninstall();
         Configuration::uninstall();
         Valet::uninstall();
 
