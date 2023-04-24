@@ -21,7 +21,7 @@ use Valet\Exceptions\NgrokException;
  * Create the application.
  */
 Container::setInstance(new Container());
-const VALET_VERSION = 'v1.6.5';
+const VALET_VERSION = 'v1.6.6';
 
 $app = new Application('ValetLinux+', VALET_VERSION);
 
