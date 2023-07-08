@@ -593,6 +593,12 @@ class Site
             $url,
             $crtPath
         ));
+
+        $this->cli->run(sprintf(
+            'certutil -d $HOME/snap/firefox/common/.mozilla/firefox/*.default -A -t TC -n "%s" -i "%s"',
+            $url,
+            $crtPath
+        ));
     }
 
     /**

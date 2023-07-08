@@ -66,7 +66,9 @@ class Mailpit
     public function ensureInstalled()
     {
         if (!$this->isAvailable()) {
-            $this->cli->run('sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)');
+            $this->cli->runAsUser(
+                'curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh | bash'
+            );
         }
     }
 
