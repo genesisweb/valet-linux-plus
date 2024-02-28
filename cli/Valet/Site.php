@@ -909,25 +909,6 @@ class Site
     }
 
     /**
-     * Replace .sock file in an Nginx site configuration file contents.
-     *
-     * @param string $siteConf
-     * @param string $phpVersion
-     *
-     * @return string
-     */
-    public function replaceSockFile($siteConf, $phpVersion)
-    {
-        $sockFile = PhpFpm::socketFileName($phpVersion);
-
-        $siteConf = preg_replace('/valet[0-9]*.sock/', $sockFile, $siteConf);
-        // Remove ISOLATED_PHP_VERSION line from config
-        $siteConf = preg_replace('/# '.ISOLATED_PHP_VERSION.'.*\n/', '', $siteConf);
-
-        return '# '.ISOLATED_PHP_VERSION.'='.$phpVersion.PHP_EOL.$siteConf;
-    }
-
-    /**
      * Get PHP version from .valetphprc for a site.
      *
      * @param string $site
