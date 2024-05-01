@@ -19,12 +19,27 @@ use Valet\ServiceManagers\Systemd;
 
 class Valet
 {
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var Filesystem
+     */
     public $files;
 
-    public $valetBin = '/usr/local/bin/valet';
-    public $sudoers = '/etc/sudoers.d/valet';
-    public $github = 'https://api.github.com/repos/genesisweb/valet-linux-plus/releases/latest';
+    /**
+     * @var string
+     */
+    private $valetBin = '/usr/local/bin/valet';
+    /**
+     * @var string
+     */
+    private $sudoers = '/etc/sudoers.d/valet';
+    /**
+     * @var string
+     */
+    private $github = 'https://api.github.com/repos/genesisweb/valet-linux-plus/releases/latest';
 
     /**
      * Create a new Valet instance.
@@ -40,10 +55,8 @@ class Valet
 
     /**
      * Symlink the Valet Bash script into the user's local bin.
-     *
-     * @return void
      */
-    public function symlinkToUsersBin()
+    public function symlinkToUsersBin(): void
     {
         $this->cli->run('ln -snf '.realpath(__DIR__.'/../../valet').' '.$this->valetBin);
     }
@@ -51,21 +64,17 @@ class Valet
     /**
      * Unlink the Valet Bash script from the user's local bin
      * and the sudoers.d entry.
-     *
-     * @return void
      */
-    public function uninstall()
+    public function uninstall(): void
     {
         $this->files->unlink($this->valetBin);
         $this->files->unlink($this->sudoers);
     }
 
     /**
-     * Get the paths to all of the Valet extensions.
-     *
-     * @return array
+     * Get the paths to all the Valet extensions.
      */
-    public function extensions()
+    public function extensions(): array
     {
         if (!$this->files->isDir(VALET_HOME_PATH.'/Extensions')) {
             return [];
@@ -83,14 +92,9 @@ class Valet
 
     /**
      * Determine if this is the latest version of Valet.
-     *
-     * @param string $currentVersion
-     *
      * @throws Exception
-     *
-     * @return bool
      */
-    public function onLatestVersion($currentVersion)
+    public function onLatestVersion(string $currentVersion): bool
     {
         $response = Request::get($this->github)->send();
         $currentVersion = str_replace('v', '', $currentVersion);
@@ -102,9 +106,7 @@ class Valet
 
     /**
      * Retrieve the latest version of Valet Linux Plus.
-     *
      * @throws Exception
-     *
      * @return string|bool
      */
     public function getLatestVersion()
@@ -116,31 +118,26 @@ class Valet
 
     /**
      * Determine current environment.
-     *
-     * @return void
      */
-    public function environmentSetup()
+    public function environmentSetup(): void
     {
-        $this->packageManagerSetup();
         $this->serviceManagerSetup();
+        $this->packageManagerSetup();
     }
 
     /**
      * Configure package manager.
-     *
-     * @return void
      */
-    public function packageManagerSetup()
+    private function packageManagerSetup(): void
     {
         Container::getInstance()->bind(PackageManager::class, $this->getAvailablePackageManager());
     }
 
     /**
      * Determine the first available package manager.
-     *
-     * @return string
+     * @return class-string
      */
-    public function getAvailablePackageManager()
+    private function getAvailablePackageManager(): string
     {
         return collect([
             Apt::class,
@@ -158,24 +155,21 @@ class Valet
 
     /**
      * Configure service manager.
-     *
-     * @return void
      */
-    public function serviceManagerSetup()
+    private function serviceManagerSetup(): void
     {
         Container::getInstance()->bind(ServiceManager::class, $this->getAvailableServiceManager());
     }
 
     /**
      * Determine the first available service manager.
-     *
-     * @return string
+     * @return class-string
      */
-    public function getAvailableServiceManager()
+    private function getAvailableServiceManager(): string
     {
         return collect([
-            LinuxService::class,
             Systemd::class,
+            LinuxService::class,
         ])->first(function ($pm) {
             return resolve($pm)->isAvailable();
         }, function () {

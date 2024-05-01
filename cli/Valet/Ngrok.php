@@ -8,15 +8,19 @@ use Httpful\Request;
 
 class Ngrok
 {
-    public $tunnelsEndpoint = 'http://127.0.0.1:4040/api/tunnels';
+    /**
+     * @var string
+     */
+    private const TUNNEL_ENDPOINT = 'http://127.0.0.1:4040/api/tunnels';
+    /**
+     * @var CommandLine
+     */
     public $cli;
 
     /**
      * Create a new Ngrok instance.
      *
      * @param CommandLine $cli
-     *
-     * @return void
      */
     public function __construct(CommandLine $cli)
     {
@@ -25,15 +29,12 @@ class Ngrok
 
     /**
      * Get the current tunnel URL from the Ngrok API.
-     *
      * @throws Exception
-     *
-     * @return string
      */
-    public function currentTunnelUrl()
+    public function currentTunnelUrl(): string
     {
         return retry(20, function () {
-            $body = Request::get($this->tunnelsEndpoint)->send()->body;
+            $body = Request::get(self::TUNNEL_ENDPOINT)->send()->body;
 
             // If there are active tunnels on the Ngrok instance we will spin through them and
             // find the one responding on HTTP. Each tunnel has an HTTP and a HTTPS address
@@ -48,12 +49,17 @@ class Ngrok
 
     /**
      * Find the HTTP tunnel URL from the list of tunnels.
-     *
-     * @param array $tunnels
-     *
-     * @return string|null
      */
-    public function findHttpTunnelUrl(array $tunnels)
+    public function setAuthToken(string $authToken): void
+    {
+        $this->cli->run(__DIR__.'/../../bin/ngrok config add-authtoken '.$authToken);
+        info('Ngrok authentication token set.');
+    }
+
+    /**
+     * Find the HTTP tunnel URL from the list of tunnels.
+     */
+    private function findHttpTunnelUrl(array $tunnels): ?string
     {
         foreach ($tunnels as $tunnel) {
             if ($tunnel->proto === 'http') {
@@ -62,18 +68,5 @@ class Ngrok
         }
 
         return null;
-    }
-
-    /**
-     * Find the HTTP tunnel URL from the list of tunnels.
-     *
-     * @param string $authToken
-     *
-     * @return void
-     */
-    public function setAuthToken(string $authToken)
-    {
-        $this->cli->run(__DIR__.'/../../bin/ngrok config add-authtoken '.$authToken);
-        info('Ngrok authentication token set.');
     }
 }

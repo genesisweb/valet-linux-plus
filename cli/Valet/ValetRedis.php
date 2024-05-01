@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: uttam
- * Date: 31/10/19
- * Time: 5:16 PM.
- */
 
 namespace Valet;
 
@@ -47,10 +41,8 @@ class ValetRedis
 
     /**
      * Install Redis Server.
-     *
-     * @return void
      */
-    public function install()
+    public function install(): void
     {
         $this->pm->ensureInstalled($this->pm->redisPackageName);
         $this->sm->enable($this->pm->redisPackageName);
@@ -58,40 +50,32 @@ class ValetRedis
 
     /**
      * Returns true if Redis is installed or not.
-     *
-     * @return bool
      */
-    public function installed()
+    public function installed(): bool
     {
         return $this->pm->installed($this->pm->redisPackageName);
     }
 
     /**
      * Restart the service.
-     *
-     * @return void
      */
-    public function restart()
+    public function restart(): void
     {
         $this->sm->restart($this->pm->redisPackageName);
     }
 
     /**
      * Stop the service.
-     *
-     * @return void
      */
-    public function stop()
+    public function stop(): void
     {
         $this->sm->stop($this->pm->redisPackageName);
     }
 
     /**
      * Prepare for uninstall.
-     *
-     * @return void
      */
-    public function uninstall()
+    public function uninstall(): void
     {
         $this->stop();
     }

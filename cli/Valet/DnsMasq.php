@@ -8,27 +8,53 @@ use Valet\Contracts\ServiceManager;
 
 class DnsMasq
 {
+    /**
+     * @var PackageManager
+     */
     public $pm;
+    /**
+     * @var ServiceManager
+     */
     public $sm;
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var Filesystem
+     */
     public $files;
-    public $rclocal;
-    public $resolvconf;
-    public $dnsmasqconf;
-    public $dnsmasqOpts;
-    public $resolvedConfigPath;
-    public $configPath;
-    public $nmConfigPath;
+    /**
+     * @var string
+     */
+    public $rclocal = '/etc/rc.local';
+    /**
+     * @var string
+     */
+    public $resolvconf = '/etc/resolv.conf';
+    /**
+     * @var string
+     */
+    public $dnsmasqconf = '/etc/dnsmasq.conf';
+    /**
+     * @var string
+     */
+    public $dnsmasqOpts = '/etc/dnsmasq.d/options';
+    /**
+     * @var string
+     */
+    public $resolvedConfigPath = '/etc/systemd/resolved.conf';
+    /**
+     * @var string
+     */
+    public $configPath = '/etc/dnsmasq.d/valet';
+    /**
+     * @var string
+     */
+    public $nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
 
     /**
      * Create a new DnsMasq instance.
-     *
-     * @param PackageManager $pm    PackageManager object
-     * @param ServiceManager $sm    ServiceManager object
-     * @param Filesystem     $files Filesystem     object
-     * @param CommandLine    $cli   CommandLine    object
-     *
-     * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, Filesystem $files, CommandLine $cli)
     {
@@ -36,23 +62,80 @@ class DnsMasq
         $this->sm = $sm;
         $this->cli = $cli;
         $this->files = $files;
-        $this->rclocal = '/etc/rc.local';
-        $this->resolvconf = '/etc/resolv.conf';
-        $this->dnsmasqconf = '/etc/dnsmasq.conf';
-        $this->configPath = '/etc/dnsmasq.d/valet';
-        $this->dnsmasqOpts = '/etc/dnsmasq.d/options';
-        $this->nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
-        $this->resolvedConfigPath = '/etc/systemd/resolved.conf';
     }
 
     /**
      * Install and configure DnsMasq.
      *
-     * @param bool $lock Lock or Unlock the file
-     *
-     * @return void
+     * @throws Exception
      */
-    private function _lockResolvConf($lock = true)
+    public function install(string $domain = 'test'): void
+    {
+        $this->dnsmasqSetup();
+        $this->stopResolved();
+        $this->createCustomConfigFile($domain);
+        $this->sm->restart('dnsmasq');
+    }
+
+    /**
+     * Stop the DnsMasq service.
+     */
+    public function stop(): void
+    {
+        $this->sm->stop('dnsmasq');
+    }
+
+    /**
+     * Restart the DnsMasq service.
+     */
+    public function restart(): void
+    {
+        $this->sm->restart('dnsmasq');
+    }
+
+    /**
+     * Update the domain used by DnsMasq.
+     */
+    public function updateDomain(string $newDomain): void
+    {
+        $this->createCustomConfigFile($newDomain);
+        $this->sm->restart('dnsmasq');
+    }
+
+    /**
+     * Delete the DnsMasq config file.
+     */
+    public function uninstall(): void
+    {
+        $this->sm->removeValetDns();
+
+        $this->cli->passthru('rm -rf /opt/valet-linux');
+        $this->files->unlink($this->configPath);
+        $this->files->unlink($this->dnsmasqOpts);
+        $this->files->unlink($this->nmConfigPath);
+        $this->files->restore($this->resolvedConfigPath);
+
+        $this->lockResolvConf(false);
+        $this->files->restore($this->rclocal);
+
+        $this->cli->passthru('rm -f /etc/resolv.conf');
+        $this->sm->stop('systemd-resolved');
+        $this->sm->start('systemd-resolved');
+        $this->files->symlink('/run/systemd/resolve/resolv.conf', $this->resolvconf);
+
+        $this->files->restore($this->dnsmasqconf);
+        $this->files->commentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
+
+        $this->pm->restartNetworkManager();
+        $this->sm->restart('dnsmasq');
+
+        info('Valet DNS changes have been rolled back');
+    }
+
+    /**
+     * Install and configure DnsMasq.
+     */
+    private function lockResolvConf(bool $lock = true): void
     {
         $arg = $lock ? '+i' : '-i';
 
@@ -68,18 +151,15 @@ class DnsMasq
 
     /**
      * Enable nameserver merging.
-     *
      * @throws Exception
-     *
-     * @return void
      */
-    private function _mergeDns()
+    private function mergeDns(): void
     {
         $optDir = '/opt/valet-linux';
         $this->files->remove($optDir);
         $this->files->ensureDirExists($optDir);
 
-        $this->sm->removeValetDns($this->files);
+        $this->sm->removeValetDns();
 
         if ($this->files->exists($this->rclocal)) {
             $this->files->restore($this->rclocal);
@@ -87,50 +167,9 @@ class DnsMasq
     }
 
     /**
-     * Install and configure DnsMasq.
-     *
-     * @param string $domain Domain TLD to use
-     *
-     * @throws Exception
-     *
-     * @return void
-     */
-    public function install($domain = 'test')
-    {
-        $this->dnsmasqSetup();
-        $this->stopResolved();
-        $this->createCustomConfigFile($domain);
-        $this->sm->restart('dnsmasq');
-    }
-
-    /**
-     * Stop the DnsMasq service.
-     *
-     * @return void
-     */
-    public function stop()
-    {
-        $this->sm->stop('dnsmasq');
-    }
-
-    /**
-     * Restart the DnsMasq service.
-     *
-     * @return void
-     */
-    public function restart()
-    {
-        $this->sm->restart('dnsmasq');
-    }
-
-    /**
      * Append the custom DnsMasq configuration file to the main configuration file.
-     *
-     * @param string $domain Domain TLD to use
-     *
-     * @return void
      */
-    public function createCustomConfigFile($domain)
+    private function createCustomConfigFile(string $domain): void
     {
         $this->files->putAsUser(
             $this->configPath,
@@ -140,10 +179,8 @@ class DnsMasq
 
     /**
      * Fix systemd-resolved configuration.
-     *
-     * @return void
      */
-    public function stopResolved()
+    private function stopResolved(): void
     {
         if (!$this->sm->disabled('systemd-resolved')) {
             $this->sm->disable('systemd-resolved');
@@ -153,12 +190,9 @@ class DnsMasq
 
     /**
      * Setup dnsmasq with Network Manager.
-     *
      * @throws Exception
-     *
-     * @return void
      */
-    public function dnsmasqSetup()
+    private function dnsmasqSetup(): void
     {
         $this->pm->ensureInstalled('dnsmasq');
         $this->sm->enable('dnsmasq');
@@ -168,8 +202,8 @@ class DnsMasq
 
         $this->files->uncommentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
 
-        $this->_lockResolvConf(false);
-        $this->_mergeDns();
+        $this->lockResolvConf(false);
+        $this->mergeDns();
 
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->dnsmasqconf);
@@ -177,50 +211,5 @@ class DnsMasq
         $this->files->putAsUser($this->dnsmasqconf, $this->files->get(__DIR__.'/../stubs/dnsmasq.conf'));
         $this->files->putAsUser($this->dnsmasqOpts, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
         $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
-    }
-
-    /**
-     * Update the domain used by DnsMasq.
-     *
-     * @param string $newDomain New TLD
-     *
-     * @return void
-     */
-    public function updateDomain($newDomain)
-    {
-        $this->createCustomConfigFile($newDomain);
-        $this->sm->restart('dnsmasq');
-    }
-
-    /**
-     * Delete the DnsMasq config file.
-     *
-     * @return void
-     */
-    public function uninstall()
-    {
-        $this->sm->removeValetDns($this->files);
-
-        $this->cli->passthru('rm -rf /opt/valet-linux');
-        $this->files->unlink($this->configPath);
-        $this->files->unlink($this->dnsmasqOpts);
-        $this->files->unlink($this->nmConfigPath);
-        $this->files->restore($this->resolvedConfigPath);
-
-        $this->_lockResolvConf(false);
-        $this->files->restore($this->rclocal);
-
-        $this->cli->passthru('rm -f /etc/resolv.conf');
-        $this->sm->stop('systemd-resolved');
-        $this->sm->start('systemd-resolved');
-        $this->files->symlink('/run/systemd/resolve/resolv.conf', $this->resolvconf);
-
-        $this->files->restore($this->dnsmasqconf);
-        $this->files->commentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
-
-        $this->pm->nmRestart($this->sm);
-        $this->sm->restart('dnsmasq');
-
-        info('Valet DNS changes have been rolled back');
     }
 }

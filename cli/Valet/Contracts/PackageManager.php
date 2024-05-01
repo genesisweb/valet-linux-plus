@@ -6,51 +6,42 @@ interface PackageManager
 {
     /**
      * Determine if the given package is installed.
-     *
-     * @param string $package
-     *
-     * @return bool
      */
-    public function installed($package);
+    public function installed(string $package): bool;
 
     /**
      * Ensure that the given package is installed.
-     *
-     * @param string $package
-     *
-     * @return void
      */
-    public function ensureInstalled($package);
+    public function ensureInstalled(string $package): void;
 
     /**
      * Install the given package and throw an exception on failure.
-     *
-     * @param string $package
-     *
-     * @return void
      */
-    public function installOrFail($package);
+    public function installOrFail(string $package): void;
 
     /**
      * Configure package manager on valet install.
-     *
-     * @return void
      */
-    public function setup();
-
-    /**
-     * Restart dnsmasq in distro.
-     */
-    public function nmRestart($sm);
+    public function setup(): void;
 
     /**
      * Determine if package manager is available on the system.
-     *
-     * @return bool
      */
-    public function isAvailable();
+    public function isAvailable(): bool;
 
-    public function getPhpFpmName($version);
+    /**
+     * Get Php fpm service name from distro
+     */
+    public function getPhpFpmName(string $version): string;
 
-    public function getPhpExtensionPattern($version);
+    /**
+     * Get Php extension pattern from distro
+     *  TODO: This function is refactored, please update the usage.
+     */
+    public function getPhpExtensionPrefix(string $version): string;
+
+    /**
+     * Restart network manager in distro
+     */
+    public function restartNetworkManager(): void;
 }

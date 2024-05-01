@@ -11,25 +11,48 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\Facades\PhpFpm as PhpFpmFacade;
 use Valet\PackageManagers\Dnf;
 use Valet\PackageManagers\Pacman;
 
 class Mysql
 {
+    /**
+     * @var string
+     */
     const MYSQL_USER = 'valet';
-
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var Filesystem
+     */
     public $files;
+    /**
+     * @var PackageManager
+     */
     public $pm;
+    /**
+     * @var ServiceManager
+     */
     public $sm;
+    /**
+     * @var Configuration
+     */
     public $configuration;
-    public $site;
-    public $systemDatabase = ['sys', 'performance_schema', 'information_schema', 'mysql'];
+    /**
+     * @var string[]
+     */
+    public $systemDatabases = ['sys', 'performance_schema', 'information_schema', 'mysql'];
     /**
      * @var PDO
      */
-    protected $link = false;
-    protected $currentPackage;
+    private $pdoConnection = false;
+    /**
+     * @var string
+     */
+    protected $currentPackage = '';
 
     /**
      * Create a new instance.
@@ -46,13 +69,11 @@ class Mysql
         ServiceManager $sm,
         CommandLine $cli,
         Filesystem $files,
-        Configuration $configuration,
-        Site $site
+        Configuration $configuration
     ) {
         $this->cli = $cli;
         $this->pm = $pm;
         $this->sm = $sm;
-        $this->site = $site;
         $this->files = $files;
         $this->configuration = $configuration;
         if ($this->pm->installed($this->pm->mysqlPackageName)) {
@@ -75,23 +96,22 @@ class Mysql
         $this->currentPackage = $package;
         $service = $this->serviceName();
         if (!$this->pm instanceof Pacman && !extension_loaded('mysql')) {
-            $phpVersion = \PhpFpm::getCurrentVersion();
+            $phpVersion = PhpFpmFacade::getCurrentVersion();
             $this->pm->ensureInstalled("php{$phpVersion}-mysql");
         }
 
-        if ($package === $this->pm->mariaDBPackageName) {
-            if ($this->pm->installed($this->pm->mysqlPackageName)) {
-                warning('MySQL is already installed, please remove --mariadb flag and try again!');
-
-                return;
-            }
+        if ($package === $this->pm->mariaDBPackageName
+            && $this->pm->installed($this->pm->mysqlPackageName)
+        ) {
+            warning('MySQL is already installed, please remove --mariadb flag and try again!');
+            return;
         }
-        if ($package === $this->pm->mysqlPackageName) {
-            if ($this->pm->installed($this->pm->mariaDBPackageName)) {
-                warning('MariaDB is already installed, please add --mariadb flag and try again!');
 
-                return;
-            }
+        if ($package === $this->pm->mysqlPackageName
+            && $this->pm->installed($this->pm->mariaDBPackageName)
+        ) {
+            warning('MariaDB is already installed, please add --mariadb flag and try again!');
+            return;
         }
 
         if ($this->pm->installed($package)) {
@@ -126,7 +146,7 @@ class Mysql
     /**
      * Stop the Mysql service.
      */
-    public function stop()
+    public function stop(): void
     {
         $this->sm->stop($this->serviceName());
     }
@@ -134,7 +154,7 @@ class Mysql
     /**
      * Restart the Mysql service.
      */
-    public function restart()
+    public function restart(): void
     {
         $this->sm->restart($this->serviceName());
     }
@@ -142,27 +162,266 @@ class Mysql
     /**
      * Prepare Mysql for uninstall.
      */
-    public function uninstall()
+    public function uninstall(): void
     {
         $this->stop();
     }
 
-    public function configureDataDirectory()
+    /**
+     * Print table of exists databases.
+     */
+    public function listDatabases(): void
     {
-        $this->cli->run('sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql', function ($statusCode, $output) {
-            output($output);
-        });
+        table(['Database'], $this->getDatabases());
+    }
+
+    /**
+     * Import Mysql database from file.
+     */
+    public function importDatabase(string $file, string $database, bool $isDatabaseExists): void
+    {
+        $database = $this->getDatabaseName($database);
+
+        if (!$isDatabaseExists) {
+            $this->createDatabase($database);
+        }
+        $gzip = '';
+        $sqlFile = '';
+        if (\stristr($file, '.gz')) {
+            $file = escapeshellarg($file);
+            $gzip = "zcat {$file} | ";
+        } else {
+            $file = escapeshellarg($file);
+            $sqlFile = " < {$file}";
+        }
+        $database = escapeshellarg($database);
+        $credentials = $this->getCredentials();
+        $this->cli->run("{$gzip}mysql -u {$credentials['user']} -p{$credentials['password']} {$database} {$sqlFile}");
+    }
+
+    /**
+     * Drop Mysql database.
+     */
+    public function dropDatabase(string $name): bool
+    {
+        $name = $this->getDatabaseName($name);
+
+        if (!$this->isDatabaseExists($name)) {
+            warning("Database [$name] does not exists!");
+
+            return false;
+        }
+
+        $dbDropped = $this->query('DROP DATABASE `'.$name.'`') ? true : false;
+
+        if (!$dbDropped) {
+            warning('Error dropping database');
+
+            return false;
+        }
+
+        info("Database [{$name}] dropped successfully");
+
+        return true;
+    }
+
+    /**
+     * Create Mysql database.
+     */
+    public function createDatabase(string $name): void
+    {
+        if ($this->isDatabaseExists($name)) {
+            warning("Database [$name] is already exists!");
+
+            return;
+        }
+
+        try {
+            $name = $this->getDatabaseName($name);
+            if ($this->query('CREATE DATABASE IF NOT EXISTS `'.$name.'`')) {
+                info("Database [{$name}] created successfully");
+            }
+        } catch (\Exception $exception) {
+            warning('Error while creating database!');
+        }
+    }
+
+    /**
+     * Check if database already exists.
+     */
+    public function isDatabaseExists(string $name): bool
+    {
+        $name = $this->getDatabaseName($name);
+        $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$name}'");
+        $query->execute();
+
+        return (bool) $query->rowCount();
+    }
+
+    /**
+     * Export Mysql database.
+     */
+    public function exportDatabase(string $database, bool $exportSql = false): array
+    {
+        $database = $this->getDatabaseName($database);
+
+        $filename = $database.'-'.\date('Y-m-d-H-i-s', \time());
+
+        if ($exportSql) {
+            $filename = $filename.'.sql';
+        } else {
+            $filename = $filename.'.sql.gz';
+        }
+
+        $credentials = $this->getCredentials();
+        $command = "mysqldump -u {$credentials['user']} -p{$credentials['password']} ".escapeshellarg($database).' ';
+        if ($exportSql) {
+            $command .= ' > '.escapeshellarg($filename);
+        } else {
+            $command .= ' | gzip > '.escapeshellarg($filename);
+        }
+        $this->cli->run($command);
+
+        return [
+            'database' => $database,
+            'filename' => $filename,
+        ];
+    }
+
+    /**
+     * Get database name via name or current dir.
+     */
+    private function getDatabaseName(string $database = ''): string
+    {
+        return $database ?: $this->getDirName();
+    }
+
+    /**
+     * Get current dir name.
+     */
+    private function getDirName(): string
+    {
+        $gitDir = $this->cli->runAsUser('git rev-parse --show-toplevel 2>/dev/null');
+
+        if ($gitDir) {
+            return \trim(\basename($gitDir));
+        }
+
+        return \trim(\basename(\getcwd()));
+    }
+
+    /**
+     * Get exists databases.
+     *
+     * @return array
+     */
+    private function getDatabases(): array
+    {
+        $result = $this->query('SHOW DATABASES');
+
+        if (!$result) {
+            return ['Failed to get databases'];
+        }
+
+        return collect($result->fetchAll(PDO::FETCH_ASSOC))
+            ->reject(function ($row) {
+                return \in_array($row['Database'], $this->getSystemDatabases());
+            })->map(function ($row) {
+                return [$row['Database']];
+            })->toArray();
+    }
+
+    /**
+     * Run Mysql query.
+     *
+     * @return bool|\PDOStatement|void
+     */
+    private function query(string $query)
+    {
+        $link = $this->getConnection();
+
+        try {
+            return $link->query($query);
+        } catch (\PDOException $e) {
+            warning($e->getMessage());
+        }
+    }
+
+    /**
+     * Validate Username & Password.
+     */
+    private function validateCredentials(string $username, string $password): bool
+    {
+        try {
+            // Create connection
+            $connection = new PDO(
+                'mysql:host=localhost',
+                $username,
+                $password
+            );
+            $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            return true;
+        } catch (\PDOException $e) {
+            warning('Connection failed due to `'.$e->getMessage().'`');
+
+            return false;
+        }
+    }
+
+    /**
+     * Return Mysql connection.
+     */
+    private function getConnection(): PDO
+    {
+        // if connection already exists return it early.
+        if ($this->pdoConnection) {
+            return $this->pdoConnection;
+        }
+
+        try {
+            // Create connection
+            $credentials = $this->getCredentials();
+            $this->pdoConnection = new PDO(
+                'mysql:host=localhost',
+                $credentials['user'],
+                $credentials['password']
+            );
+            $this->pdoConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            return $this->pdoConnection;
+        } catch (\PDOException $e) {
+            warning('Failed to connect MySQL due to :`'.$e->getMessage().'`');
+            exit;
+        }
+    }
+
+    /**
+     * Get default databases of mysql.
+     */
+    private function getSystemDatabases(): array
+    {
+        return $this->systemDatabases;
+    }
+
+    /**
+     * Configure data directory
+     */
+    private function configureDataDirectory(): void
+    {
+        $this->cli->run(
+            'sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql',
+            function ($statusCode, $output) {
+                output(\sprintf('%s: %s', $statusCode, $output));
+            }
+        );
         $this->restart();
     }
 
     /**
      * Configure Database user for Valet.
-     *
-     * @param bool $force
-     *
-     * @return void
      */
-    public function configure(bool $force = false)
+    private function configure(bool $force = false): void
     {
         $config = $this->configuration->read();
         if (!isset($config['mysql'])) {
@@ -179,7 +438,10 @@ class Mysql
         if (empty($config['mysql']['user'])) {
             $question = new Question('Please enter MySQL/MariaDB user: ');
         } else {
-            $question = new Question('Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ', $config['mysql']['user']);
+            $question = new Question(
+                'Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ',
+                $config['mysql']['user']
+            );
         }
         $helper = new HelperSet([new QuestionHelper()]);
         $helper = $helper->get('question');
@@ -209,7 +471,7 @@ class Mysql
         info('Database user configured successfully!');
     }
 
-    private function serviceName()
+    private function serviceName(): string
     {
         if ($this->isMariaDB()) {
             return 'mariadb';
@@ -218,17 +480,15 @@ class Mysql
         return 'mysql';
     }
 
-    private function isMariaDB()
+    private function isMariaDB(): bool
     {
         return $this->currentPackage === $this->pm->mariaDBPackageName;
     }
 
     /**
      * Set root password of Mysql.
-     *
-     * @param string $password
      */
-    private function createValetUser(string $password)
+    private function createValetUser(string $password): void
     {
         $success = true;
         $query = "sudo mysql -e \"CREATE USER '".self::MYSQL_USER."'@'localhost' IDENTIFIED WITH mysql_native_password BY '".$password."';GRANT ALL PRIVILEGES ON *.* TO '".self::MYSQL_USER."'@'localhost' WITH GRANT OPTION;FLUSH PRIVILEGES;\"";
@@ -257,7 +517,7 @@ class Mysql
     /**
      * Returns the stored password from the config. If not configured returns the default root password.
      */
-    private function getCredentials()
+    private function getCredentials(): array
     {
         $config = $this->configuration->read();
         if (!isset($config['mysql']['password']) && !is_null($config['mysql']['password'])) {
@@ -271,280 +531,5 @@ class Mysql
         }
 
         return ['user' => $config['mysql']['user'], 'password' => $config['mysql']['password']];
-    }
-
-    /**
-     * Print table of exists databases.
-     */
-    public function listDatabases()
-    {
-        table(['Database'], $this->getDatabases());
-    }
-
-    /**
-     * Get exists databases.
-     *
-     * @return array
-     */
-    protected function getDatabases()
-    {
-        $result = $this->query('SHOW DATABASES');
-
-        if (!$result) {
-            return ['Failed to get databases'];
-        }
-
-        return collect($result->fetchAll(PDO::FETCH_ASSOC))
-            ->reject(function ($row) {
-                return \in_array($row['Database'], $this->getSystemDatabase());
-            })->map(function ($row) {
-                return [$row['Database']];
-            })->toArray();
-    }
-
-    /**
-     * Run Mysql query.
-     *
-     * @param $query
-     *
-     * @return bool|\PDOException
-     */
-    protected function query($query)
-    {
-        $link = $this->getConnection();
-
-        try {
-            return $link->query($query);
-        } catch (\PDOException $e) {
-            warning($e->getMessage());
-        }
-    }
-
-    /**
-     * Validate Username & Password.
-     *
-     * @param $username
-     * @param $password
-     *
-     * @return bool
-     */
-    protected function validateCredentials($username, $password)
-    {
-        try {
-            // Create connection
-            $connection = new PDO(
-                'mysql:host=localhost',
-                $username,
-                $password
-            );
-            $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            return true;
-        } catch (\PDOException $e) {
-            warning('Connection failed due to `'.$e->getMessage().'`');
-
-            return false;
-        }
-    }
-
-    /**
-     * Return Mysql connection.
-     *
-     * @return bool|PDO
-     */
-    protected function getConnection()
-    {
-        // if connection already exists return it early.
-        if ($this->link) {
-            return $this->link;
-        }
-
-        try {
-            // Create connection
-            $credentials = $this->getCredentials();
-            $this->link = new PDO(
-                'mysql:host=localhost',
-                $credentials['user'],
-                $credentials['password']
-            );
-            $this->link->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            return $this->link;
-        } catch (\PDOException $e) {
-            warning('Failed to connect MySQL due to :`'.$e->getMessage().'`');
-            exit;
-        }
-    }
-
-    /**
-     * Get default databases of mysql.
-     *
-     * @return array
-     */
-    protected function getSystemDatabase()
-    {
-        return $this->systemDatabase;
-    }
-
-    /**
-     * Import Mysql database from file.
-     *
-     * @param string $file
-     * @param string $database
-     * @param bool   $isDatabaseExists
-     */
-    public function importDatabase(string $file, string $database, bool $isDatabaseExists)
-    {
-        $database = $this->getDatabaseName($database);
-
-        if (!$isDatabaseExists) {
-            $this->createDatabase($database);
-        }
-        $gzip = '';
-        $sqlFile = '';
-        if (\stristr($file, '.gz')) {
-            $file = escapeshellarg($file);
-            $gzip = "zcat {$file} | ";
-        } else {
-            $file = escapeshellarg($file);
-            $sqlFile = " < {$file}";
-        }
-        $database = escapeshellarg($database);
-        $credentials = $this->getCredentials();
-        $this->cli->run("{$gzip}mysql -u {$credentials['user']} -p{$credentials['password']} {$database} {$sqlFile}");
-    }
-
-    /**
-     * Get database name via name or current dir.
-     *
-     * @param string $database
-     *
-     * @return string
-     */
-    protected function getDatabaseName(string $database = '')
-    {
-        return $database ?: $this->getDirName();
-    }
-
-    /**
-     * Get current dir name.
-     *
-     * @return string
-     */
-    public function getDirName()
-    {
-        $gitDir = $this->cli->runAsUser('git rev-parse --show-toplevel 2>/dev/null');
-
-        if ($gitDir) {
-            return \trim(\basename($gitDir));
-        }
-
-        return \trim(\basename(\getcwd()));
-    }
-
-    /**
-     * Drop Mysql database.
-     *
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function dropDatabase(string $name)
-    {
-        $name = $this->getDatabaseName($name);
-
-        if (!$this->isDatabaseExists($name)) {
-            warning("Database [$name] does not exists!");
-
-            return false;
-        }
-
-        $dbDropped = $this->query('DROP DATABASE `'.$name.'`') ? true : false;
-
-        if (!$dbDropped) {
-            warning('Error dropping database');
-
-            return false;
-        }
-
-        info("Database [{$name}] dropped successfully");
-
-        return true;
-    }
-
-    /**
-     * Create Mysql database.
-     *
-     * @param string $name
-     *
-     * @return bool|string
-     */
-    public function createDatabase(string $name)
-    {
-        if ($this->isDatabaseExists($name)) {
-            warning("Database [$name] is already exists!");
-
-            return;
-        }
-
-        try {
-            $name = $this->getDatabaseName($name);
-            if ($this->query('CREATE DATABASE IF NOT EXISTS `'.$name.'`')) {
-                info("Database [{$name}] created successfully");
-            }
-        } catch (\Exception $exception) {
-            warning('Error while creating database!');
-        }
-    }
-
-    /**
-     * Check if database already exists.
-     *
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function isDatabaseExists(string $name)
-    {
-        $name = $this->getDatabaseName($name);
-        $query = $this->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$name}'");
-        $query->execute();
-
-        return (bool) $query->rowCount();
-    }
-
-    /**
-     * Export Mysql database.
-     *
-     * @param $database
-     * @param bool $exportSql
-     *
-     * @return array
-     */
-    public function exportDatabase($database, bool $exportSql = false)
-    {
-        $database = $this->getDatabaseName($database);
-
-        $filename = $database.'-'.\date('Y-m-d-H-i-s', \time());
-
-        if ($exportSql) {
-            $filename = $filename.'.sql';
-        } else {
-            $filename = $filename.'.sql.gz';
-        }
-
-        $credentials = $this->getCredentials();
-        $command = "mysqldump -u {$credentials['user']} -p{$credentials['password']} ".escapeshellarg($database).' ';
-        if ($exportSql) {
-            $command .= ' > '.escapeshellarg($filename);
-        } else {
-            $command .= ' | gzip > '.escapeshellarg($filename);
-        }
-        $this->cli->run($command);
-
-        return [
-            'database' => $database,
-            'filename' => $filename,
-        ];
     }
 }

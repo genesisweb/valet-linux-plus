@@ -8,3 +8,4 @@ Gemfile
 Gemfile.lock
 _site/
 .idea
+/.php-cs-fixer.cache

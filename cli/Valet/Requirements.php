@@ -6,7 +6,13 @@ use RuntimeException;
 
 class Requirements
 {
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var bool
+     */
     public $ignoreSELinux = false;
 
     /**
@@ -21,12 +27,8 @@ class Requirements
 
     /**
      * Determine if SELinux check should be skipped.
-     *
-     * @param bool $ignore
-     *
-     * @return $this
      */
-    public function setIgnoreSELinux($ignore = true)
+    public function setIgnoreSELinux(bool $ignore = true): self
     {
         $this->ignoreSELinux = $ignore;
 
@@ -35,10 +37,8 @@ class Requirements
 
     /**
      * Run all checks and output warnings.
-     *
-     * @return void
      */
-    public function check()
+    public function check(): void
     {
         $this->homePathIsInsideRoot();
         $this->seLinuxIsEnabled();
@@ -50,7 +50,7 @@ class Requirements
      * This usually means the HOME parameters has not been
      * kept using sudo.
      */
-    public function homePathIsInsideRoot()
+    private function homePathIsInsideRoot(): void
     {
         if (strpos(VALET_HOME_PATH, '/root/') === 0) {
             throw new RuntimeException('Valet home directory is inside /root');
@@ -60,7 +60,7 @@ class Requirements
     /**
      * Verify is SELinux is enabled and in enforcing mode.
      */
-    public function seLinuxIsEnabled()
+    private function seLinuxIsEnabled(): void
     {
         if ($this->ignoreSELinux) {
             return;

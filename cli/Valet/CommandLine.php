@@ -8,78 +8,51 @@ class CommandLine
 {
     /**
      * Simple global function to run commands.
-     *
-     * @param string $command
-     *
-     * @return void
      */
-    public function quietly($command)
+    public function quietly(string $command): void
     {
         $this->runCommand($command.' > /dev/null 2>&1');
     }
 
     /**
      * Simple global function to run commands.
-     *
-     * @param string $command
-     *
-     * @return void
      */
-    public function quietlyAsUser($command)
+    public function quietlyAsUser(string $command): void
     {
         $this->quietly('sudo -u '.user().' '.$command.' > /dev/null 2>&1');
     }
 
     /**
      * Pass the command to the command line and display the output.
-     *
-     * @param string $command
-     *
-     * @return void
      */
-    public function passthru($command)
+    public function passthru(string $command): void
     {
         passthru($command);
     }
 
     /**
      * Run the given command as the non-root user.
-     *
-     * @param string   $command
-     * @param callable $onError
-     *
-     * @return string
      */
-    public function run($command, callable $onError = null)
+    public function run(string $command, callable $onError = null): string
     {
         return $this->runCommand($command, $onError);
     }
 
     /**
      * Run the given command.
-     *
-     * @param string   $command
-     * @param callable $onError
-     *
-     * @return string
      */
-    public function runAsUser(string $command, callable $onError = null)
+    public function runAsUser(string $command, callable $onError = null): string
     {
         return $this->runCommand('sudo -u '.user().' '.$command, $onError);
     }
 
     /**
      * Run the given command.
-     *
-     * @param string   $command
-     * @param callable $onError
-     *
-     * @return string
+     * TODO: Refactor new Process instance, we might not need if statement there.
      */
-    protected function runCommand($command, callable $onError = null)
+    private function runCommand(string $command, callable $onError = null): string
     {
-        $onError = $onError ?: function () {
-        };
+        $onError = $onError ?: function () {};
 
         // Symfony's 4.x Process component has deprecated passing a command string
         // to the constructor, but older versions (which Valet's Composer

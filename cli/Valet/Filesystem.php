@@ -3,7 +3,7 @@
 namespace Valet;
 
 use ArrayObject;
-use CommandLine as CommandLineFacade;
+use Valet\Facades\CommandLine;
 use Exception;
 use FilesystemIterator;
 use Traversable;
@@ -14,20 +14,6 @@ use Traversable;
 class Filesystem
 {
     /**
-     * @param $files
-     *
-     * @return ArrayObject
-     */
-    private function toIterator($files)
-    {
-        if (!$files instanceof Traversable) {
-            $files = new ArrayObject(is_array($files) ? $files : [$files]);
-        }
-
-        return $files;
-    }
-
-    /**
      * Delete the specified file or directory with files.
      *
      * @param string $files
@@ -36,7 +22,7 @@ class Filesystem
      *
      * @return void
      */
-    public function remove($files)
+    public function remove($files): void
     {
         $files = iterator_to_array($this->toIterator($files));
         $files = array_reverse($files);
@@ -68,26 +54,17 @@ class Filesystem
 
     /**
      * Determine if the given path is a directory.
-     *
-     * @param string $path
-     *
-     * @return bool
+     * TODO: Remove this function and use is_dir function directly.
      */
-    public function isDir($path)
+    public function isDir(string $path): bool
     {
         return is_dir($path);
     }
 
     /**
      * Create a directory.
-     *
-     * @param string      $path
-     * @param string|null $owner
-     * @param int         $mode
-     *
-     * @return void
      */
-    public function mkdir($path, $owner = null, $mode = 0755)
+    public function mkdir(string $path, ?string $owner = null, int $mode = 0755): void
     {
         mkdir($path, $mode, true);
 
@@ -98,14 +75,8 @@ class Filesystem
 
     /**
      * Ensure that the given directory exists.
-     *
-     * @param string      $path
-     * @param string|null $owner
-     * @param int         $mode
-     *
-     * @return void
      */
-    public function ensureDirExists($path, $owner = null, $mode = 0755)
+    public function ensureDirExists(string $path, ?string $owner = null, int $mode = 0755): void
     {
         if (!$this->isDir($path)) {
             $this->mkdir($path, $owner, $mode);
@@ -114,30 +85,20 @@ class Filesystem
 
     /**
      * Create a directory as the non-root user.
-     *
-     * @param string $path
-     * @param int    $mode
-     *
-     * @return void
      */
-    public function mkdirAsUser($path, $mode = 0755)
+    public function mkdirAsUser(string $path, int $mode = 0755): void
     {
         $this->mkdir($path, user(), $mode);
     }
 
     /**
      * Touch the given path.
-     *
-     * @param string      $path
-     * @param string|null $owner
-     *
-     * @return string
      */
-    public function touch($path, $owner = null)
+    public function touch(string $path, ?string $owner = null): string
     {
         touch($path);
 
-        if ($owner) {
+        if ($owner === null) {
             $this->chown($path, $owner);
         }
 
@@ -146,56 +107,32 @@ class Filesystem
 
     /**
      * Touch the given path as the non-root user.
-     *
-     * @param string $path
-     *
-     * @return void
      */
-    public function touchAsUser($path)
+    public function touchAsUser(string $path): void
     {
         $this->touch($path, user());
     }
 
     /**
      * Determine if the given file exists.
-     *
-     * @param string $files
-     *
-     * @return bool
      */
-    public function exists($files)
+    public function exists(string $file): bool
     {
-        foreach ($this->toIterator($files) as $file) {
-            if (!file_exists($file)) {
-                return false;
-            }
-        }
-
-        return true;
+        return file_exists($file);
     }
 
     /**
      * Read the contents of the given file.
-     *
-     * @param string $path
-     *
-     * @return string
      */
-    public function get($path)
+    public function get(string $path): string
     {
         return file_get_contents($path);
     }
 
     /**
      * Write to the given file.
-     *
-     * @param string      $path
-     * @param string      $contents
-     * @param string|null $owner
-     *
-     * @return string
      */
-    public function put($path, $contents, $owner = null)
+    public function put(string $path, string $contents, ?string $owner = null): string
     {
         $status = file_put_contents($path, $contents);
 
@@ -214,21 +151,15 @@ class Filesystem
      *
      * @return string
      */
-    public function putAsUser($path, $contents)
+    public function putAsUser(string $path, string $contents): string
     {
         return $this->put($path, $contents, user());
     }
 
     /**
      * Append the contents to the given file.
-     *
-     * @param string      $path
-     * @param string      $contents
-     * @param string|null $owner
-     *
-     * @return void
      */
-    public function append($path, $contents, $owner = null)
+    public function append(string $path, string $contents, ?string $owner = null): void
     {
         file_put_contents($path, $contents, FILE_APPEND);
 
@@ -239,39 +170,24 @@ class Filesystem
 
     /**
      * Append the contents to the given file as the non-root user.
-     *
-     * @param string $path
-     * @param string $contents
-     *
-     * @return void
      */
-    public function appendAsUser($path, $contents)
+    public function appendAsUser(string $path, string $contents): void
     {
         $this->append($path, $contents, user());
     }
 
     /**
      * Copy the given file to a new location.
-     *
-     * @param string $from
-     * @param string $to
-     *
-     * @return void
      */
-    public function copy($from, $to)
+    public function copy(string $from, string $to): void
     {
         copy($from, $to);
     }
 
     /**
      * Copy the given file to a new location for the non-root user.
-     *
-     * @param string $from
-     * @param string $to
-     *
-     * @return void
      */
-    public function copyAsUser($from, $to)
+    public function copyAsUser(string $from, string $to): void
     {
         copy($from, $to);
 
@@ -280,51 +196,32 @@ class Filesystem
 
     /**
      * Backup the given file.
-     *
-     * @param string $file
-     *
-     * @return bool
      */
-    public function backup($file)
+    public function backup(string $file): void
     {
         $to = $file.'.bak';
 
-        if (!$this->exists($to)) {
-            if ($this->exists($file)) {
-                return rename($file, $to);
-            }
+        if (!$this->exists($to) && $this->exists($file)) {
+            rename($file, $to);
         }
-
-        return false;
     }
 
     /**
      * Restore a backed up file.
-     *
-     * @param string $file
-     *
-     * @return bool
      */
-    public function restore($file)
+    public function restore(string $file): void
     {
         $from = $file.'.bak';
 
         if ($this->exists($from)) {
-            return rename($from, $file);
+            rename($from, $file);
         }
-
-        return false;
     }
 
     /**
      * Create a symlink to the given target.
-     *
-     * @param string $target
-     * @param string $link
-     *
-     * @return void
      */
-    public function symlink($target, $link)
+    public function symlink(string $target, string $link): void
     {
         if ($this->exists($link)) {
             $this->unlink($link);
@@ -337,61 +234,42 @@ class Filesystem
      * Create a symlink to the given target for the non-root user.
      *
      * This uses the command line as PHP can't change symlink permissions.
-     *
-     * @param string $target
-     * @param string $link
-     *
-     * @return void
      */
-    public function symlinkAsUser($target, $link)
+    public function symlinkAsUser(string $target, string $link): void
     {
         if ($this->exists($link)) {
             $this->unlink($link);
         }
 
-        CommandLineFacade::runAsUser('ln -s '.escapeshellarg($target).' '.escapeshellarg($link));
+        CommandLine::runAsUser('ln -s '.escapeshellarg($target).' '.escapeshellarg($link));
     }
 
     /**
      * Comment a line in a file.
-     *
-     * @param string $line
-     * @param string $file
-     *
-     * @return void
      */
-    public function commentLine($line, $file)
+    public function commentLine(string $line, string $file): void
     {
         if ($this->exists($file)) {
             $command = "sed -i '/{$line}/ s/^/# /' {$file}";
-            CommandLineFacade::run($command);
+            CommandLine::run($command);
         }
     }
 
     /**
      * Uncomment a line in a file.
-     *
-     * @param string $line
-     * @param string $file
-     *
-     * @return void
      */
-    public function uncommentLine($line, $file)
+    public function uncommentLine(string $line, string $file): void
     {
         if ($this->exists($file)) {
             $command = "sed -i '/{$line}/ s/# *//' {$file}";
-            CommandLineFacade::run($command);
+            CommandLine::run($command);
         }
     }
 
     /**
      * Delete the file at the given path.
-     *
-     * @param string $path
-     *
-     * @return void
      */
-    public function unlink($path)
+    public function unlink(string $path): void
     {
         if (file_exists($path) || is_link($path)) {
             unlink($path);
@@ -400,50 +278,34 @@ class Filesystem
 
     /**
      * Change the owner of the given path.
-     *
-     * @param string $path
-     * @param string $user
-     *
-     * @return void
+     * TODO: Remove this function and use chown directly.
      */
-    public function chown($path, $user)
+    public function chown(string $path, string $user): void
     {
         chown($path, $user);
     }
 
     /**
      * Change the group of the given path.
-     *
-     * @param string $path
-     * @param string $group
-     *
-     * @return void
+     * TODO: Remove this function and use chgrp directly.
      */
-    public function chgrp($path, $group)
+    public function chgrp(string $path, string $group): void
     {
         chgrp($path, $group);
     }
 
     /**
      * Resolve the given path.
-     *
-     * @param string $path
-     *
-     * @return string
      */
-    public function realpath($path)
+    public function realpath(string $path): string
     {
         return realpath($path);
     }
 
     /**
      * Determine if the given path is a symbolic link.
-     *
-     * @param string $path
-     *
-     * @return bool
      */
-    public function isLink($path)
+    public function isLink(string $path): bool
     {
         return is_link($path);
     }
@@ -455,7 +317,7 @@ class Filesystem
      *
      * @return string
      */
-    public function readLink($path)
+    public function readLink(string $path): string
     {
         $link = $path;
 
@@ -467,13 +329,13 @@ class Filesystem
     }
 
     /**
-     * Remove all of the broken symbolic links at the given path.
+     * Remove all the broken symbolic links at the given path.
      *
      * @param string $path
      *
      * @return void
      */
-    public function removeBrokenLinksAt($path)
+    public function removeBrokenLinksAt(string $path): void
     {
         collect($this->scandir($path))
                 ->filter(function ($file) use ($path) {
@@ -486,28 +348,34 @@ class Filesystem
 
     /**
      * Determine if the given path is a broken symbolic link.
-     *
-     * @param string $path
-     *
-     * @return bool
      */
-    public function isBrokenLink($path)
+    public function isBrokenLink(string $path): bool
     {
         return is_link($path) && !file_exists($path);
     }
 
     /**
      * Scan the given directory path.
-     *
-     * @param string $path
-     *
-     * @return array
      */
-    public function scandir($path)
+    public function scandir(string $path): array
     {
         return collect(scandir($path))
             ->reject(function ($file) {
                 return in_array($file, ['.', '..']);
             })->values()->all();
+    }
+
+    /**
+     * @param array|string $files
+     *
+     * @return ArrayObject
+     */
+    private function toIterator($files): ArrayObject
+    {
+        if (!$files instanceof Traversable) {
+            $files = new ArrayObject(is_array($files) ? $files : [$files]);
+        }
+
+        return $files;
     }
 }

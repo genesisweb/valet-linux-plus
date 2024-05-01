@@ -9,7 +9,7 @@ use Valet\Contracts\ServiceManager;
 class DevTools
 {
     /**
-     * Sublime binary selector.
+     * Sublime binary selector.\
      */
     const VS_CODE = 'code';
     /**
@@ -46,13 +46,6 @@ class DevTools
 
     /**
      * Create a new DevTools instance.
-     *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
-     *
-     * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli, Filesystem $files)
     {
@@ -63,21 +56,9 @@ class DevTools
     }
 
     /**
-     * @param $service
-     *
      * @return false|string
      */
-    public function ensureInstalled($service)
-    {
-        return $this->getBin($service);
-    }
-
-    /**
-     * @param $service
-     *
-     * @return false|string
-     */
-    public function getBin($service)
+    public function getBin(string $service)
     {
         if (!($bin = $this->getService($service))) {
             $bin = $this->getService($service, true);
@@ -85,7 +66,7 @@ class DevTools
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (ends_with($bin, "bin/${service}")) {
+            if (endsWith($bin, "bin/${service}")) {
                 $servicePath = $bin;
                 break;
             }
@@ -97,13 +78,27 @@ class DevTools
         return false;
     }
 
+    public function run(string $folder, string $service): void
+    {
+        if ($this->ensureInstalled($service)) {
+            $this->runService($service, $folder);
+        } else {
+            warning("$service not available");
+        }
+    }
+
     /**
-     * @param string $service
-     * @param bool   $locate
-     *
      * @return false|string
      */
-    public function getService(string $service, bool $locate = false)
+    private function ensureInstalled(string $service)
+    {
+        return $this->getBin($service);
+    }
+
+    /**
+     * @return false|string
+     */
+    private function getService(string $service, bool $locate = false)
     {
         try {
             $locator = $locate ? 'locate' : 'which';
@@ -119,13 +114,7 @@ class DevTools
         }
     }
 
-    /**
-     * @param $service
-     * @param $folder
-     *
-     * @return void
-     */
-    public function runService($service, $folder = null)
+    private function runService(string $service, ?string $folder = null): void
     {
         $bin = $this->getBin($service);
 
@@ -133,21 +122,6 @@ class DevTools
             $this->cli->quietly("$bin $folder");
         } catch (DomainException $e) {
             warning("Error while opening [$folder] with $service");
-        }
-    }
-
-    /**
-     * @param string $folder
-     * @param string $service
-     *
-     * @return void
-     */
-    public function run(string $folder, string $service)
-    {
-        if ($this->ensureInstalled($service)) {
-            $this->runService($service, $folder);
-        } else {
-            warning("$service not available");
         }
     }
 }

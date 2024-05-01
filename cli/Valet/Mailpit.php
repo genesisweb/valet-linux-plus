@@ -5,18 +5,35 @@ namespace Valet;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\Facades\CommandLine;
+use Valet\Facades\Configuration;
+use Valet\Facades\Site;
 
 class Mailpit
 {
+    /**
+     * @var PackageManager
+     */
     public $pm;
+    /**
+     * @var ServiceManager
+     */
     public $sm;
+    /**
+     * @var CommandLine
+     */
     public $cli;
+    /**
+     * @var Filesystem
+     */
     public $files;
-
+    /**
+     * @var string
+     */
     const SERVICE_NAME = 'mailpit';
 
     /**
-     * Create a new MailHog instance.
+     * Create a new Mailpit instance.
      *
      * @param PackageManager $pm
      * @param ServiceManager $sm
@@ -34,11 +51,9 @@ class Mailpit
     }
 
     /**
-     * Install the configuration files for MailHog.
-     *
-     * @return void
+     * Install the configuration files for Mailpit.
      */
-    public function install()
+    public function install(): void
     {
         $this->ensureInstalled();
 
@@ -46,24 +61,72 @@ class Mailpit
 
         $this->sm->start(self::SERVICE_NAME);
 
-        if (!$this->sm->disabled('mailhog')) {
-            $this->sm->disable('mailhog');
-            if ($this->files->exists('/opt/valet-linux/mailhog')) {
-                $this->files->remove('/opt/valet-linux/mailhog');
+        if (!$this->sm->disabled('Mailpit')) {
+            $this->sm->disable('Mailpit');
+            if ($this->files->exists('/opt/valet-linux/Mailpit')) {
+                $this->files->remove('/opt/valet-linux/Mailpit');
             }
-            $domain = \Configuration::get('domain');
-            if ($this->files->exists(VALET_HOME_PATH."/Nginx/mailhog.$domain")) {
-                \Site::proxyDelete("mailhog.$domain");
+            $domain = Configuration::get('domain');
+            if ($this->files->exists(VALET_HOME_PATH."/Nginx/Mailpit.$domain")) {
+                Site::proxyDelete("Mailpit.$domain");
             }
         }
     }
 
     /**
-     * Validate if system already has MailHog installed in it.
+     * Start the Mailpit service.
      *
      * @return void
      */
-    public function ensureInstalled()
+    public function start(): void
+    {
+        $this->sm->start(self::SERVICE_NAME);
+    }
+
+    /**
+     * Restart the Mailpit service.
+     *
+     * @return void
+     */
+    public function restart(): void
+    {
+        $this->sm->restart(self::SERVICE_NAME);
+    }
+
+    /**
+     * Stop the Mailpit service.
+     *
+     * @return void
+     */
+    public function stop(): void
+    {
+        $this->sm->stop(self::SERVICE_NAME);
+    }
+
+    /**
+     * Mailpit service status.
+     *
+     * @return void
+     */
+    public function status(): void
+    {
+        $this->sm->printStatus(self::SERVICE_NAME);
+    }
+
+    /**
+     * Prepare Mailpit for uninstall.
+     *
+     * @return void
+     */
+    public function uninstall(): void
+    {
+        $this->stop();
+    }
+
+    /**
+     * Validate if system already has Mailpit installed in it.
+     */
+    private function ensureInstalled(): void
     {
         if (!$this->isAvailable()) {
             $this->cli->runAsUser(
@@ -73,15 +136,15 @@ class Mailpit
     }
 
     /**
-     * @return void
+     * Create Mailpit service files
      */
-    public function createService()
+    private function createService(): void
     {
         info('Installing Mailpit service...');
 
         $servicePath = '/etc/init.d/mailpit';
         $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit.sh';
-        $hasSystemd = $this->sm->_hasSystemd();
+        $hasSystemd = $this->sm->isSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/mailpit.service';
@@ -104,20 +167,18 @@ class Mailpit
 
     /**
      * Update domain for HTTP access.
-     *
-     * @return void
      */
-    public function updateDomain()
+    private function updateDomain(): void
     {
-        $domain = \Configuration::get('domain');
+        $domain = Configuration::get('domain');
 
-        \Site::proxyCreate("mails.$domain", 'http://localhost:8025', true);
+        Site::proxyCreate("mails.$domain", 'http://localhost:8025', true);
     }
 
     /**
      * @return bool
      */
-    public function isAvailable()
+    private function isAvailable(): bool
     {
         try {
             $output = $this->cli->run(
@@ -131,55 +192,5 @@ class Mailpit
         } catch (DomainException $e) {
             return false;
         }
-    }
-
-    /**
-     * Start the MailHog service.
-     *
-     * @return void
-     */
-    public function start()
-    {
-        $this->sm->start(self::SERVICE_NAME);
-    }
-
-    /**
-     * Restart the MailHog service.
-     *
-     * @return void
-     */
-    public function restart()
-    {
-        $this->sm->restart(self::SERVICE_NAME);
-    }
-
-    /**
-     * Stop the MailHog service.
-     *
-     * @return void
-     */
-    public function stop()
-    {
-        $this->sm->stop(self::SERVICE_NAME);
-    }
-
-    /**
-     * MailHog service status.
-     *
-     * @return void
-     */
-    public function status()
-    {
-        $this->sm->printStatus(self::SERVICE_NAME);
-    }
-
-    /**
-     * Prepare MailHog for uninstall.
-     *
-     * @return void
-     */
-    public function uninstall()
-    {
-        $this->stop();
     }
 }
