@@ -31,7 +31,7 @@ class Ngrok
      * Get the current tunnel URL from the Ngrok API.
      * @throws Exception
      */
-    public function currentTunnelUrl(): string
+    public function currentTunnelUrl(): ?string
     {
         return retry(20, function () {
             $body = Request::get(self::TUNNEL_ENDPOINT)->send()->body;

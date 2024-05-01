@@ -21,6 +21,7 @@ use Tightenco\Collect\Support\Collection;
  * @method static string       socketFileName($version = null)
  * @method static string       normalizePhpVersion($version)
  * @method static string       fpmSocketFile($version)
+ * @method static void         updateHomePath(string $oldHomePath, string $newHomePath)
  */
 class PhpFpm extends Facade
 {

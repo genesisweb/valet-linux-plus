@@ -5,7 +5,6 @@ namespace Valet;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use Valet\Facades\CommandLine;
 use Valet\Facades\Configuration;
 use Valet\Facades\Site;
 
@@ -61,15 +60,19 @@ class Mailpit
 
         $this->sm->start(self::SERVICE_NAME);
 
-        if (!$this->sm->disabled('Mailpit')) {
-            $this->sm->disable('Mailpit');
-            if ($this->files->exists('/opt/valet-linux/Mailpit')) {
-                $this->files->remove('/opt/valet-linux/Mailpit');
+        try {
+            if (!$this->sm->disabled('mailhog')) {
+                $this->sm->disable('mailhog');
+                if ($this->files->exists('/opt/valet-linux/mailhog')) {
+                    $this->files->remove('/opt/valet-linux/mailhog');
+                }
+                $domain = Configuration::get('domain');
+                if ($this->files->exists(VALET_HOME_PATH."/Nginx/mailhog.$domain")) {
+                    Site::proxyDelete("mailhog.$domain");
+                }
             }
-            $domain = Configuration::get('domain');
-            if ($this->files->exists(VALET_HOME_PATH."/Nginx/Mailpit.$domain")) {
-                Site::proxyDelete("Mailpit.$domain");
-            }
+        } catch(\DomainException $e) {
+
         }
     }
 

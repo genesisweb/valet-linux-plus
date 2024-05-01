@@ -36,7 +36,6 @@ interface PackageManager
 
     /**
      * Get Php extension pattern from distro
-     *  TODO: This function is refactored, please update the usage.
      */
     public function getPhpExtensionPrefix(string $version): string;
 

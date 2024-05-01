@@ -98,7 +98,7 @@ class Filesystem
     {
         touch($path);
 
-        if ($owner === null) {
+        if ($owner !== null) {
             $this->chown($path, $owner);
         }
 
@@ -174,6 +174,38 @@ class Filesystem
     public function appendAsUser(string $path, string $contents): void
     {
         $this->append($path, $contents, user());
+    }
+
+    /**
+     * Copy the given directory to a new location.
+     */
+    public function copyDirectory(string $from, string $to): void
+    {
+        if ($this->isDir($to)) {
+            warning('Destination directory already exists');
+            return;
+        }
+
+        $this->mkdir($to);
+        $sourceContents = $this->scandir($from);
+
+        foreach ($sourceContents as $sourceContent) {
+            if ($sourceContent == '.' || $sourceContent == '..') {
+                continue;
+            }
+
+            $sourcePath = $from . '/' . $sourceContent;
+            $destinationPath = $to . '/' . $sourceContent;
+
+            if (!$this->isLink($sourcePath) && $this->isDir($sourcePath)) {
+                $this->copyDirectory($sourcePath, $destinationPath);
+            } elseif ($this->isLink($sourcePath)) {
+                $sourcePath = $this->readLink($sourcePath);
+                $this->symlink($sourcePath, $destinationPath);
+            } else {
+                $this->copy($sourcePath, $destinationPath);
+            }
+        }
     }
 
     /**
@@ -361,16 +393,16 @@ class Filesystem
     {
         return collect(scandir($path))
             ->reject(function ($file) {
-                return in_array($file, ['.', '..']);
+                return in_array($file, ['.', '..', '.keep']);
             })->values()->all();
     }
 
     /**
      * @param array|string $files
      *
-     * @return ArrayObject
+     * @return ArrayObject|Traversable
      */
-    private function toIterator($files): ArrayObject
+    private function toIterator($files)
     {
         if (!$files instanceof Traversable) {
             $files = new ArrayObject(is_array($files) ? $files : [$files]);

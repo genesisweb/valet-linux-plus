@@ -11,6 +11,7 @@ namespace Valet\Facades;
  * @method static bool   onLatestVersion(string $currentVersion)
  * @method static string getLatestVersion()
  * @method static void   environmentSetup()
+ * @method static void   migrateConfig()
  */
 class Valet extends Facade
 {

@@ -230,4 +230,13 @@ class Configuration
     {
         return VALET_HOME_PATH.'/config.json';
     }
+
+    public function parseDomain(string $siteName): string
+    {
+        $domain = $this->get('domain');
+        if (endsWith($siteName, ".$domain") !== true) {
+            return \sprintf('%s.%s', $siteName, $domain);
+        }
+        return $siteName;
+    }
 }

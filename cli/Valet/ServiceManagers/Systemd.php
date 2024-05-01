@@ -174,7 +174,7 @@ class Systemd implements ServiceManager
 
     /**
      * Determine real service name.
-     * TODO: Validate this function
+     * @throws DomainException
      */
     private function getRealService(string $service): string
     {

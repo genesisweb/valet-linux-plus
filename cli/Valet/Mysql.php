@@ -289,6 +289,59 @@ class Mysql
     }
 
     /**
+     * Configure Database user for Valet.
+     */
+    public function configure(bool $force = false): void
+    {
+        $config = $this->configuration->read();
+        if (!isset($config['mysql'])) {
+            $config['mysql'] = [];
+        }
+
+        if (!$force && isset($config['mysql']['password'])) {
+            info('Valet database user is already configured. Use --force to reconfigure database user.');
+
+            return;
+        }
+        $input = new ArgvInput();
+        $output = new ConsoleOutput();
+        if (empty($config['mysql']['user'])) {
+            $question = new Question('Please enter MySQL/MariaDB user: ');
+        } else {
+            $question = new Question(
+                'Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ',
+                $config['mysql']['user']
+            );
+        }
+        $helper = new HelperSet([new QuestionHelper()]);
+        $helper = $helper->get('question');
+        $user = $helper->ask($input, $output, $question);
+        $question = new Question('Please enter MySQL/MariaDB password: ');
+        $helper = new HelperSet([new QuestionHelper()]);
+        $question->setHidden(true);
+        $helper = $helper->get('question');
+        $password = $helper->ask($input, $output, $question);
+
+        $connection = $this->validateCredentials($user, $password);
+        if (!$connection) {
+            $question = new ConfirmationQuestion('Would you like to try again? [Y/n] ', true);
+            if (!$helper->ask($input, $output, $question)) {
+                warning('Valet database user is not configured!');
+
+                return;
+            } else {
+                $this->configure($force);
+
+                return;
+            }
+        }
+        $config['mysql']['user'] = $user;
+        $config['mysql']['password'] = $password;
+        $this->configuration->write($config);
+        info('Database user configured successfully!');
+    }
+
+    /**
      * Get database name via name or current dir.
      */
     private function getDatabaseName(string $database = ''): string
@@ -418,59 +471,6 @@ class Mysql
         $this->restart();
     }
 
-    /**
-     * Configure Database user for Valet.
-     */
-    private function configure(bool $force = false): void
-    {
-        $config = $this->configuration->read();
-        if (!isset($config['mysql'])) {
-            $config['mysql'] = [];
-        }
-
-        if (!$force && isset($config['mysql']['password'])) {
-            info('Valet database user is already configured. Use --force to reconfigure database user.');
-
-            return;
-        }
-        $input = new ArgvInput();
-        $output = new ConsoleOutput();
-        if (empty($config['mysql']['user'])) {
-            $question = new Question('Please enter MySQL/MariaDB user: ');
-        } else {
-            $question = new Question(
-                'Please enter MySQL/MariaDB user [current: '.$config['mysql']['user'].']: ',
-                $config['mysql']['user']
-            );
-        }
-        $helper = new HelperSet([new QuestionHelper()]);
-        $helper = $helper->get('question');
-        $user = $helper->ask($input, $output, $question);
-        $question = new Question('Please enter MySQL/MariaDB password: ');
-        $helper = new HelperSet([new QuestionHelper()]);
-        $question->setHidden(true);
-        $helper = $helper->get('question');
-        $password = $helper->ask($input, $output, $question);
-
-        $connection = $this->validateCredentials($user, $password);
-        if (!$connection) {
-            $question = new ConfirmationQuestion('Would you like to try again? [Y/n] ', true);
-            if (!$helper->ask($input, $output, $question)) {
-                warning('Valet database user is not configured!');
-
-                return;
-            } else {
-                $this->configure($force);
-
-                return;
-            }
-        }
-        $config['mysql']['user'] = $user;
-        $config['mysql']['password'] = $password;
-        $this->configuration->write($config);
-        info('Database user configured successfully!');
-    }
-
     private function serviceName(): string
     {
         if ($this->isMariaDB()) {
@@ -520,7 +520,7 @@ class Mysql
     private function getCredentials(): array
     {
         $config = $this->configuration->read();
-        if (!isset($config['mysql']['password']) && !is_null($config['mysql']['password'])) {
+        if (!isset($config['mysql']['password']) && $config['mysql']['password'] !== null) {
             warning('Valet database user is not configured!');
             exit;
         }

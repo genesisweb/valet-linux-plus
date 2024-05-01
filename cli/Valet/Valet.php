@@ -73,6 +73,7 @@ class Valet
 
     /**
      * Get the paths to all the Valet extensions.
+     * @return array<int,string>
      */
     public function extensions(): array
     {
@@ -123,6 +124,93 @@ class Valet
     {
         $this->serviceManagerSetup();
         $this->packageManagerSetup();
+    }
+
+    /**
+     * Migrate ~/.valet directory to ~/.config/valet directory
+     */
+    public function migrateConfig(): void
+    {
+        $newHomePath = VALET_HOME_PATH;
+        $oldHomePath = OLD_VALET_HOME_PATH;
+
+        // Check if new config home already exists, then skip the process
+        if ($this->files->isDir($newHomePath)) {
+            return;
+        }
+
+        // Fetch FPM running process
+        $fpmVersions = $this->getRunningFpmVersions($oldHomePath);
+
+        // Stop running fpm services
+        if (count($fpmVersions)) {
+            foreach ($fpmVersions as $fpmVersion) {
+                \Valet\Facades\PhpFpm::stop($fpmVersion);
+            }
+        }
+
+        // Copy directory
+        $this->files->copyDirectory($oldHomePath, $newHomePath);
+
+        // Replace $oldHomePath to $newHomePath in Certificates, Valet.conf file
+        $this->updateNginxConfFiles();
+
+        // Update phpfpm's socket file path in config
+        \Valet\Facades\PhpFpm::updateHomePath($oldHomePath, $newHomePath);
+
+        // Start fpm services again
+        if (count($fpmVersions)) {
+            foreach ($fpmVersions as $fpmVersion) {
+                \Valet\Facades\PhpFpm::restart($fpmVersion);
+            }
+        } else {
+            \Valet\Facades\PhpFpm::restart();
+        }
+
+        \Valet\Facades\Nginx::restart();
+
+        info('Valet home directory is migrated successfully! Please re-run your command');
+        info(\sprintf('New home directory: %s', $newHomePath));
+        info(\sprintf('NOTE: Please remove %s directory manually', $oldHomePath));
+        exit;
+    }
+
+    private function updateNginxConfFiles(): void
+    {
+        $newHomePath = VALET_HOME_PATH;
+        $oldHomePath = OLD_VALET_HOME_PATH;
+        $nginxPath = $newHomePath.'/Nginx';
+
+        $siteConfigs = $this->files->scandir($nginxPath);
+        foreach ($siteConfigs as $siteConfig) {
+            $filePath = \sprintf('%s/%s', $nginxPath, $siteConfig);
+            $content = $this->files->get($filePath);
+            $content = str_replace($oldHomePath, $newHomePath, $content);
+            $this->files->put($filePath, $content);
+        }
+
+        $sitesAvailableConf = $this->files->get(Nginx::SITES_AVAILABLE_CONF);
+        $sitesAvailableConf = str_replace($oldHomePath, $newHomePath, $sitesAvailableConf);
+        $this->files->put(Nginx::SITES_AVAILABLE_CONF, $sitesAvailableConf);
+
+        $nginxConfig = $this->files->get(Nginx::NGINX_CONF);
+        $nginxConfig = str_replace($oldHomePath, $newHomePath, $nginxConfig);
+        $this->files->put(Nginx::SITES_AVAILABLE_CONF, $nginxConfig);
+    }
+
+    private function getRunningFpmVersions(string $homePath): array
+    {
+        $runningVersions = [];
+
+        $files = $this->files->scandir($homePath);
+        foreach ($files as $file) {
+            preg_match('/valet(\d)(\d)\.sock/', $file, $matches);
+            if (count($matches) >= 2) {
+                $runningVersions[] = \sprintf('%d.%d', $matches[1], $matches[2]);
+            }
+        }
+
+        return $runningVersions;
     }
 
     /**

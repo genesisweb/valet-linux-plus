@@ -106,7 +106,7 @@ class Server
         $siteName = basename(
         // Filter host to support wildcard dns feature
             $this->allowWildcardDnsDomains($httpHost),
-            '.'.$this->config['tld']
+            '.'.$this->config['domain']
         );
 
         if (strpos($siteName, 'www.') === 0) {
@@ -207,8 +207,7 @@ class Server
      **/
     public function defaultSitePath(): ?string
     {
-        if (
-            isset($this->config['default'])
+        if (isset($this->config['default'])
             && is_string($this->config['default'])
             && is_dir($this->config['default'])
         ) {

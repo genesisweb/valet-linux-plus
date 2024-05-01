@@ -25,8 +25,7 @@ if (! defined('VALET_STATIC_PREFIX')) {
     define('VALET_STATIC_PREFIX', '41c270e4-5535-4daa-b23e-c269744c2f45');
 }
 define('VALET_LOOPBACK', '127.0.0.1');
-define('VALET_ROOT_PATH', realpath(__DIR__.'/../../')); //TODO: Check if it is in user
-define('VALET_BIN_PATH', realpath(__DIR__.'/../../bin/')); //TODO: Check if it is in user
+define('VALET_ROOT_PATH', realpath(__DIR__.'/../../'));
 define('VALET_SERVER_PATH', realpath(__DIR__.'/../../server.php'));
 define('ISOLATED_PHP_VERSION', 'ISOLATED_PHP_VERSION');
 
@@ -183,7 +182,7 @@ if (!function_exists('tap')) {
 /**
  * Get the user.
  */
-function user(): string // TODO: Validate user function
+function user(): string
 {
     if (!isset($_SERVER['SUDO_USER'])) {
         return $_SERVER['USER'];

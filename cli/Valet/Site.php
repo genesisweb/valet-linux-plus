@@ -258,7 +258,7 @@ class Site
      */
     public function secure(string $url, string $stub = null): void
     {
-        if (is_null($stub)) {
+        if ($stub === null) {
             $stub = $this->prepareConf($url, true);
         }
         $this->unsecure($url);
@@ -367,7 +367,7 @@ class Site
      */
     public function customPhpVersion(string $url, string $siteConf = null, bool $returnDecimal = false): ?string
     {
-        if (is_null($siteConf) && !$this->files->exists($this->nginxPath($url))) {
+        if ($siteConf === null && !$this->files->exists($this->nginxPath($url))) {
             return null;
         }
 
@@ -404,7 +404,7 @@ class Site
      */
     private function getProxyPass(string $url, string $siteConf = null): ?string
     {
-        if (is_null($siteConf) && !$this->files->exists($this->nginxPath($url))) {
+        if ($siteConf === null && !$this->files->exists($this->nginxPath($url))) {
             return null;
         }
 
@@ -476,9 +476,9 @@ class Site
     /**
      * Identify whether a site is for a proxy by reading the host name from its config file.
      */
-    private function getProxyHostForSite(string $site, string $configContents = null): ?string
+    private function getProxyHostForSite(string $site): ?string
     {
-        $siteConf = $configContents ?: $this->getSiteConfigFileContents($site);
+        $siteConf = $this->getSiteConfigFileContents($site);
 
         if (empty($siteConf)) {
             return null;
@@ -532,10 +532,10 @@ class Site
         );
     }
 
-    private function getSiteConfigFileContents(string $site, string $suffix = null): ?string
+    private function getSiteConfigFileContents(string $site): ?string
     {
         $config = $this->config->read();
-        $suffix = $suffix ?: '.'.$config['domain'];
+        $suffix = '.'.$config['domain'];
         $file = str_replace($suffix, '', $site).$suffix;
 
         return $this->files->exists($this->nginxPath($file)) ? $this->files->get($this->nginxPath($file)) : null;
@@ -549,7 +549,7 @@ class Site
         $path = $path ?: $this->certificatesPath();
 
         return collect($this->files->scanDir($path))->filter(function ($value) {
-            return ends_with($value, '.crt');
+            return endsWith($value, '.crt');
         })->map(function ($cert) {
             return substr($cert, 0, -9);
         })->flip();

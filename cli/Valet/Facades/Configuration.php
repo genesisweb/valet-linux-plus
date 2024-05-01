@@ -24,6 +24,7 @@ namespace Valet\Facades;
  * @method static array  updateKey(string $key, mixed $value)
  * @method static void   write(array $config)
  * @method static string path()
+ * @method static string parseDomain(string $site)
  */
 class Configuration extends Facade
 {

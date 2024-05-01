@@ -58,15 +58,25 @@ class DevTools
     /**
      * @return false|string
      */
-    public function getBin(string $service)
+    public function getBin(string $service, array $ignoredServices = [])
     {
-        if (!($bin = $this->getService($service))) {
+        $bin = trim($this->getService($service), "\n");
+
+        if (count($ignoredServices) && in_array($bin, $ignoredServices)) {
+            $bin = null;
+        }
+
+        if (!$bin) {
             $bin = $this->getService($service, true);
         }
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (endsWith($bin, "bin/${service}")) {
+            if (
+                endsWith($bin, "bin/${service}")
+                && count($ignoredServices)
+                && !in_array($bin, $ignoredServices)
+            ) {
                 $servicePath = $bin;
                 break;
             }

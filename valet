@@ -3,7 +3,7 @@
 set -e
 
 SOURCE="${BASH_SOURCE[0]}"
-SUDO_COMMANDS="uninstall install start restart stop unsecure secure use isolate unisolate"
+SUDO_COMMANDS="uninstall install start restart stop unsecure secure use isolate unisolate proxy unproxy"
 HOME_PATH=$HOME
 
 function check_dependencies() {
@@ -91,10 +91,10 @@ then
     verify_ngrok_auth
 
     HOST="${PWD##*/}"
-    DOMAIN=$(cat "$HOME/.valet/config.json" | jq -r ".domain")
-    PORT=$(cat "$HOME/.valet/config.json" | jq -r ".port")
+    DOMAIN=$(cat "$HOME/.config/valet/config.json" | jq -r ".domain")
+    PORT=$(cat "$HOME/.config/valet/config.json" | jq -r ".port")
 
-    for linkname in ~/.valet/Sites/*; do
+    for linkname in ~/.config/valet/Sites/*; do
         if [[ "$(readlink ${linkname})" = "$PWD" ]]
         then
             HOST="${linkname##*/}"
@@ -103,7 +103,7 @@ then
 
     # Decide the correct PORT to use according if the site has a secure
     # config or not.
-    if grep --no-messages --quiet 443 ~/.valet/Nginx/$HOST*
+    if grep --no-messages --quiet 443 ~/.config/valet/Nginx/$HOST*
     then
         PORT=88
     fi

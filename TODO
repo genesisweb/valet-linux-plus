@@ -1,13 +1,16 @@
 1. Finish refactoring classes in Valet directory -- Done
 2. Fix facade.php -- Done
-3. Move config directory from ~/.valet to ~/.config/valet
-   3.1 Copy directory from ~/.valet to ~/.config
-   3.2 Replace /home/uttam/.valet path with /home/uttam/.config/valet for Nginx directory files (Logs & Certificate, .sock files)
-   3.3 Replace .sock file paths in valet.conf file.
-   3.4 Regenerate symbolic links in Sites directory
+3. Move config directory from ~/.valet to ~/.config/valet -- Done
+   3.0 Fetch all running php versions and turn off before starting further process -- Done
+   3.1 Copy directory from ~/.valet to ~/.config -- Done
+   3.2 Replace /home/uttam/.valet path with /home/uttam/.config/valet for Nginx directory files (Logs & Certificate, .sock files) -- Done
+   3.3 Replace .sock file paths in valet.conf file. -- Done
+   3.4 Regenerate symbolic links in Sites directory -- Done
 4. Add relevant test cases
 5. Enable Phpstan & CodeSniffer -- Done
 6. Enable unit coverage report
 7. Add Infection
 8. Ngrok remove binary file and install it via `valet install` command
 9. self-signed certificate verification issues in Firefox & PHP's curl requests
+
+

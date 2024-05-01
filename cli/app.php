@@ -48,6 +48,7 @@ $app = new Application('ValetLinux+', VALET_VERSION);
  * Detect environment.
  */
 Valet::environmentSetup();
+Valet::migrateConfig();
 
 /**
  * Install valet required services
@@ -59,11 +60,11 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     Nginx::install();
     PhpFpm::install();
     DnsMasq::install(Configuration::read()['domain']);
-    Valet::symlinkToUsersBin();
     Mailpit::install();
     ValetRedis::install();
     Nginx::restart();
     Mysql::install($mariaDB);
+    Valet::symlinkToUsersBin();
 
     output(PHP_EOL.'<info>Valet installed successfully!</info>');
 })->descriptions('Install the Valet services', [
@@ -262,10 +263,10 @@ if (is_dir(VALET_HOME_PATH)) {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
         if (Valet::onLatestVersion(VALET_VERSION)) {
-            info('You have the latest version of Valet Linux');
+            info('You have the latest version of Valet Linux+');
             passthru($script);
         } else {
-            warning('There is a new release of Valet Linux');
+            warning('There is a new release of Valet Linux+');
             warning('Updating now...');
             $latestVersion = Valet::getLatestVersion();
             if ($latestVersion) {
@@ -274,7 +275,7 @@ if (is_dir(VALET_HOME_PATH)) {
                 passthru($script.' update');
             }
         }
-    })->descriptions('Update Valet Linux and clean up cruft');
+    })->descriptions('Update Valet Linux+ and clean up cruft');
 
     /**
      * Get or set the domain currently being used by Valet.
@@ -428,7 +429,8 @@ if (is_dir(VALET_HOME_PATH)) {
      * Secure the given domain with a trusted TLS certificate.
      */
     $app->command('secure [domain]', function ($domain = null) {
-        $url = ($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'];
+        $url = ($domain ?: Site::host(getcwd()));
+        $url = Configuration::parseDomain($url);
 
         Site::secure($url);
         Nginx::restart();
@@ -440,7 +442,8 @@ if (is_dir(VALET_HOME_PATH)) {
      * Stop serving the given domain over HTTPS and remove the trusted TLS certificate.
      */
     $app->command('unsecure [domain]', function ($domain = null) {
-        $url = ($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'];
+        $url = ($domain ?: Site::host(getcwd()));
+        $url = Configuration::parseDomain($url);
 
         Site::unsecure($url, true);
         Nginx::restart();
@@ -452,6 +455,9 @@ if (is_dir(VALET_HOME_PATH)) {
      * Determine if the site is secured or not.
      */
     $app->command('secured [site]', function ($site) {
+        $site = $site ?: Site::host(getcwd());
+        $site = Configuration::parseDomain($site);
+
         if (Site::secured()->contains($site)) {
             info("$site is secured.");
             return 1;
@@ -671,8 +677,13 @@ if (is_dir(VALET_HOME_PATH)) {
             $site = basename(getcwd());
         }
 
-        if (is_null($phpVersion) && $phpVersion = Site::phpRcVersion($site)) {
+        if ($phpVersion === null && $phpVersion = Site::phpRcVersion($site)) {
             info("Found '$site/.valetphprc' specifying version: $phpVersion");
+        }
+
+        if ($phpVersion === null) {
+            warning('Please select version to isolate');
+            return;
         }
 
         PhpFpm::isolateDirectory($site, $phpVersion, $secure);
@@ -708,15 +719,15 @@ if (is_dir(VALET_HOME_PATH)) {
      * Get the PHP executable path for a site.
      */
     $app->command('which-php [site]', function ($site) {
-        $phpVersion = Site::customPhpVersion(
-            Site::host($site ?: getcwd()).'.'.Configuration::read()['domain']
-        );
+        $site = Site::host($site ?: getcwd());
+        $domain = Configuration::parseDomain($site);
+        $phpVersion = Site::customPhpVersion($domain);
 
         if (!$phpVersion) {
             $phpVersion = Site::phpRcVersion($site ?: basename(getcwd()));
         }
 
-        info(PhpFpm::getPhpExecutablePath($phpVersion));
+        output(PhpFpm::getPhpExecutablePath($phpVersion)); // Use output function only
     })->descriptions('Get the PHP executable path for a given site', [
         'site' => 'The site to get the PHP executable path for',
     ]);
@@ -768,7 +779,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Echo the currently tunneled URL.
      */
     $app->command('fetch-share-url', function () {
-        output(Ngrok::currentTunnelUrl());
+        output((string)Ngrok::currentTunnelUrl());
     })->descriptions('Get the URL to the current Ngrok tunnel');
 
     /**

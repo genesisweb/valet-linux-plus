@@ -41,7 +41,7 @@ $uri = Server::uriFromRequestUri($_SERVER['REQUEST_URI']);
 $siteName = $server->siteNameFromHttpHost($_SERVER['HTTP_HOST']);
 $valetSitePath = $server->sitePath($siteName);
 
-if (is_null($valetSitePath) && is_null($valetSitePath = $server->defaultSitePath())) {
+if ($valetSitePath === null && is_null($valetSitePath = $server->defaultSitePath())) {
     Server::show404();
 }
 

@@ -276,6 +276,22 @@ class PhpFpm
         return VALET_HOME_PATH.'/'.$this->socketFileName($version);
     }
 
+    public function updateHomePath(string $oldHomePath, string $newHomePath): void
+    {
+        foreach (self::SUPPORTED_PHP_VERSIONS as $version) {
+            try {
+                $confPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
+                if ($this->files->exists($confPath)) {
+                    $valetConf = $this->files->get($confPath);
+                    $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
+                    $this->files->put($confPath, $valetConf);
+                }
+            } catch(\DomainException $exception) {
+
+            }
+        }
+    }
+
     /**
      * Stop a given PHP version, if that specific version isn't being used globally or by any sites.
      */
@@ -332,7 +348,7 @@ class PhpFpm
         $extArray = [];
         $extensionPrefix = $this->getExtensionPrefix($version);
         foreach (self::COMMON_EXTENSIONS as $ext) {
-            $extArray[] = "{$extensionPrefix}-{$ext}";
+            $extArray[] = "{$extensionPrefix}{$ext}";
         }
         $this->pm->ensureInstalled(implode(' ', $extArray));
     }
@@ -342,7 +358,7 @@ class PhpFpm
      */
     private function installConfiguration(string $version): void
     {
-        $contents = $this->files->get(__DIR__.'/../../stubs/fpm.conf');
+        $contents = $this->files->get(__DIR__.'/../stubs/fpm.conf');
         $contents = strArrayReplace([
             'VALET_USER'            => user(),
             'VALET_GROUP'           => group(),
@@ -410,14 +426,12 @@ class PhpFpm
 
     /**
      * Validate PHP version.
-     * @throws VersionException
      */
     private function validateVersion(string $version): void
     {
         if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
-            throw new VersionException(
-                "Invalid version [$version] used. Supported versions are :".implode(self::SUPPORTED_PHP_VERSIONS)
-            );
+            warning("Invalid version [$version] used. Supported versions are: ".implode(', ', self::SUPPORTED_PHP_VERSIONS));
+            exit;
         }
     }
 

@@ -72,7 +72,7 @@ abstract class ValetDriver
     public static function customSiteDriver(string $sitePath): ?string
     {
         if (!file_exists($sitePath.'/LocalValetDriver.php')) {
-            return null; // TODO: Validate this.
+            return null;
         }
 
         require_once $sitePath.'/LocalValetDriver.php';

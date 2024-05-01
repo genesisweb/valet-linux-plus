@@ -145,7 +145,7 @@ class Nginx
     {
         return collect($this->files->scandir(VALET_HOME_PATH.'/Nginx'))
             ->reject(function ($file) {
-                return starts_with($file, '.');
+                return startsWith($file, '.');
             });
     }
 
