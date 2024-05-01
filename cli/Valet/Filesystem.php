@@ -3,6 +3,7 @@
 namespace Valet;
 
 use ArrayObject;
+use ConsoleComponents\Writer;
 use Valet\Facades\CommandLine;
 use Exception;
 use FilesystemIterator;
@@ -182,7 +183,7 @@ class Filesystem
     public function copyDirectory(string $from, string $to): void
     {
         if ($this->isDir($to)) {
-            warning('Destination directory already exists');
+            Writer::warn('Destination directory already exists');
             return;
         }
 

@@ -2,8 +2,9 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use Exception;
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Exceptions\VersionException;
@@ -20,7 +21,11 @@ class PhpFpm
     protected $site;
     protected $nginx;
 
-    const SUPPORTED_PHP_VERSIONS = [
+    private const SUPPORTED_PHP_VERSIONS = [
+        '8.2', '8.3',
+    ];
+
+    private const ISOLATION_SUPPORTED_PHP_VERSIONS = [
         '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3',
     ];
 
@@ -103,14 +108,17 @@ class PhpFpm
     public function switchVersion(
         string $version = null,
         bool $updateCli = false,
-        bool $ignoreExt = false,
-        bool $ignoreUpdate = false
+        bool $ignoreExt = false
     ): void {
         $exception = null;
 
         $currentVersion = $this->getCurrentVersion();
         // Validate if in use
         $version = $this->normalizePhpVersion($version);
+
+        $this->validateVersion($version);
+
+        Writer::info('Changing php version...');
 
         try {
             $this->install($version, !$ignoreExt);
@@ -132,13 +140,10 @@ class PhpFpm
         $this->status($version);
         if ($updateCli) {
             $this->cli->run("update-alternatives --set php /usr/bin/php$version");
-            if (!$ignoreUpdate) {
-                $this->handlePackageUpdate($version);
-            }
         }
 
         if ($exception) {
-            warning('Changing version failed');
+            Writer::error('Changing version failed');
 
             throw $exception;
         }
@@ -177,7 +182,7 @@ class PhpFpm
         $site = $this->site->getSiteUrl($directory);
 
         $version = $this->normalizePhpVersion($version);
-        $this->validateVersion($version);
+        $this->validateIsolationVersion($version);
 
         $fpmName = $this->pm->getPhpFpmName($version);
         if (!$this->pm->installed($fpmName)) {
@@ -194,7 +199,7 @@ class PhpFpm
         $this->restart($version);
         NginxFacade::restart();
 
-        info(sprintf('The site [%s] is now using %s.', $site, $version));
+        Writer::info(sprintf('The site [%s] is now using %s.', $site, $version));
     }
 
     /**
@@ -212,7 +217,7 @@ class PhpFpm
         }
         NginxFacade::restart();
 
-        info(sprintf('The site [%s] is now using the default PHP version.', $site));
+        Writer::info(sprintf('The site [%s] is now using the default PHP version.', $site));
     }
 
     /**
@@ -245,7 +250,9 @@ class PhpFpm
      */
     public function normalizePhpVersion($version): string
     {
-        return substr(preg_replace('/(?:php@?)?([0-9+])(?:.)?([0-9+])/i', '$1.$2', (string) $version), 0, 3);
+        /** @var string $version */
+        $version = preg_replace('/(?:php@?)?([0-9+]).?([0-9+])/i', '$1.$2', (string)$version);
+        return substr($version, 0, 3);
     }
 
     /**
@@ -263,12 +270,12 @@ class PhpFpm
     public function getPhpExecutablePath(string $version = null)
     {
         if (!$version) {
-            return DevToolsFacade::getBin('php');
+            return DevToolsFacade::getBin('php', ['/usr/local/bin/php']);
         }
 
         $version = $this->normalizePhpVersion($version);
 
-        return DevToolsFacade::getBin('php'.$version);
+        return DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
     }
 
     public function fpmSocketFile(string $version): string
@@ -278,7 +285,7 @@ class PhpFpm
 
     public function updateHomePath(string $oldHomePath, string $newHomePath): void
     {
-        foreach (self::SUPPORTED_PHP_VERSIONS as $version) {
+        foreach (self::ISOLATION_SUPPORTED_PHP_VERSIONS as $version) {
             try {
                 $confPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
                 if ($this->files->exists($confPath)) {
@@ -286,8 +293,7 @@ class PhpFpm
                     $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
                     $this->files->put($confPath, $valetConf);
                 }
-            } catch(\DomainException $exception) {
-
+            } catch (\DomainException $exception) {
             }
         }
     }
@@ -371,10 +377,12 @@ class PhpFpm
     /**
      * Get a list including the global PHP version and all PHP versions currently serving "isolated sites" (sites with
      * custom Nginx configs pointing them to a specific PHP version).
+     * @return array<int, string>
      */
     private function utilizedPhpVersions(): array
     {
-        $fpmSockFiles = collect(self::SUPPORTED_PHP_VERSIONS)->map(function ($version) {
+        /** @var array<int, string> $fpmSockFiles */
+        $fpmSockFiles = collect(self::ISOLATION_SUPPORTED_PHP_VERSIONS)->map(function ($version) {
             return $this->socketFileName($this->normalizePhpVersion($version));
         })->unique();
 
@@ -406,7 +414,8 @@ class PhpFpm
         $version = $version ?: $this->getCurrentVersion();
         $versionWithoutDot = preg_replace('~[^\d]~', '', $version);
 
-        return collect([
+        /** @var string $confDir */
+        $confDir = collect([
             '/etc/php/'.$version.'/fpm/pool.d', // Ubuntu
             '/etc/php'.$version.'/fpm/pool.d', // Ubuntu
             '/etc/php'.$version.'/php-fpm.d', // Manjaro
@@ -422,6 +431,8 @@ class PhpFpm
         }, function () {
             throw new \DomainException('Unable to determine PHP-FPM configuration folder.');
         });
+
+        return $confDir;
     }
 
     /**
@@ -430,7 +441,36 @@ class PhpFpm
     private function validateVersion(string $version): void
     {
         if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
-            warning("Invalid version [$version] used. Supported versions are: ".implode(', ', self::SUPPORTED_PHP_VERSIONS));
+            Writer::error(
+                \sprintf(
+                    "Invalid version [%s] used. Supported versions are: %s",
+                    $version,
+                    implode(', ', self::SUPPORTED_PHP_VERSIONS)
+                )
+            );
+            Writer::info(
+                \sprintf(
+                    'You can still use any version from [%s] list using `valet isolate` command',
+                    \implode(', ', self::ISOLATION_SUPPORTED_PHP_VERSIONS)
+                )
+            );
+            exit;
+        }
+    }
+
+    /**
+     * Validate PHP version for isolation process.
+     */
+    private function validateIsolationVersion(string $version): void
+    {
+        if (!in_array($version, self::ISOLATION_SUPPORTED_PHP_VERSIONS)) {
+            Writer::error(
+                \sprintf(
+                    "Invalid version [%s] used. Supported versions are: %s",
+                    $version,
+                    implode(', ', self::ISOLATION_SUPPORTED_PHP_VERSIONS)
+                )
+            );
             exit;
         }
     }
@@ -447,20 +487,5 @@ class PhpFpm
     {
         $version = $version ?: $this->getCurrentVersion();
         return $this->pm->getPhpExtensionPrefix($version);
-    }
-
-    private function handlePackageUpdate($version): void
-    {
-        $installedPhpVersion = $this->config->get('installed_php_version');
-        if ($installedPhpVersion && $installedPhpVersion >= $version) {
-            if (is_dir(__DIR__.'/../../../vendor')) {
-                // Local vendor
-                $this->cli->runAsUser('composer update');
-            } else {
-                // Global vendor
-                $this->cli->runAsUser('composer global require genesisweb/valet-linux-plus:'.VALET_VERSION.' -W');
-            }
-            $this->config->set('installed_php_version', $version);
-        }
     }
 }

@@ -2,11 +2,11 @@
 
 namespace Valet\PackageManagers;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use function Valet\output;
 
 class Eopkg implements PackageManager
 {
@@ -78,10 +78,10 @@ class Eopkg implements PackageManager
      */
     public function installOrFail(string $package): void
     {
-        output('<info>['.$package.'] is not installed, installing it now via Eopkg</info>');
+        Writer::twoColumnDetail($package, 'Installing');
 
         $this->cli->run(trim('eopkg install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
-            output(\sprintf('%s: %s', $exitCode, $errorOutput));
+            Writer::error(\sprintf('%s: %s', $exitCode, $errorOutput));
 
             throw new DomainException('Eopkg was unable to install ['.$package.'].');
         });

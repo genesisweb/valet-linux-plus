@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -27,22 +28,10 @@ class DevTools
      */
     const ATOM = 'atom';
 
-    /**
-     * @var PackageManager
-     */
-    public $pm;
-    /**
-     * @var ServiceManager
-     */
-    public $sm;
-    /**
-     * @var CommandLine
-     */
-    public $cli;
-    /**
-     * @var Filesystem
-     */
-    public $files;
+    public PackageManager $pm;
+    public ServiceManager $sm;
+    public CommandLine $cli;
+    public Filesystem $files;
 
     /**
      * Create a new DevTools instance.
@@ -56,24 +45,35 @@ class DevTools
     }
 
     /**
+     * @param string[] $ignoredServices
      * @return false|string
      */
-    public function getBin(string $service, array $ignoredServices = [])
+    public function getBin(string $service, array $ignoredServices = []): false|string
     {
-        $bin = trim($this->getService($service), "\n");
+        $selectedService = $this->getService($service);
+        if ($service === false) {
+            return false;
+        }
+
+        $bin = trim($selectedService, "\n");
 
         if (count($ignoredServices) && in_array($bin, $ignoredServices)) {
             $bin = null;
         }
 
         if (!$bin) {
-            $bin = $this->getService($service, true);
+            $bin = $this->getServiceByLocate("bin/$service");
         }
+
+        if ($bin === false) {
+            return false;
+        }
+
+        /** @var string[] $bins */
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (
-                endsWith($bin, "bin/${service}")
+            if (str_ends_with($bin, "bin/$service")
                 && count($ignoredServices)
                 && !in_array($bin, $ignoredServices)
             ) {
@@ -81,8 +81,10 @@ class DevTools
                 break;
             }
         }
-        if ($servicePath) {
-            return trim(preg_replace('/\s\s+/', ' ', $servicePath));
+        if ($servicePath !== null) {
+            /** @var string $servicePath */
+            $servicePath = preg_replace('/\s\s+/', ' ', $servicePath);
+            return trim($servicePath);
         }
 
         return false;
@@ -93,7 +95,7 @@ class DevTools
         if ($this->ensureInstalled($service)) {
             $this->runService($service, $folder);
         } else {
-            warning("$service not available");
+            Writer::warn("$service not available");
         }
     }
 
@@ -108,13 +110,28 @@ class DevTools
     /**
      * @return false|string
      */
-    private function getService(string $service, bool $locate = false)
+    private function getService(string $service)
     {
         try {
-            $locator = $locate ? 'locate' : 'which';
-
             return $this->cli->run(
-                "$locator $service",
+                "which $service",
+                function () {
+                    throw new DomainException('Service not available');
+                }
+            );
+        } catch (DomainException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @return false|string
+     */
+    private function getServiceByLocate(string $service)
+    {
+        try {
+            return $this->cli->run(
+                "locate --regex $service$",
                 function () {
                     throw new DomainException('Service not available');
                 }
@@ -131,7 +148,7 @@ class DevTools
         try {
             $this->cli->quietly("$bin $folder");
         } catch (DomainException $e) {
-            warning("Error while opening [$folder] with $service");
+            Writer::warn("Error while opening [$folder] with $service");
         }
     }
 }

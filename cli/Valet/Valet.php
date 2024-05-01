@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Exception;
 use Httpful\Request;
@@ -32,6 +33,7 @@ class Valet
      * @var string
      */
     private $valetBin = '/usr/local/bin/valet';
+    private $phpBin = '/usr/local/bin/php';
     /**
      * @var string
      */
@@ -62,12 +64,21 @@ class Valet
     }
 
     /**
+     * Symlink the Valet Bash script into the user's local bin.
+     */
+    public function symlinkPhpToUsersBin(): void
+    {
+        $this->cli->run('ln -snf '.realpath(__DIR__.'/../../php').' '.$this->phpBin);
+    }
+
+    /**
      * Unlink the Valet Bash script from the user's local bin
      * and the sudoers.d entry.
      */
     public function uninstall(): void
     {
         $this->files->unlink($this->valetBin);
+        $this->files->unlink($this->phpBin);
         $this->files->unlink($this->sudoers);
     }
 
@@ -169,9 +180,9 @@ class Valet
 
         \Valet\Facades\Nginx::restart();
 
-        info('Valet home directory is migrated successfully! Please re-run your command');
-        info(\sprintf('New home directory: %s', $newHomePath));
-        info(\sprintf('NOTE: Please remove %s directory manually', $oldHomePath));
+        Writer::info('Valet home directory is migrated successfully! Please re-run your command');
+        Writer::info(\sprintf('New home directory: %s', $newHomePath));
+        Writer::info(\sprintf('Please remove %s directory manually', $oldHomePath));
         exit;
     }
 

@@ -5,9 +5,6 @@ namespace Valet;
 use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\BindingResolutionException;
-use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Define constants.
@@ -37,66 +34,6 @@ function testing(): bool
     return strpos($_SERVER['SCRIPT_NAME'], 'phpunit') !== false;
 }
 
-/**
- * Set or get a global console writer.
- * @throws BindingResolutionException
- */
-function writer(?OutputInterface $writer = null): ?OutputInterface
-{
-    $container = Container::getInstance();
-
-    if (! $writer) {
-        if (! $container->bound('writer')) {
-            $container->instance('writer', new ConsoleOutput());
-        }
-
-        return $container->make('writer');
-    }
-
-    $container->instance('writer', $writer);
-
-    return null;
-}
-/**
- * Output the given text to the console.
- */
-function info(string $output): void
-{
-    output('<info>'.$output.'</info>');
-}
-
-/**
- * Output the given text to the console.
- */
-function warning(string $output): void
-{
-    output('<fg=red>'.$output.'</>');
-}
-
-/**
- * Output a table to the console.
- */
-function table(array $headers = [], array $rows = []): void
-{
-    $table = new Table(new ConsoleOutput());
-
-    $table->setHeaders($headers)->setRows($rows);
-
-    $table->render();
-}
-
-/**
- * Output the given text to the console.
- */
-function output(string $output): void
-{
-    if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing') {
-        return;
-    }
-
-    (new ConsoleOutput())->writeln($output);
-}
-
 if (!function_exists('resolve')) {
     /**
      * Resolve the given class from the container.
@@ -106,26 +43,6 @@ if (!function_exists('resolve')) {
     function resolve(string $class)
     {
         return Container::getInstance()->make($class);
-    }
-}
-
-if (!function_exists('endsWith')) {
-    /**
-     * Determine if a given string ends with a given substring.
-     */
-    function endsWith(string $haystack, string $needle): bool
-    {
-        return substr($haystack, -strlen($needle)) === $needle;
-    }
-}
-
-if (!function_exists('startsWith')) {
-    /**
-     * Determine if a given string starts with a given substring.
-     */
-    function startsWith(string $haystack, string $needle): bool
-    {
-        return $needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0;
     }
 }
 

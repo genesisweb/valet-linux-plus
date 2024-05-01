@@ -2,7 +2,7 @@
 
 namespace Valet;
 
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Facades\PhpFpm as PhpFpmFacade;
@@ -145,7 +145,7 @@ class Nginx
     {
         return collect($this->files->scandir(VALET_HOME_PATH.'/Nginx'))
             ->reject(function ($file) {
-                return startsWith($file, '.');
+                return str_starts_with($file, '.');
             });
     }
 

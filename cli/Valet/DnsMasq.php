@@ -2,56 +2,24 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
 class DnsMasq
 {
-    /**
-     * @var PackageManager
-     */
-    public $pm;
-    /**
-     * @var ServiceManager
-     */
-    public $sm;
-    /**
-     * @var CommandLine
-     */
-    public $cli;
-    /**
-     * @var Filesystem
-     */
-    public $files;
-    /**
-     * @var string
-     */
-    public $rclocal = '/etc/rc.local';
-    /**
-     * @var string
-     */
-    public $resolvconf = '/etc/resolv.conf';
-    /**
-     * @var string
-     */
-    public $dnsmasqconf = '/etc/dnsmasq.conf';
-    /**
-     * @var string
-     */
-    public $dnsmasqOpts = '/etc/dnsmasq.d/options';
-    /**
-     * @var string
-     */
-    public $resolvedConfigPath = '/etc/systemd/resolved.conf';
-    /**
-     * @var string
-     */
-    public $configPath = '/etc/dnsmasq.d/valet';
-    /**
-     * @var string
-     */
-    public $nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
+    public PackageManager $pm;
+    public ServiceManager $sm;
+    public CommandLine $cli;
+    public Filesystem $files;
+    public string $rclocal = '/etc/rc.local';
+    public string $resolvconf = '/etc/resolv.conf';
+    public string $dnsmasqconf = '/etc/dnsmasq.conf';
+    public string $dnsmasqOpts = '/etc/dnsmasq.d/options';
+    public string $resolvedConfigPath = '/etc/systemd/resolved.conf';
+    public string $configPath = '/etc/dnsmasq.d/valet';
+    public string $nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
 
     /**
      * Create a new DnsMasq instance.
@@ -129,7 +97,7 @@ class DnsMasq
         $this->pm->restartNetworkManager();
         $this->sm->restart('dnsmasq');
 
-        info('Valet DNS changes have been rolled back');
+        Writer::info('Valet DNS changes have been rolled back');
     }
 
     /**
@@ -143,7 +111,7 @@ class DnsMasq
             $this->cli->run(
                 "chattr {$arg} {$this->resolvconf}",
                 function ($code, $msg) {
-                    warning($msg);
+                    Writer::warn($msg);
                 }
             );
         }

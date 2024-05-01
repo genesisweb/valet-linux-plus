@@ -53,7 +53,6 @@ class Ngrok
     public function setAuthToken(string $authToken): void
     {
         $this->cli->run(__DIR__.'/../../bin/ngrok config add-authtoken '.$authToken);
-        info('Ngrok authentication token set.');
     }
 
     /**

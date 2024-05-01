@@ -6,7 +6,7 @@ use Exception;
 
 class Configuration
 {
-    public $files;
+    public Filesystem $files;
 
     /**
      * Create a new Valet configuration class instance.
@@ -112,7 +112,6 @@ class Configuration
                 'domain'                => 'test',
                 'paths'                 => [],
                 'port'                  => '80',
-                'installed_php_version' => PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION,
             ]);
         }
     }
@@ -234,7 +233,7 @@ class Configuration
     public function parseDomain(string $siteName): string
     {
         $domain = $this->get('domain');
-        if (endsWith($siteName, ".$domain") !== true) {
+        if (str_ends_with($siteName, ".$domain") !== true) {
             return \sprintf('%s.%s', $siteName, $domain);
         }
         return $siteName;

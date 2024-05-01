@@ -2,7 +2,7 @@
 
 namespace Valet;
 
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use Valet\Facades\PhpFpm as PhpFpmFacade;
 
 class Site
@@ -96,7 +96,7 @@ class Site
             ->filter(function ($site) use ($domain) {
                 // keep sites that match our TLD
 
-                return endsWith($site, '.'.$domain);
+                return str_ends_with($site, '.'.$domain);
             })->map(function ($site) use ($domain) {
                 // remove the TLD suffix for consistency
                 return str_replace('.'.$domain, '', $site);
@@ -116,7 +116,7 @@ class Site
 
                 return [
                     'url'     => $url,
-                    'secured' => $secured ? ' X' : '',
+                    'secured' => $secured ? '✓' : '✕',
                     'path'    => $host,
                 ];
             });
@@ -127,15 +127,8 @@ class Site
      */
     public function proxyDelete(string $url): void
     {
-        $tld = $this->config->read()['domain'];
-        if (!endsWith($url, '.'.$tld)) {
-            $url .= '.'.$tld;
-        }
-
         $this->unsecure($url);
         $this->files->unlink($this->nginxPath($url));
-
-        info('Valet will no longer proxy [https://'.$url.'].');
     }
 
     /**
@@ -150,7 +143,7 @@ class Site
 
         $domain = $this->config->read()['domain'];
 
-        if (!endsWith($url, '.'.$domain)) {
+        if (!str_ends_with($url, '.'.$domain)) {
             $url .= '.'.$domain;
         }
 
@@ -184,10 +177,6 @@ class Site
         } else {
             $this->put($url, $siteConf);
         }
-
-        $protocol = $secure ? 'https' : 'http';
-
-        info('Valet will now proxy ['.$protocol.'://'.$url.'] traffic to ['.$host.'].');
     }
 
     /**
@@ -549,7 +538,7 @@ class Site
         $path = $path ?: $this->certificatesPath();
 
         return collect($this->files->scanDir($path))->filter(function ($value) {
-            return endsWith($value, '.crt');
+            return str_ends_with($value, '.crt');
         })->map(function ($cert) {
             return substr($cert, 0, -9);
         })->flip();

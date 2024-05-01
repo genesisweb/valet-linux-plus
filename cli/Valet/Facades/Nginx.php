@@ -2,7 +2,7 @@
 
 namespace Valet\Facades;
 
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 
 /**
  * Class Nginx.

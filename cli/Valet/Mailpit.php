@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -143,8 +144,6 @@ class Mailpit
      */
     private function createService(): void
     {
-        info('Installing Mailpit service...');
-
         $servicePath = '/etc/init.d/mailpit';
         $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit.sh';
         $hasSystemd = $this->sm->isSystemd();

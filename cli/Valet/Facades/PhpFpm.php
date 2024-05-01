@@ -2,7 +2,7 @@
 
 namespace Valet\Facades;
 
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 
 /**
  * Class PhpFpm.
@@ -12,7 +12,7 @@ use Tightenco\Collect\Support\Collection;
  * @method static void         restart($version = null)
  * @method static void         stop($version = null)
  * @method static void         status($version = null)
- * @method static void         switchVersion(string $version = null, bool $updateCli = null, bool $ignoreExt = null, bool $ignoreUpdate = null)
+ * @method static void         switchVersion(string $version = null, bool $updateCli = null, bool $ignoreExt = null)
  * @method static string       getCurrentVersion()
  * @method static void         isolateDirectory($site, $phpVersion, $secure = false)
  * @method static Collection   isolatedDirectories()

@@ -7,23 +7,23 @@ interface ServiceManager
     /**
      * Start the given services.
      *
-     * @param array|string $services
+     * @param array|string|string[]|null $services
      */
-    public function start($services): void;
+    public function start(array|string|null $services): void;
 
     /**
      * Stop the given services.
      *
-     * @param array|string $services
+     * @param array|string|string[]|null $services
      */
-    public function stop($services): void;
+    public function stop(array|string|null $services): void;
 
     /**
      * Restart the given services.
      *
-     * @param array|string $services
+     * @param array|string|string[]|null $services
      */
-    public function restart($services): void;
+    public function restart(array|string|null $services): void;
 
     /**
      * Enable the given services.
@@ -54,4 +54,9 @@ interface ServiceManager
      * If the service manager is systemd.
      */
     public function isSystemd(): bool;
+
+    /**
+     * Remove Valet DNS services.
+     */
+    public function removeValetDns(): void;
 }
