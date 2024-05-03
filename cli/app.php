@@ -32,9 +32,9 @@ if (file_exists(__DIR__.'/../vendor/autoload.php')) {
  * Create the application.
  */
 Container::setInstance(new Container());
-const VALET_VERSION = '2.0.0';
+$version = '2.0.0';
 
-$app = new Application('ValetLinux+', VALET_VERSION);
+$app = new Application('ValetLinux+', $version);
 
 /**
  * Detect environment.
@@ -252,8 +252,8 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('is-latest', function () {
-        if (Valet::onLatestVersion(VALET_VERSION)) {
+    $app->command('is-latest', function () use ($version) {
+        if (Valet::onLatestVersion($version)) {
             Writer::info('YES');
         } else {
             Writer::info('NO');
@@ -263,10 +263,10 @@ if (is_dir(VALET_HOME_PATH)) {
     /**
      * Determine if this is the latest release of Valet.
      */
-    $app->command('update', function () {
+    $app->command('update', function () use ($version) {
         $script = dirname(__FILE__).'/scripts/update.sh';
 
-        if (Valet::onLatestVersion(VALET_VERSION)) {
+        if (Valet::onLatestVersion($version)) {
             Writer::info('You have the latest version of Valet Linux+');
             passthru($script);
         } else {

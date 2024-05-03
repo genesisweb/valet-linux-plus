@@ -48,7 +48,8 @@ class TestCase extends PhpUnitTestCase
         // Keep this file empty, as it's tailed in a test
         $files->touch(VALET_HOME_PATH.'/Log/nginx-error.log');
 
-        require_once __DIR__.'/../cli/app.php';
+        require __DIR__.'/../cli/app.php';
+
         /** @var Application $app */
         $this->app = $app;
         $this->app->setAutoExit(false);
