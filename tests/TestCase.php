@@ -11,15 +11,12 @@ use Valet\Filesystem;
 
 class TestCase extends PhpUnitTestCase
 {
-    use UsesNullWriter;
-
     protected Application $app;
     protected ApplicationTester $tester;
 
     public function setUp(): void
     {
         $this->prepTestConfig();
-        $this->setNullWriter();
     }
 
     public function tearDown(): void
