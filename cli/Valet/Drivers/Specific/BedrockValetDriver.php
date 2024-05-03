@@ -47,9 +47,9 @@ class BedrockValetDriver extends BasicValetDriver
     /**
      * Redirect to uri with trailing slash.
      */
-    private function forceTrailingSlash(string $uri): string
+    private function forceTrailingSlash($uri)
     {
-        if (str_ends_with($uri, '/wp/wp-admin')) {
+        if (substr($uri, -1 * strlen('/wp/wp-admin')) == '/wp/wp-admin') {
             header('Location: '.$uri.'/');
             exit;
         }

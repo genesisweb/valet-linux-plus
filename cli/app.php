@@ -42,7 +42,6 @@ $app = new Application('ValetLinux+', VALET_VERSION);
 Valet::environmentSetup();
 Valet::migrateConfig();
 
-
 /**
  * Install valet required services
  */
@@ -59,6 +58,7 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     ValetRedis::install();
     Nginx::restart();
     Mysql::install($mariaDB);
+    Ngrok::install();
     Valet::symlinkToUsersBin();
 
     Writer::info('Valet installed successfully!');

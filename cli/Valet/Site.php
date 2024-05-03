@@ -20,6 +20,14 @@ class Site
      */
     public $files;
 
+    private string $caCertificatePath = '/usr/local/share/ca-certificates/';
+    private string $caCertificatePem = 'ValetLinuxCASelfSigned.pem';
+    private string $caCertificateKey = 'ValetLinuxCASelfSigned.key';
+    private string $caCertificateSrl = 'ValetLinuxCASelfSigned.srl';
+    private string $caCertificateOrganization = 'Valet Linux CA Self Signed Organization';
+    private string $caCertificateCommonName = 'Valet Linux CA Self Signed CN';
+    private string $certificateDummyEmail = 'certificate@valet.linux';
+
     /**
      * Create a new Site instance.
      *
@@ -252,9 +260,17 @@ class Site
         }
         $this->unsecure($url);
 
+        $this->files->ensureDirExists($this->caPath(), user());
+
         $this->files->ensureDirExists($this->certificatesPath(), user());
 
-        $this->createCertificate($url);
+        $caExpireInYears = 20;
+        $certificateExpireInDays = 368;
+        $caExpireInDate = (new \DateTime())->diff(new \DateTime("+{$caExpireInYears} years"));
+
+        $this->createCa($caExpireInDate->format('%a'));
+
+        $this->createCertificate($url, $certificateExpireInDays);
 
         $this->createSecureNginxServer($url, $stub);
     }
@@ -593,10 +609,88 @@ class Site
     }
 
     /**
+     * If CA and root certificates are nonexistent, create them and trust the root cert.
+     *
+     * @param  int  $caExpireInDays  The number of days the self signed certificate authority is valid.
+     */
+    private function createCa(int $caExpireInDays): void
+    {
+        $caPemPath = $this->caPath($this->caCertificatePem);
+        $caKeyPath = $this->caPath($this->caCertificateKey);
+
+        if ($this->files->exists($caKeyPath) && $this->files->exists($caPemPath)) {
+            $this->trustCa($caPemPath);
+            return;
+        }
+
+        if ($this->files->exists($caKeyPath)) {
+            $this->files->unlink($caKeyPath);
+        }
+        if ($this->files->exists($caPemPath)) {
+            $this->files->unlink($caPemPath);
+        }
+
+        $this->untrustCa();
+
+        $this->cli->runAsUser(
+            sprintf(
+                'openssl req -new -newkey rsa:2048 -days %s -nodes -x509 -subj "/C=/ST=/O=%s/localityName=/commonName=%s/organizationalUnitName=Developers/emailAddress=%s/" -keyout "%s" -out "%s"',
+                $caExpireInDays,
+                $this->caCertificateOrganization,
+                $this->caCertificateCommonName,
+                $this->certificateDummyEmail,
+                $caKeyPath,
+                $caPemPath
+            )
+        );
+        $this->trustCa($caPemPath);
+    }
+
+    /**
+     * Trust the given root certificate file in the macOS Keychain.
+     */
+    private function untrustCa(): void
+    {
+        $this->files->remove(\sprintf('%s%s.crt', $this->caCertificatePath, $this->caCertificatePem));
+        $this->cli->run('sudo update-ca-certificates');
+    }
+
+    /**
+     * Trust the given root certificate file in the macOS Keychain.
+     */
+    private function trustCa(string $caPemPath): void
+    {
+        $this->files->copy($caPemPath, \sprintf('%s%s.crt', $this->caCertificatePath, $this->caCertificatePem));
+        $this->cli->run('sudo update-ca-certificates');
+
+        $this->cli->runAsUser(sprintf(
+            'certutil -d sql:$HOME/.pki/nssdb -A -t TC -n "%s" -i "%s"',
+            $this->caCertificateOrganization,
+            $caPemPath
+        ));
+
+        $this->cli->runAsUser(sprintf(
+            'certutil -d $HOME/.mozilla/firefox/*.default -A -t TC -n "%s" -i "%s"',
+            $this->caCertificateOrganization,
+            $caPemPath
+        ));
+
+        $this->cli->runAsUser(sprintf(
+            'certutil -d $HOME/snap/firefox/common/.mozilla/firefox/*.default -A -t TC -n "%s" -i "%s"',
+            $this->caCertificateOrganization,
+            $caPemPath
+        ));
+    }
+
+    /**
      * Create and trust a certificate for the given URL.
      */
-    private function createCertificate(string $url): void
+    private function createCertificate(string $url, int $certificateExpireInDays = 368): void
     {
+        $caPemPath = $this->caPath($this->caCertificatePem);
+        $caKeyPath = $this->caPath($this->caCertificateKey);
+        $caSrlPath = $this->caPath($this->caCertificateSrl);
+
         $keyPath = $this->certificatesPath().'/'.$url.'.key';
         $csrPath = $this->certificatesPath().'/'.$url.'.csr';
         $crtPath = $this->certificatesPath().'/'.$url.'.crt';
@@ -606,15 +700,21 @@ class Site
         $this->createPrivateKey($keyPath);
         $this->createSigningRequest($url, $keyPath, $csrPath, $confPath);
 
-        $this->cli->runAsUser(sprintf(
-            'openssl x509 -req -sha256 -days 365 -in %s -signkey %s -out %s -extensions v3_req -extfile %s',
+        $caSrlParam = '-CAserial "'.$caSrlPath.'"';
+        if (! $this->files->exists($caSrlPath)) {
+            $caSrlParam .= ' -CAcreateserial';
+        }
+
+        $this->cli->run(sprintf(
+            'openssl x509 -req -sha256 -days %s -CA "%s" -CAkey "%s" %s -in %s -out %s -extensions v3_req -extfile %s',
+            $certificateExpireInDays,
+            $caPemPath,
+            $caKeyPath,
+            $caSrlParam,
             $csrPath,
-            $keyPath,
             $crtPath,
             $confPath
         ));
-
-        $this->trustCertificate($crtPath, $url);
     }
 
     /**
@@ -631,10 +731,11 @@ class Site
     private function createSigningRequest(string $url, string $keyPath, string $csrPath, string $confPath): void
     {
         $this->cli->runAsUser(sprintf(
-            'openssl req -new -key %s -out %s -subj "/C=US/ST=MN/O=Valet/localityName=Valet/commonName=%s/organizationalUnitName=Valet/emailAddress=valet/" -config %s -passin pass:',
+            'openssl req -new -key %s -out %s -subj "/C=/ST=/O=/localityName=/commonName=%s/organizationalUnitName=/emailAddress=%s/" -config %s',
             $keyPath,
             $csrPath,
             $url,
+            $this->certificateDummyEmail,
             $confPath
         ));
     }
@@ -646,30 +747,6 @@ class Site
     {
         $config = str_replace('VALET_DOMAIN', $url, $this->files->get(__DIR__.'/../stubs/openssl.conf'));
         $this->files->putAsUser($path, $config);
-    }
-
-    /**
-     * Trust the given certificate file in the Mac Keychain.
-     */
-    private function trustCertificate(string $crtPath, string $url): void
-    {
-        $this->cli->run(sprintf(
-            'certutil -d sql:$HOME/.pki/nssdb -A -t TC -n "%s" -i "%s"',
-            $url,
-            $crtPath
-        ));
-
-        $this->cli->run(sprintf(
-            'certutil -d $HOME/.mozilla/firefox/*.default -A -t TC -n "%s" -i "%s"',
-            $url,
-            $crtPath
-        ));
-
-        $this->cli->run(sprintf(
-            'certutil -d $HOME/snap/firefox/common/.mozilla/firefox/*.default -A -t TC -n "%s" -i "%s"',
-            $url,
-            $crtPath
-        ));
     }
 
     private function createSecureNginxServer(string $url, string $stub = null): void
@@ -719,6 +796,14 @@ class Site
     private function certificatesPath(): string
     {
         return $this->valetHomePath().'/Certificates';
+    }
+
+    /**
+     * Get the path to the Valet CA certificates.
+     */
+    public function caPath(?string $caFile = null): string
+    {
+        return $this->valetHomePath().'/CA'.($caFile ? '/'.$caFile : '');
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Exception;
 use Httpful\Request;
@@ -12,19 +13,46 @@ class Ngrok
      * @var string
      */
     private const TUNNEL_ENDPOINT = 'http://127.0.0.1:4040/api/tunnels';
-    /**
-     * @var CommandLine
-     */
-    public $cli;
+    private const BINARY_DOWNLOAD_LINK = 'https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz';
+
+    public CommandLine $cli;
+
+    public Filesystem $files;
 
     /**
      * Create a new Ngrok instance.
-     *
-     * @param CommandLine $cli
      */
-    public function __construct(CommandLine $cli)
+    public function __construct(CommandLine $cli, Filesystem $filesystem)
     {
         $this->cli = $cli;
+        $this->files = $filesystem;
+    }
+
+
+    /**
+     * Install Ngrok binary
+     * @throws Exception
+     */
+    public function install(): void
+    {
+        if ($this->files->exists(\sprintf('%s/bin/ngrok', VALET_ROOT_PATH))) {
+            return;
+        }
+
+        Writer::twoColumnDetail('Ngrok', 'Installing');
+        $this->files->ensureDirExists(\sprintf('%s/bin', VALET_ROOT_PATH));
+        $response = Request::get(self::BINARY_DOWNLOAD_LINK)->send();
+        if ($response->hasErrors()) {
+            die('Error downloading file: ' . $response->body);
+        }
+        $zipFile = \sprintf('%s/bin/%s', VALET_ROOT_PATH, basename(self::BINARY_DOWNLOAD_LINK));
+
+        file_put_contents($zipFile, $response->raw_body);
+        $phar = new \PharData($zipFile);
+
+        $phar->extractTo(VALET_ROOT_PATH.'/bin/');
+
+        $this->files->remove($zipFile);
     }
 
     /**
