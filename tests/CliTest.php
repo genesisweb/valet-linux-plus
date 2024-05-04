@@ -105,8 +105,12 @@ class CliTest extends TestCase
      * @test
      * @dataProvider nginxPortDataProvider
      */
-    public function itWillUpdateNginxPortSuccessfully(int $port, bool $isHttps, string $updateKey, string $expectedOutput): void
-    {
+    public function itWillUpdateNginxPortSuccessfully(
+        int    $port,
+        bool   $isHttps,
+        string $updateKey,
+        string $expectedOutput
+    ): void {
         Writer::fake();
 
         $nginx = Mockery::mock(Nginx::class);
@@ -279,8 +283,13 @@ class CliTest extends TestCase
      * @test
      * @dataProvider nginxProxyDataProvider
      */
-    public function itWillCreateNginxProxy(string $domain, string $host, bool $isSecure, string $expectedDomain, string $expectedMessage): void
-    {
+    public function itWillCreateNginxProxy(
+        string $domain,
+        string $host,
+        bool   $isSecure,
+        string $expectedDomain,
+        string $expectedMessage
+    ): void {
         Writer::fake();
 
         $site = Mockery::mock(Site::class);
@@ -332,8 +341,10 @@ class CliTest extends TestCase
      * @test
      * @dataProvider invalidProxyDataProvider
      */
-    public function itWillFailToProxyDomainWhenValidParametersNotAvailable(array $overrides, string $expectedMessage): void
-    {
+    public function itWillFailToProxyDomainWhenValidParametersNotAvailable(
+        array  $overrides,
+        string $expectedMessage
+    ): void {
         Writer::fake();
 
         $domain = array_key_exists('domain', $overrides) ? $overrides['domain'] : 'mails';
@@ -421,8 +432,10 @@ class CliTest extends TestCase
      * @test
      * @dataProvider invalidUnproxyDataProvider
      */
-    public function itWillFailToUnproxyDomainWhenValidParametersNotAvailable(array $overrides, string $expectedMessage): void
-    {
+    public function itWillFailToUnproxyDomainWhenValidParametersNotAvailable(
+        array  $overrides,
+        string $expectedMessage
+    ): void {
         Writer::fake();
 
         $domain = array_key_exists('domain', $overrides) ? $overrides['domain'] : 'mails';
@@ -458,14 +471,14 @@ class CliTest extends TestCase
         $site = Mockery::mock(Site::class);
         $site->shouldReceive('proxies')->withNoArgs()->once()->andReturn(collect([
             [
-                'url' => 'https://mails.localhost',
+                'url'     => 'https://mails.localhost',
                 'secured' => '✓',
-                'path' => 'http://127.0.0.1:8045',
+                'path'    => 'http://127.0.0.1:8045',
             ],
             [
-                'url' => 'http://docker-host.localhost',
+                'url'     => 'http://docker-host.localhost',
                 'secured' => '✕',
-                'path' => 'http://127.0.0.1:8888',
+                'path'    => 'http://127.0.0.1:8888',
             ],
         ]));
         swap(Site::class, $site);
@@ -553,10 +566,10 @@ class CliTest extends TestCase
         $site = Mockery::mock(Site::class);
         $site->shouldReceive('links')->withNoArgs()->once()->andReturn(collect([
             [
-                'site' => 'scripts',
-                'secured' => '',
-                'url' => 'http://scripts.test',
-                'path' => '/test/path',
+                'site'       => 'scripts',
+                'secured'    => '',
+                'url'        => 'http://scripts.test',
+                'path'       => '/test/path',
                 'phpVersion' => '8.2',
             ],
         ]));
@@ -794,7 +807,10 @@ class CliTest extends TestCase
             $content
         );
         $this->assertStringContainsString(
-            'You can still use any version from [7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3] list using `valet isolate` command',
+            \sprintf(
+                'You can still use any version from [%s] list using `valet isolate` command',
+                '7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3'
+            ),
             $content
         );
     }
@@ -1007,15 +1023,24 @@ class CliTest extends TestCase
      * @test
      * @dataProvider isolateDirectoryDataProvider
      */
-    public function itWillIsolatePhpVersion(string $phpVersion, ?string $siteName, string $expectedSiteName, bool $isSecure): void
-    {
+    public function itWillIsolatePhpVersion(
+        string  $phpVersion,
+        ?string $siteName,
+        string  $expectedSiteName,
+        bool    $isSecure
+    ): void {
         Writer::fake();
 
         $phpFpm = Mockery::mock(PhpFpm::class);
         $phpFpm->shouldReceive('isolateDirectory')->with($expectedSiteName, $phpVersion, $isSecure)->once();
         swap(PhpFpm::class, $phpFpm);
 
-        $this->tester->run(['command' => 'isolate', 'phpVersion' => $phpVersion, 'site' => $siteName, '--secure' => $isSecure]);
+        $this->tester->run([
+            'command'    => 'isolate',
+            'phpVersion' => $phpVersion,
+            'site'       => $siteName,
+            '--secure'   => $isSecure
+        ]);
 
         $this->tester->assertCommandIsSuccessful();
 
@@ -1054,7 +1079,7 @@ class CliTest extends TestCase
         );
     }
 
-    public function unisolateDirectoryDataProvider(): array
+    public function unIsolateDirectoryDataProvider(): array
     {
         return [
             [
@@ -1070,9 +1095,9 @@ class CliTest extends TestCase
 
     /**
      * @test
-     * @dataProvider unisolateDirectoryDataProvider
+     * @dataProvider unIsolateDirectoryDataProvider
      */
-    public function itWillUnisolateDirectory(?string $domainName, string $expectedDomainName): void
+    public function itWillUnIsolateDirectory(?string $domainName, string $expectedDomainName): void
     {
         Writer::fake();
 
@@ -1092,5 +1117,41 @@ class CliTest extends TestCase
             sprintf('The site [%s] is now using the default PHP version.', $expectedDomainName),
             $content
         );
+    }
+
+    /**
+     * @test
+     */
+    public function itWillListIsolatedDirectories(): void
+    {
+        Writer::fake();
+
+        $phpFpm = Mockery::mock(PhpFpm::class);
+        $phpFpm->shouldReceive('isolatedDirectories')
+            ->withNoArgs()
+            ->andReturn(
+                collect([
+                    [
+                        'url'     => 'fpm-site.test',
+                        'version' => '7.2',
+                    ],
+                    [
+                        'url'     => 'second.test',
+                        'version' => '8.1'
+                    ]
+                ])
+            );
+        swap(PhpFpm::class, $phpFpm);
+
+        $this->tester->run(['command' => 'isolated']);
+
+        $this->tester->assertCommandIsSuccessful();
+
+        /** @var BufferedOutput $output */
+        $output = Writer::output();
+
+        $content = $output->fetch();
+        $this->assertStringContainsString('fpm-site.test | 7.2', $content);
+        $this->assertStringContainsString('second.test   | 8.1', $content);
     }
 }
