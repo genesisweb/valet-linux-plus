@@ -3,6 +3,7 @@
 namespace Valet;
 
 use ConsoleComponents\Writer;
+use Illuminate\Support\Collection;
 use PDO;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -22,7 +23,7 @@ class Mysql
      * @var array|string[]
      */
     public array $systemDatabases = ['sys', 'performance_schema', 'information_schema', 'mysql'];
-    private ?PDO $pdoConnection;
+    private ?PDO $pdoConnection = null;
     protected string $currentPackage = '';
 
     /**
@@ -131,14 +132,6 @@ class Mysql
     public function uninstall(): void
     {
         $this->stop();
-    }
-
-    /**
-     * Print table of exists databases.
-     */
-    public function listDatabases(): void
-    {
-        Writer::table(['Database'], $this->getDatabases());
     }
 
     /**
@@ -311,11 +304,11 @@ class Mysql
     }
 
     /**
-     * Get exists databases.
+     * Get a list of databases.
      *
      * @return array
      */
-    private function getDatabases(): array
+    public function getDatabases(): array
     {
         $result = $this->query('SHOW DATABASES');
 

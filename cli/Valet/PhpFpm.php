@@ -21,11 +21,11 @@ class PhpFpm
     protected $site;
     protected $nginx;
 
-    private const SUPPORTED_PHP_VERSIONS = [
+    public const SUPPORTED_PHP_VERSIONS = [
         '8.2', '8.3',
     ];
 
-    private const ISOLATION_SUPPORTED_PHP_VERSIONS = [
+    public const ISOLATION_SUPPORTED_PHP_VERSIONS = [
         '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3',
     ];
 
@@ -72,7 +72,10 @@ class PhpFpm
     {
         $version = $version ?: $this->getCurrentVersion();
         $version = $this->normalizePhpVersion($version);
-        $this->validateVersion($version);
+        $isValid = $this->validateVersion($version);
+        if (!$isValid) {
+            return;
+        }
 
         $packageName = $this->pm->getPhpFpmName($version);
         if (!$this->pm->installed($packageName)) {
@@ -116,7 +119,10 @@ class PhpFpm
         // Validate if in use
         $version = $this->normalizePhpVersion($version);
 
-        $this->validateVersion($version);
+        $isValid = $this->validateVersion($version);
+        if (!$isValid) {
+            return;
+        }
 
         Writer::info('Changing php version...');
 
@@ -182,7 +188,10 @@ class PhpFpm
         $site = $this->site->getSiteUrl($directory);
 
         $version = $this->normalizePhpVersion($version);
-        $this->validateIsolationVersion($version);
+        $isValid = $this->validateIsolationVersion($version);
+        if (!$isValid) {
+            return;
+        }
 
         $fpmName = $this->pm->getPhpFpmName($version);
         if (!$this->pm->installed($fpmName)) {
@@ -198,8 +207,6 @@ class PhpFpm
         }
         $this->restart($version);
         NginxFacade::restart();
-
-        Writer::info(sprintf('The site [%s] is now using %s.', $site, $version));
     }
 
     /**
@@ -216,8 +223,6 @@ class PhpFpm
             $this->stopIfUnused($oldCustomPhpVersion);
         }
         NginxFacade::restart();
-
-        Writer::info(sprintf('The site [%s] is now using the default PHP version.', $site));
     }
 
     /**
@@ -438,30 +443,19 @@ class PhpFpm
     /**
      * Validate PHP version.
      */
-    private function validateVersion(string $version): void
+    public function validateVersion(string $version): bool
     {
         if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
-            Writer::error(
-                \sprintf(
-                    "Invalid version [%s] used. Supported versions are: %s",
-                    $version,
-                    implode(', ', self::SUPPORTED_PHP_VERSIONS)
-                )
-            );
-            Writer::info(
-                \sprintf(
-                    'You can still use any version from [%s] list using `valet isolate` command',
-                    \implode(', ', self::ISOLATION_SUPPORTED_PHP_VERSIONS)
-                )
-            );
-            exit;
+            return false;
         }
+
+        return true;
     }
 
     /**
      * Validate PHP version for isolation process.
      */
-    private function validateIsolationVersion(string $version): void
+    private function validateIsolationVersion(string $version): bool
     {
         if (!in_array($version, self::ISOLATION_SUPPORTED_PHP_VERSIONS)) {
             Writer::error(
@@ -471,8 +465,10 @@ class PhpFpm
                     implode(', ', self::ISOLATION_SUPPORTED_PHP_VERSIONS)
                 )
             );
-            exit;
+            return false;
         }
+
+        return true;
     }
 
     /**

@@ -20,6 +20,7 @@ use Illuminate\Support\Collection;
  * @method static false|string getPhpExecutablePath($version = null)
  * @method static string       socketFileName($version = null)
  * @method static string       normalizePhpVersion($version)
+ * @method static string       validateVersion($version)
  * @method static string       fpmSocketFile($version)
  * @method static void         updateHomePath(string $oldHomePath, string $newHomePath)
  */

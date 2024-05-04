@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  * @method static void        secure(string $url, string $stub = null)
  * @method static void        unsecure(string $url, bool $preserveUnsecureConfig = false)
  * @method static void        regenerateSecuredSitesConfig()
- * @method static string      phpRcVersion($site)
+ * @method static string|null phpRcVersion($site)
  * @method static string      customPhpVersion($site)
  */
 class Site extends Facade
