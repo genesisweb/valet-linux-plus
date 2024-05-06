@@ -491,20 +491,32 @@ class PhpFpm
         return $this->pm->getPhpExtensionPrefix($version);
     }
 
-    public function addBinFileToConfig(string $version, string $directoryName): void
+    private function addBinFileToConfig(string $version, string $directoryName): void
     {
+        $directoryName = $this->removeTld($directoryName);
         $binaryFile = DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
         $isolatedConfig = $this->config->get('isolated_versions', []);
         $isolatedConfig[$directoryName] = $binaryFile;
         $this->config->updateKey('isolated_versions', $isolatedConfig);
     }
 
-    public function removeBinFromConfig(string $directoryName): void
+    private function removeBinFromConfig(string $directoryName): void
     {
+        $directoryName = $this->removeTld($directoryName);
         $isolatedConfig = $this->config->get('isolated_versions', []);
         if (isset($isolatedConfig[$directoryName])) {
             unset($isolatedConfig[$directoryName]);
             $this->config->updateKey('isolated_versions', $isolatedConfig);
         }
+    }
+
+    private function removeTld(string $domainName): string
+    {
+        $tld = $this->config->get('domain');
+        if (str_ends_with($domainName, \sprintf('.%s', $tld))) {
+            $domainName = str_replace(\sprintf('.%s', $tld), '', $domainName);
+        }
+
+        return $domainName;
     }
 }

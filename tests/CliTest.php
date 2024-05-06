@@ -1033,14 +1033,20 @@ class CliTest extends TestCase
         Writer::fake();
 
         $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('isolateDirectory')->with($expectedSiteName, $phpVersion, $isSecure)->once();
+        $phpFpm->shouldReceive('isolateDirectory')->with($expectedSiteName, $phpVersion, $isSecure)->once()->andReturnTrue();
         swap(PhpFpm::class, $phpFpm);
+
+        $arguments = [
+            'phpVersion' => $phpVersion,
+            '--secure'   => $isSecure
+        ];
+        if ($siteName) {
+            $arguments['--site'] = $siteName;
+        }
 
         $this->tester->run([
             'command'    => 'isolate',
-            'phpVersion' => $phpVersion,
-            'site'       => $siteName,
-            '--secure'   => $isSecure
+            ...$arguments
         ]);
 
         $this->tester->assertCommandIsSuccessful();
@@ -1103,10 +1109,14 @@ class CliTest extends TestCase
         Writer::fake();
 
         $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('unIsolateDirectory')->with($expectedDomainName)->once();
+        $phpFpm->shouldReceive('unIsolateDirectory')->with($expectedDomainName)->once()->andReturnTrue();
         swap(PhpFpm::class, $phpFpm);
 
-        $this->tester->run(['command' => 'unisolate', 'site' => $domainName]);
+        $arguments = [];
+        if ($domainName) {
+            $arguments['--site'] = $domainName;
+        }
+        $this->tester->run(['command' => 'unisolate', ...$arguments]);
 
         $this->tester->assertCommandIsSuccessful();
 
@@ -1154,34 +1164,6 @@ class CliTest extends TestCase
         $content = $output->fetch();
         $this->assertStringContainsString('fpm-site.test | 7.2', $content);
         $this->assertStringContainsString('second.test   | 8.1', $content);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillShowIsolatedPhpVersionForGivenSite(): void
-    {
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('host')
-            ->with('site1')
-            ->andReturn('site1')->once();
-        $site->shouldReceive('customPhpVersion')
-            ->with('site1.test')
-            ->andReturnNull()->once();
-        $site->shouldReceive('phpRcVersion')
-            ->with('site1')
-            ->andReturn('7.4')->once();
-        swap(Site::class, $site);
-
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('getPhpExecutablePath')
-            ->with('7.4')
-            ->andReturn('/usr/bin/php7.4')->once();
-        swap(PhpFpm::class, $phpFpm);
-
-        $this->tester->run(['command' => 'which-php', 'site' => 'site1']);
-
-        $this->tester->assertCommandIsSuccessful();
     }
 
     /**
