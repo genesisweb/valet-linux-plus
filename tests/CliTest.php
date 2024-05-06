@@ -11,6 +11,7 @@ use Valet\Facades\Configuration as ConfigurationFacade;
 use Valet\Filesystem;
 use Valet\Mysql;
 use Valet\Nginx;
+use Valet\Ngrok;
 use Valet\PhpFpm;
 use Valet\Site;
 use function Valet\swap;
@@ -1102,7 +1103,7 @@ class CliTest extends TestCase
         Writer::fake();
 
         $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('unIsolateDirectory')->with($expectedDomainName);
+        $phpFpm->shouldReceive('unIsolateDirectory')->with($expectedDomainName)->once();
         swap(PhpFpm::class, $phpFpm);
 
         $this->tester->run(['command' => 'unisolate', 'site' => $domainName]);
@@ -1140,7 +1141,7 @@ class CliTest extends TestCase
                         'version' => '8.1'
                     ]
                 ])
-            );
+            )->once();
         swap(PhpFpm::class, $phpFpm);
 
         $this->tester->run(['command' => 'isolated']);
@@ -1153,5 +1154,78 @@ class CliTest extends TestCase
         $content = $output->fetch();
         $this->assertStringContainsString('fpm-site.test | 7.2', $content);
         $this->assertStringContainsString('second.test   | 8.1', $content);
+    }
+
+    /**
+     * @test
+     */
+    public function itWillShowIsolatedPhpVersionForGivenSite(): void
+    {
+        $site = Mockery::mock(Site::class);
+        $site->shouldReceive('host')
+            ->with('site1')
+            ->andReturn('site1')->once();
+        $site->shouldReceive('customPhpVersion')
+            ->with('site1.test')
+            ->andReturnNull()->once();
+        $site->shouldReceive('phpRcVersion')
+            ->with('site1')
+            ->andReturn('7.4')->once();
+        swap(Site::class, $site);
+
+        $phpFpm = Mockery::mock(PhpFpm::class);
+        $phpFpm->shouldReceive('getPhpExecutablePath')
+            ->with('7.4')
+            ->andReturn('/usr/bin/php7.4')->once();
+        swap(PhpFpm::class, $phpFpm);
+
+        $this->tester->run(['command' => 'which-php', 'site' => 'site1']);
+
+        $this->tester->assertCommandIsSuccessful();
+    }
+
+    /**
+     * @test
+     */
+    public function itWillStoreNgrokAuthToken(): void
+    {
+        Writer::fake();
+
+        $ngrok = Mockery::mock(Ngrok::class);
+        $ngrok->shouldReceive('setAuthToken')
+            ->with('auth-token')->once();
+        swap(Ngrok::class, $ngrok);
+
+        $this->tester->run(['command' => 'ngrok-auth', 'authtoken' => 'auth-token']);
+
+        $this->tester->assertCommandIsSuccessful();
+
+        /** @var BufferedOutput $output */
+        $output = Writer::output();
+
+        $content = $output->fetch();
+        $this->assertStringContainsString('Ngrok authentication token set', $content);
+    }
+
+    /**
+     * @test
+     */
+    public function itWillThrowErrorWhenTokenNotProvided(): void
+    {
+        Writer::fake();
+
+        $ngrok = Mockery::mock(Ngrok::class);
+        $ngrok->shouldReceive('setAuthToken')->never();
+        swap(Ngrok::class, $ngrok);
+
+        $this->tester->run(['command' => 'ngrok-auth']);
+
+        $this->tester->assertCommandIsSuccessful();
+
+        /** @var BufferedOutput $output */
+        $output = Writer::output();
+
+        $content = $output->fetch();
+        $this->assertStringContainsString('Please provide ngrok auth token', $content);
     }
 }
