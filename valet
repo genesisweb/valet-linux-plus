@@ -47,7 +47,7 @@ function verify_ngrok_auth() {
 # do it in pure Bash. So, we'll call into PHP CLI here to resolve.
 if [[ -L $SOURCE ]]
 then
-    DIR=$(/usr/bin/php -r "echo dirname(realpath('$SOURCE'));")
+    DIR=$( dirname "$( readlink -f "$SOURCE" )" )
 else
     DIR="$( cd "$( dirname "$SOURCE" )" && pwd )"
 fi
@@ -57,7 +57,7 @@ fi
 # Valet CLI script which is written in PHP. Will use PHP to do it.
 if [[ ! -f "$DIR/cli/valet.php" ]]
 then
-    DIR=$(/usr/bin/php -r "echo realpath('$DIR/../genesisweb/valet-linux-plus');")
+    DIR="$( cd "$DIR/../genesisweb/valet-linux-plus" && pwd )"
 fi
 
 # If the command is one of the commands that requires "sudo" privileges
@@ -143,5 +143,5 @@ then
 # and let it handle the request. These are commands which can be run
 # without sudo and don't require taking over terminals like Ngrok.
 else
-    /usr/bin/php "$DIR/cli/valet.php" "$@"
+    php "$DIR/cli/valet.php" "$@"
 fi

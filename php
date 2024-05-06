@@ -2,23 +2,43 @@
 
 set -e
 
-SOURCE="${BASH_SOURCE[0]}"
+DEFAULT_PHP_BINARY="/usr/bin/php"
+CONFIG_FILE="$HOME/.config/valet/config.json"
 
-if [[ -L $SOURCE ]]
-then
-    DIR="$( cd "$( dirname "$(readlink "$SOURCE")" )" && pwd )"
+# Check if the JSON file exists
+if [ -f "$CONFIG_FILE" ]; then
+    MATCH_FOUND=0
+
+    # Read the paths array from the JSON file
+    paths=$(jq -r '.paths | .[]' "$CONFIG_FILE")
+
+    # Loop through the paths and print each one
+    for path in $paths
+    do
+        if [[ "$PWD" == "$path"* ]]; then
+            MATCH_FOUND=1
+            break
+        fi
+    done
+    if [ $MATCH_FOUND -eq 1 ]; then
+        SITE_NAME=$( basename $PWD );
+        if [ "$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")" != "null" ]; then
+            SELECTED_PHP=$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")
+        elif [ "$(jq -r ".fallback_binary" "$CONFIG_FILE")" != "null" ]; then
+            SELECTED_PHP=$(jq -r ".fallback_binary" "$CONFIG_FILE")
+        else
+            SELECTED_PHP=$DEFAULT_PHP_BINARY
+        fi
+    else
+        SELECTED_PHP=$(jq -r ".fallback_binary" "$CONFIG_FILE")
+    fi
 else
-    DIR="$( cd "$( dirname "$SOURCE" )" && pwd )"
+    SELECTED_PHP=$DEFAULT_PHP_BINARY
 fi
 
-
-if [[ ! -f "$DIR/cli/valet.php" ]]
-then
-    DIR="$DIR/../genesisweb/valet-linux-plus"
+if ! [ -f "$SELECTED_PHP" ]; then
+    SELECTED_PHP=$DEFAULT_PHP_BINARY
 fi
-FALLBACK_PHP="/usr/bin/php"
-SELECTED_PHP=$(eval "/usr/bin/php $DIR/cli/valet.php which-php")
 
-SELECTED_PHP=${SELECTED_PHP:-$FALLBACK_PHP}
-
-eval "$SELECTED_PHP ${*}"
+# shellcheck disable=SC2145
+eval "$SELECTED_PHP ${@@Q}"

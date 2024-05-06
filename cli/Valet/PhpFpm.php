@@ -183,30 +183,37 @@ class PhpFpm
      * Isolate a given directory to use a specific version of PHP.
      * @throws VersionException
      */
-    public function isolateDirectory(string $directory, string $version, bool $secure = false): void
+    public function isolateDirectory(string $directory, string $version, bool $secure = false): bool
     {
-        $site = $this->site->getSiteUrl($directory);
+        try {
+            $site = $this->site->getSiteUrl($directory);
 
-        $version = $this->normalizePhpVersion($version);
-        $isValid = $this->validateIsolationVersion($version);
-        if (!$isValid) {
-            return;
+            $version = $this->normalizePhpVersion($version);
+            $this->validateIsolationVersion($version);
+
+            $fpmName = $this->pm->getPhpFpmName($version);
+            if (!$this->pm->installed($fpmName)) {
+                $this->install($version);
+            }
+
+            $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
+
+            $this->site->isolate($site, $version, $secure);
+
+            if ($oldCustomPhpVersion) {
+                $this->stopIfUnused($oldCustomPhpVersion);
+            }
+
+            $this->restart($version);
+            NginxFacade::restart();
+
+            $this->addBinFileToConfig($version, $directory);
+        } catch(\DomainException $exception) {
+            Writer::error($exception->getMessage());
+            return false;
         }
 
-        $fpmName = $this->pm->getPhpFpmName($version);
-        if (!$this->pm->installed($fpmName)) {
-            $this->install($version);
-        }
-
-        $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
-
-        $this->site->isolate($site, $version, $secure);
-
-        if ($oldCustomPhpVersion) {
-            $this->stopIfUnused($oldCustomPhpVersion);
-        }
-        $this->restart($version);
-        NginxFacade::restart();
+        return true;
     }
 
     /**
@@ -223,6 +230,8 @@ class PhpFpm
             $this->stopIfUnused($oldCustomPhpVersion);
         }
         NginxFacade::restart();
+
+        $this->removeBinFromConfig($directory);
     }
 
     /**
@@ -455,20 +464,17 @@ class PhpFpm
     /**
      * Validate PHP version for isolation process.
      */
-    private function validateIsolationVersion(string $version): bool
+    private function validateIsolationVersion(string $version): void
     {
         if (!in_array($version, self::ISOLATION_SUPPORTED_PHP_VERSIONS)) {
-            Writer::error(
+            throw new \DomainException(
                 \sprintf(
                     "Invalid version [%s] used. Supported versions are: %s",
                     $version,
                     implode(', ', self::ISOLATION_SUPPORTED_PHP_VERSIONS)
                 )
             );
-            return false;
         }
-
-        return true;
     }
 
     /**
@@ -483,5 +489,22 @@ class PhpFpm
     {
         $version = $version ?: $this->getCurrentVersion();
         return $this->pm->getPhpExtensionPrefix($version);
+    }
+
+    public function addBinFileToConfig(string $version, string $directoryName): void
+    {
+        $binaryFile = DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
+        $isolatedConfig = $this->config->get('isolated_versions', []);
+        $isolatedConfig[$directoryName] = $binaryFile;
+        $this->config->updateKey('isolated_versions', $isolatedConfig);
+    }
+
+    public function removeBinFromConfig(string $directoryName): void
+    {
+        $isolatedConfig = $this->config->get('isolated_versions', []);
+        if (isset($isolatedConfig[$directoryName])) {
+            unset($isolatedConfig[$directoryName]);
+            $this->config->updateKey('isolated_versions', $isolatedConfig);
+        }
     }
 }

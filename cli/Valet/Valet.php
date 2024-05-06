@@ -9,6 +9,7 @@ use Httpful\Request;
 use Illuminate\Container\Container;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\Facades\Configuration as ConfigurationFacade;
 use Valet\PackageManagers\Apt;
 use Valet\PackageManagers\Dnf;
 use Valet\PackageManagers\Eopkg;
@@ -68,6 +69,15 @@ class Valet
      */
     public function symlinkPhpToUsersBin(): void
     {
+        $fallbackBin = '/usr/bin/php';
+        $phpBin = $_SERVER['_'] ?? $fallbackBin;
+        $phpBin = $this->files->realpath($phpBin);
+        if ($phpBin !== VALET_ROOT_PATH.'php') {
+            ConfigurationFacade::updateKey('fallback_binary', $phpBin);
+        } else {
+            ConfigurationFacade::updateKey('fallback_binary', $fallbackBin);
+        }
+
         $this->cli->run('ln -snf '.realpath(__DIR__.'/../../php').' '.$this->phpBin);
     }
 
