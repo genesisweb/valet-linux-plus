@@ -22,12 +22,13 @@ if [ -f "$CONFIG_FILE" ]; then
     done
     if [ $MATCH_FOUND -eq 1 ]; then
         SITE_NAME=$( basename $PWD );
-        if [ "$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")" != "null" ]; then
-            SELECTED_PHP=$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")
-        elif [ "$(jq -r ".fallback_binary" "$CONFIG_FILE")" != "null" ]; then
-            SELECTED_PHP=$(jq -r ".fallback_binary" "$CONFIG_FILE")
-        else
-            SELECTED_PHP=$DEFAULT_PHP_BINARY
+        SELECTED_PHP=$DEFAULT_PHP_BINARY
+        if jq -e '.isolated_versions | length > 0' "$CONFIG_FILE" >/dev/null; then
+            if [ "$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")" != "null" ]; then
+                SELECTED_PHP=$(jq -r ".isolated_versions[\"$SITE_NAME\"]" "$CONFIG_FILE")
+            elif [ "$(jq -r ".fallback_binary" "$CONFIG_FILE")" != "null" ]; then
+                SELECTED_PHP=$(jq -r ".fallback_binary" "$CONFIG_FILE")
+            fi
         fi
     else
         SELECTED_PHP=$(jq -r ".fallback_binary" "$CONFIG_FILE")
