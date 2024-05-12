@@ -41,13 +41,15 @@ class Ngrok
 
         Writer::twoColumnDetail('Ngrok', 'Installing');
         $this->files->ensureDirExists(\sprintf('%s/bin', VALET_ROOT_PATH));
+
         $response = Request::get(self::BINARY_DOWNLOAD_LINK)->send();
         if ($response->hasErrors()) {
-            die('Error downloading file: ' . $response->body);
+            Writer::twoColumnDetail('Ngrok', 'Failed');
+            return;
         }
         $zipFile = \sprintf('%s/bin/%s', VALET_ROOT_PATH, basename(self::BINARY_DOWNLOAD_LINK));
 
-        file_put_contents($zipFile, $response->raw_body);
+        $this->files->put($zipFile, $response->raw_body);
         $phar = new \PharData($zipFile);
 
         $phar->extractTo(VALET_ROOT_PATH.'/bin/');

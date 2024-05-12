@@ -208,7 +208,7 @@ class PhpFpm
             NginxFacade::restart();
 
             $this->addBinFileToConfig($version, $directory);
-        } catch(\DomainException $exception) {
+        } catch (\DomainException $exception) {
             Writer::error($exception->getMessage());
             return false;
         }

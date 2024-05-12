@@ -9,10 +9,9 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use Valet\DevTools;
 use Valet\DnsMasq;
-use PHPUnit\Framework\TestCase;
 use Valet\Filesystem;
+use Valet\Tests\TestCase;
 
 class DnsMasqTest extends TestCase
 {

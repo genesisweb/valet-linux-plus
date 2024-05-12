@@ -3,9 +3,10 @@
 namespace Valet\Tests\Unit;
 
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Valet\Configuration;
 use Valet\Filesystem;
+use Valet\Tests\TestCase;
+use function Valet\user;
 
 class ConfigurationTest extends TestCase
 {
@@ -15,7 +16,6 @@ class ConfigurationTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $_SERVER['SUDO_USER'] = 'test_user';
 
         $this->filesystem = \Mockery::mock(Filesystem::class);
         $this->configuration = new Configuration($this->filesystem);
@@ -29,7 +29,7 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH, 'test_user');
+            ->with(VALET_HOME_PATH, user());
         $this->filesystem
             ->shouldReceive('isDir')
             ->once()
@@ -52,15 +52,15 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Sites', 'test_user');
+            ->with(VALET_HOME_PATH.'/Sites', user());
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Extensions', 'test_user');
+            ->with(VALET_HOME_PATH.'/Extensions', user());
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Log', 'test_user');
+            ->with(VALET_HOME_PATH.'/Log', user());
         $this->filesystem
             ->shouldReceive('touch')
             ->once()
@@ -68,7 +68,7 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Certificates', 'test_user');
+            ->with(VALET_HOME_PATH.'/Certificates', user());
         $this->filesystem
             ->shouldReceive('exists')
             ->once()
@@ -77,11 +77,17 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('putAsUser')
             ->once()
-            ->with(VALET_HOME_PATH.'/config.json', json_encode($this->defaultConfig(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
+            ->with(
+                VALET_HOME_PATH.'/config.json',
+                json_encode(
+                    $this->defaultConfig(),
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+                ).PHP_EOL
+            );
         $this->filesystem
             ->shouldReceive('chown')
             ->once()
-            ->with(VALET_HOME_PATH.'/config.json', 'test_user')
+            ->with(VALET_HOME_PATH.'/config.json', user())
         ->andReturn(false);
 
         $this->configuration->install();
@@ -95,7 +101,7 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH, 'test_user');
+            ->with(VALET_HOME_PATH, user());
         $this->filesystem
             ->shouldReceive('isDir')
             ->once()
@@ -112,15 +118,15 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Sites', 'test_user');
+            ->with(VALET_HOME_PATH.'/Sites', user());
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Extensions', 'test_user');
+            ->with(VALET_HOME_PATH.'/Extensions', user());
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Log', 'test_user');
+            ->with(VALET_HOME_PATH.'/Log', user());
         $this->filesystem
             ->shouldReceive('touch')
             ->once()
@@ -128,7 +134,7 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('ensureDirExists')
             ->once()
-            ->with(VALET_HOME_PATH.'/Certificates', 'test_user');
+            ->with(VALET_HOME_PATH.'/Certificates', user());
         $this->filesystem
             ->shouldReceive('exists')
             ->once()
@@ -146,7 +152,7 @@ class ConfigurationTest extends TestCase
         $this->filesystem
             ->shouldReceive('chown')
             ->once()
-            ->with(VALET_HOME_PATH.'/config.json', 'test_user')
+            ->with(VALET_HOME_PATH.'/config.json', user())
         ->andReturn(false);
 
         $this->configuration->install();

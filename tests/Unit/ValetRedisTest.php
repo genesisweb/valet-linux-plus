@@ -7,8 +7,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\Tests\TestCase;
 use Valet\ValetRedis;
-use PHPUnit\Framework\TestCase;
 
 class ValetRedisTest extends TestCase
 {
@@ -36,7 +36,7 @@ class ValetRedisTest extends TestCase
     /**
      * @test
      */
-    public function itWillInstallSuccessfully()
+    public function itWillInstallSuccessfully(): void
     {
         $this->packageManager
             ->shouldReceive('ensureInstalled')
@@ -54,7 +54,7 @@ class ValetRedisTest extends TestCase
     /**
      * @test
      */
-    public function itWillValidateIfPackageIsInstalled()
+    public function itWillValidateIfPackageIsInstalled(): void
     {
         $this->packageManager
             ->shouldReceive('installed')
@@ -69,7 +69,7 @@ class ValetRedisTest extends TestCase
     /**
      * @test
      */
-    public function itWillRestartServiceSuccessfully()
+    public function itWillRestartServiceSuccessfully(): void
     {
         $this->serviceManager
             ->shouldReceive('restart')
@@ -82,7 +82,7 @@ class ValetRedisTest extends TestCase
     /**
      * @test
      */
-    public function itWillStopServiceSuccessfully()
+    public function itWillStopServiceSuccessfully(): void
     {
         $this->serviceManager
             ->shouldReceive('stop')
@@ -95,7 +95,7 @@ class ValetRedisTest extends TestCase
     /**
      * @test
      */
-    public function itWillUninstallServiceSuccessfully()
+    public function itWillUninstallServiceSuccessfully(): void
     {
         $this->serviceManager
             ->shouldReceive('stop')

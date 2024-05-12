@@ -5,13 +5,13 @@ namespace Valet\Tests\Unit;
 use ConsoleComponents\Writer;
 use Mockery;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\DevTools;
 use Valet\Filesystem;
+use Valet\Tests\TestCase;
 
 class DevToolsTest extends TestCase
 {
