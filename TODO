@@ -3,9 +3,6 @@ Remain Items:
 - Enable unit coverage report
 - Add Infection
 - Valet php extension install separately so that if not installed we can install it via valet install command. (Optional)
-- Optimise PHP Bash file to not relay on which-php command
-  - It should read fallback version from ~/.config/valet/config.json file
-  - It should read isolated version for directory from ~/.config/valet/config.json file
 
 Done Items:
 - Implement termwind -- Done
@@ -20,3 +17,6 @@ Done Items:
 - Optimise php bash file to handle blank output of which-php command
 - self-signed certificate verification issues in Firefox & PHP's curl requests -- Done
 - Ngrok remove binary file and install it via `valet install` command
+- Optimise PHP Bash file to not relay on which-php command
+  - It should read fallback version from ~/.config/valet/config.json file
+  - It should read isolated version for directory from ~/.config/valet/config.json file

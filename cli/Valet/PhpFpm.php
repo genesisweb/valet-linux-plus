@@ -497,7 +497,7 @@ class PhpFpm
         $binaryFile = DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
         $isolatedConfig = $this->config->get('isolated_versions', []);
         $isolatedConfig[$directoryName] = $binaryFile;
-        $this->config->updateKey('isolated_versions', $isolatedConfig);
+        $this->config->set('isolated_versions', $isolatedConfig);
     }
 
     private function removeBinFromConfig(string $directoryName): void
@@ -506,7 +506,7 @@ class PhpFpm
         $isolatedConfig = $this->config->get('isolated_versions', []);
         if (isset($isolatedConfig[$directoryName])) {
             unset($isolatedConfig[$directoryName]);
-            $this->config->updateKey('isolated_versions', $isolatedConfig);
+            $this->config->set('isolated_versions', $isolatedConfig);
         }
     }
 

@@ -37,7 +37,7 @@ class DnsMasq
      *
      * @throws Exception
      */
-    public function install(string $domain = 'test'): void
+    public function install(string $domain): void
     {
         $this->dnsmasqSetup();
         $this->stopResolved();
@@ -83,7 +83,7 @@ class DnsMasq
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
 
-        $this->lockResolvConf(false);
+        $this->lockResolvConf();
         $this->files->restore($this->rclocal);
 
         $this->cli->passthru('rm -f /etc/resolv.conf');
@@ -103,13 +103,11 @@ class DnsMasq
     /**
      * Install and configure DnsMasq.
      */
-    private function lockResolvConf(bool $lock = true): void
+    private function lockResolvConf(): void
     {
-        $arg = $lock ? '+i' : '-i';
-
         if (!$this->files->isLink($this->resolvconf)) {
             $this->cli->run(
-                "chattr {$arg} {$this->resolvconf}",
+                "chattr -i $this->resolvconf",
                 function ($code, $msg) {
                     Writer::warn($msg);
                 }
@@ -170,14 +168,23 @@ class DnsMasq
 
         $this->files->uncommentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
 
-        $this->lockResolvConf(false);
+        $this->lockResolvConf();
         $this->mergeDns();
 
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->dnsmasqconf);
 
-        $this->files->putAsUser($this->dnsmasqconf, $this->files->get(__DIR__.'/../stubs/dnsmasq.conf'));
-        $this->files->putAsUser($this->dnsmasqOpts, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
-        $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
+        $this->files->putAsUser(
+            $this->dnsmasqconf,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq.conf')
+        );
+        $this->files->putAsUser(
+            $this->dnsmasqOpts,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq_options')
+        );
+        $this->files->putAsUser(
+            $this->nmConfigPath,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/networkmanager.conf')
+        );
     }
 }

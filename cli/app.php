@@ -54,7 +54,7 @@ $app->command('install [--ignore-selinux] [--mariadb]', function ($ignoreSELinux
     Configuration::install();
     Nginx::install();
     PhpFpm::install();
-    DnsMasq::install(Configuration::read()['domain']);
+    DnsMasq::install(Configuration::get('domain'));
     Mailpit::install();
     ValetRedis::install();
     Nginx::restart();
@@ -287,15 +287,15 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
-            Writer::info(\sprintf('Your current Valet domain is [%s].', Configuration::read()['domain']));
+            Writer::info(\sprintf('Your current Valet domain is [%s].', Configuration::get('domain')));
 
             return;
         }
 
         DnsMasq::updateDomain($domain = trim($domain, '.'));
-        $oldDomain = Configuration::read()['domain'];
+        $oldDomain = Configuration::get('domain');
 
-        Configuration::updateKey('domain', $domain);
+        Configuration::set('domain', $domain);
         Site::resecureForNewDomain($oldDomain, $domain);
         PhpFpm::restart();
         Nginx::restart();
@@ -317,10 +317,10 @@ if (is_dir(VALET_HOME_PATH)) {
         $port = trim($port);
 
         if ($https) {
-            Configuration::updateKey('https_port', $port);
+            Configuration::set('https_port', $port);
         } else {
             Nginx::updatePort($port);
-            Configuration::updateKey('port', $port);
+            Configuration::set('port', $port);
         }
 
         Site::regenerateSecuredSitesConfig();
@@ -359,7 +359,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Display all the registered paths.
      */
     $app->command('paths', function () {
-        $paths = Configuration::read()['paths'];
+        $paths = Configuration::get('paths');
 
         if (count($paths) > 0) {
             $paths = array_map(function ($path) {
@@ -401,7 +401,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        $tld = Configuration::read()['domain'];
+        $tld = Configuration::get('domain');
 
         if (!str_ends_with($domain, '.'.$tld)) {
             $domain .= '.'.$tld;
@@ -426,7 +426,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        $tld = Configuration::read()['domain'];
+        $tld = Configuration::get('domain');
         if (!str_ends_with($domain, '.'.$tld)) {
             $domain .= '.'.$tld;
         }
@@ -804,7 +804,11 @@ if (is_dir(VALET_HOME_PATH)) {
      * Open the current directory in the browser.
      */
     $app->command('open [domain]', function ($domain = null) {
-        $url = 'http://'.($domain ?: Site::host(getcwd())).'.'.Configuration::read()['domain'].'/';
+        $url = \sprintf(
+            'http://%s.%s/',
+            $domain ?: Site::host(getcwd()),
+            Configuration::get('domain')
+        );
 
         passthru('xdg-open '.escapeshellarg($url));
     })->descriptions('Open the site for the current (or specified) directory in your browser');

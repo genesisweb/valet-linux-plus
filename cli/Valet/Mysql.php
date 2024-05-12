@@ -86,11 +86,8 @@ class Mysql
         }
 
         if ($this->pm->installed($package)) {
-            $config = $this->configuration->read();
-            if (!isset($config['mysql'])) {
-                $config['mysql'] = [];
-            }
-            if (!isset($config['mysql']['password'])) {
+            $config = $this->configuration->get('mysql', []);
+            if (!isset($config['password'])) {
                 Writer::info('Looks like MySQL/MariaDB already installed to your system');
                 $this->configure();
             }
@@ -263,20 +260,17 @@ class Mysql
      */
     public function configure(bool $force = false): void
     {
-        $config = $this->configuration->read();
-        if (!isset($config['mysql'])) {
-            $config['mysql'] = [];
-        }
+        $config = $this->configuration->get('mysql', []);
 
-        if (!$force && isset($config['mysql']['password'])) {
+        if (!$force && isset($config['password'])) {
             Writer::info('Valet database user is already configured. Use --force to reconfigure database user.');
 
             return;
         }
 
         $defaultUser = null;
-        if (!empty($config['mysql']['user'])) {
-            $defaultUser = $config['mysql']['user'];
+        if (!empty($config['user'])) {
+            $defaultUser = $config['user'];
         }
         /** @var string $user */
         $user = Writer::ask('Please enter MySQL/MariaDB user:', $defaultUser);
@@ -297,9 +291,9 @@ class Mysql
                 return;
             }
         }
-        $config['mysql']['user'] = $user;
-        $config['mysql']['password'] = $password;
-        $this->configuration->write($config);
+        $config['user'] = $user;
+        $config['password'] = $password;
+        $this->configuration->set('mysql', $config);
         Writer::info('Database user configured successfully');
     }
 
@@ -444,13 +438,11 @@ class Mysql
         );
 
         if ($success !== false) {
-            $config = $this->configuration->read();
-            if (!isset($config['mysql'])) {
-                $config['mysql'] = [];
-            }
-            $config['mysql']['user'] = self::MYSQL_USER;
-            $config['mysql']['password'] = $password;
-            $this->configuration->write($config);
+            $config = $this->configuration->get('mysql', []);
+
+            $config['user'] = self::MYSQL_USER;
+            $config['password'] = $password;
+            $this->configuration->set('mysql', $config);
         }
     }
 
@@ -459,17 +451,17 @@ class Mysql
      */
     private function getCredentials(): array
     {
-        $config = $this->configuration->read();
-        if (!isset($config['mysql']['password']) && $config['mysql']['password'] !== null) {
+        $config = $this->configuration->get('mysql', []);
+        if (!isset($config['password']) && $config['password'] !== null) {
             Writer::warn('Valet database user is not configured!');
             exit;
         }
 
         // For previously installed user.
-        if (empty($config['mysql']['user'])) {
-            $config['mysql']['user'] = 'root';
+        if (empty($config['user'])) {
+            $config['user'] = 'root';
         }
 
-        return ['user' => $config['mysql']['user'], 'password' => $config['mysql']['password']];
+        return ['user' => $config['user'], 'password' => $config['password']];
     }
 }

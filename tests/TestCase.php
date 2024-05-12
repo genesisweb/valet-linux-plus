@@ -36,11 +36,7 @@ class TestCase extends PhpUnitTestCase
             $files->remove(VALET_HOME_PATH);
         }
 
-        Configuration::createConfigurationDirectory();
-        Configuration::createDriversDirectory();
-        Configuration::createLogDirectory();
-        Configuration::createCertificatesDirectory();
-        Configuration::writeBaseConfiguration();
+        Configuration::install();
 
         // Keep this file empty, as it's tailed in a test
         $files->touch(VALET_HOME_PATH.'/Log/nginx-error.log');

@@ -72,8 +72,7 @@ class Mailpit
                     Site::proxyDelete("mailhog.$domain");
                 }
             }
-        } catch(\DomainException $e) {
-
+        } catch (\DomainException $e) {
         }
     }
 

@@ -50,13 +50,9 @@ class DevTools
      */
     public function getBin(string $service, array $ignoredServices = []): false|string
     {
-        $selectedService = $this->getService($service);
-        if ($service === false) {
-            return false;
-        }
+        $bin = $this->getService($service);
 
-        $bin = trim($selectedService, "\n");
-
+        $bin = trim($bin, "\n");
         if (count($ignoredServices) && in_array($bin, $ignoredServices)) {
             $bin = null;
         }
@@ -65,17 +61,17 @@ class DevTools
             $bin = $this->getServiceByLocate("bin/$service");
         }
 
-        if ($bin === false) {
+        if (!$bin) {
             return false;
         }
 
+        $bin = trim($bin, "\n");
         /** @var string[] $bins */
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (str_ends_with($bin, "bin/$service")
-                && count($ignoredServices)
-                && !in_array($bin, $ignoredServices)
+            if ((count($ignoredServices) && !in_array($bin, $ignoredServices))
+                || !count($ignoredServices)
             ) {
                 $servicePath = $bin;
                 break;
@@ -92,8 +88,8 @@ class DevTools
 
     public function run(string $folder, string $service): void
     {
-        if ($this->ensureInstalled($service)) {
-            $this->runService($service, $folder);
+        if ($bin = $this->ensureInstalled($service)) {
+            $this->runService($bin, $folder);
         } else {
             Writer::warn("$service not available");
         }
@@ -141,14 +137,8 @@ class DevTools
         }
     }
 
-    private function runService(string $service, ?string $folder = null): void
+    private function runService(string $bin, ?string $folder = null): void
     {
-        $bin = $this->getBin($service);
-
-        try {
-            $this->cli->quietly("$bin $folder");
-        } catch (DomainException $e) {
-            Writer::warn("Error while opening [$folder] with $service");
-        }
+        $this->cli->quietly("$bin $folder");
     }
 }

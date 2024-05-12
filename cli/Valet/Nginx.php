@@ -161,7 +161,7 @@ class Nginx
             'VALET_FPM_SOCKET_FILE' => VALET_HOME_PATH.'/'.PhpFpmFacade::socketFileName($phpVersion),
             'VALET_SERVER_PATH'     => VALET_SERVER_PATH,
             'VALET_STATIC_PREFIX'   => VALET_STATIC_PREFIX,
-            'VALET_PORT'            => $this->configuration->read()['port'],
+            'VALET_PORT'            => $this->configuration->get('port'),
         ], $this->files->get(__DIR__.'/../stubs/valet.conf'));
         $this->files->putAsUser(self::SITES_AVAILABLE_CONF, $valetConf);
 
@@ -183,7 +183,7 @@ class Nginx
      */
     private function rewriteSecureNginxFiles(): void
     {
-        $domain = $this->configuration->read()['domain'];
+        $domain = $this->configuration->get('domain');
 
         $this->site->resecureForNewDomain($domain, $domain);
     }

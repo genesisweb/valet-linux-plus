@@ -10,6 +10,8 @@ use Illuminate\Container\Container;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Facades\Configuration as ConfigurationFacade;
+use Valet\Facades\Nginx as NginxFacade;
+use Valet\Facades\PhpFpm as PhpFpmFacade;
 use Valet\PackageManagers\Apt;
 use Valet\PackageManagers\Dnf;
 use Valet\PackageManagers\Eopkg;
@@ -73,9 +75,9 @@ class Valet
         $phpBin = $_SERVER['_'] ?? $fallbackBin;
         $phpBin = $this->files->realpath($phpBin);
         if ($phpBin !== VALET_ROOT_PATH.'php') {
-            ConfigurationFacade::updateKey('fallback_binary', $phpBin);
+            ConfigurationFacade::set('fallback_binary', $phpBin);
         } else {
-            ConfigurationFacade::updateKey('fallback_binary', $fallbackBin);
+            ConfigurationFacade::set('fallback_binary', $fallbackBin);
         }
 
         $this->cli->run('ln -snf '.realpath(__DIR__.'/../../php').' '.$this->phpBin);
@@ -166,7 +168,7 @@ class Valet
         // Stop running fpm services
         if (count($fpmVersions)) {
             foreach ($fpmVersions as $fpmVersion) {
-                \Valet\Facades\PhpFpm::stop($fpmVersion);
+                PhpFpmFacade::stop($fpmVersion);
             }
         }
 
@@ -177,18 +179,18 @@ class Valet
         $this->updateNginxConfFiles();
 
         // Update phpfpm's socket file path in config
-        \Valet\Facades\PhpFpm::updateHomePath($oldHomePath, $newHomePath);
+        PhpFpmFacade::updateHomePath($oldHomePath, $newHomePath);
 
         // Start fpm services again
         if (count($fpmVersions)) {
             foreach ($fpmVersions as $fpmVersion) {
-                \Valet\Facades\PhpFpm::restart($fpmVersion);
+                PhpFpmFacade::restart($fpmVersion);
             }
         } else {
-            \Valet\Facades\PhpFpm::restart();
+            PhpFpmFacade::restart();
         }
 
-        \Valet\Facades\Nginx::restart();
+        NginxFacade::restart();
 
         Writer::info('Valet home directory is migrated successfully! Please re-run your command');
         Writer::info(\sprintf('New home directory: %s', $newHomePath));

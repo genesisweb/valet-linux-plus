@@ -27,7 +27,7 @@ class CliTest extends TestCase
         $this->tester->run(['command' => 'domain']);
 
         $this->tester->assertCommandIsSuccessful();
-        $domain = ConfigurationFacade::read()['domain'];
+        $domain = ConfigurationFacade::get('domain');
 
         $this->assertSame('test', $domain);
 
@@ -48,8 +48,8 @@ class CliTest extends TestCase
         swap(DnsMasq::class, $dnsmasq);
 
         $config = Mockery::mock(Configuration::class);
-        $config->shouldReceive('read')->andReturn(['domain' => 'test'])->once();
-        $config->shouldReceive('updateKey')->with('domain', 'localhost')->once();
+        $config->shouldReceive('get')->with('domain')->andReturn('test')->once();
+        $config->shouldReceive('set')->with('domain', 'localhost')->once();
         swap(Configuration::class, $config);
 
         $site = Mockery::mock(Site::class);
@@ -124,7 +124,7 @@ class CliTest extends TestCase
         swap(Nginx::class, $nginx);
 
         $config = Mockery::mock(Configuration::class);
-        $config->shouldReceive('updateKey')->with($updateKey, $port)->once();
+        $config->shouldReceive('set')->with($updateKey, $port)->once();
         swap(Configuration::class, $config);
 
         $site = Mockery::mock(Site::class);

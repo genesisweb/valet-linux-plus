@@ -66,7 +66,7 @@ class Site
             user()
         );
 
-        $this->config->prependPath($linkPath);
+        $this->config->addPath($linkPath, true);
 
         $this->files->symlinkAsUser($target, $linkPath.'/'.$link);
 
@@ -93,7 +93,7 @@ class Site
     public function proxies(): Collection
     {
         $dir = $this->nginxPath();
-        $domain = $this->config->read()['domain'];
+        $domain = $this->config->get('domain');
         $links = $this->links();
         $certs = $this->getCertificates($this->certificatesPath());
         if (!$this->files->exists($dir)) {
@@ -149,7 +149,7 @@ class Site
             throw new \InvalidArgumentException(sprintf('"%s" is not a valid URL', $host));
         }
 
-        $domain = $this->config->read()['domain'];
+        $domain = $this->config->get('domain');
 
         if (!str_ends_with($url, '.'.$domain)) {
             $url .= '.'.$domain;
@@ -316,7 +316,7 @@ class Site
      */
     public function getSiteUrl(string $directory): string
     {
-        $tld = $this->config->read()['domain'];
+        $tld = $this->config->get('domain');
 
         if ($directory == '.' || $directory == './') { // Allow user to use dot as current directory site `--site=.`
             $directory = $this->host(getcwd());
@@ -539,8 +539,8 @@ class Site
 
     private function getSiteConfigFileContents(string $site): ?string
     {
-        $config = $this->config->read();
-        $suffix = '.'.$config['domain'];
+        $domain = $this->config->get('domain');
+        $suffix = '.'.$domain;
         $file = str_replace($suffix, '', $site).$suffix;
 
         return $this->files->exists($this->nginxPath($file)) ? $this->files->get($this->nginxPath($file)) : null;
@@ -565,18 +565,25 @@ class Site
      */
     private function getLinks(string $path, Collection $certs): Collection
     {
-        $config = $this->config->read();
+        /** @var string $domain */
+        $domain = $this->config->get('domain');
 
         $httpPort = $this->httpSuffix();
         $httpsPort = $this->httpsSuffix();
 
         return collect($this->files->scanDir($path))->mapWithKeys(function ($site) use ($path) {
             return [$site => $this->files->readLink($path.'/'.$site)];
-        })->map(function ($path, $site) use ($certs, $config, $httpPort, $httpsPort) {
+        })->map(function ($path, $site) use ($certs, $domain, $httpPort, $httpsPort) {
             $secured = $certs->has($site);
 
-            $url = ($secured ? 'https' : 'http').'://'.$site.'.'.$config['domain'].($secured ? $httpsPort : $httpPort);
-            $phpVersion = $this->getPhpVersion($site.'.'.$config['domain']);
+            $url = \sprintf(
+                '%s://%s.%s%s',
+                $secured ? 'https' : 'http',
+                $site,
+                $domain,
+                $secured ? $httpsPort : $httpPort
+            );
+            $phpVersion = $this->getPhpVersion(\sprintf('%s.%s', $site, $domain));
 
             return [
                 'site'       => $site,
@@ -812,7 +819,8 @@ class Site
      */
     private function getSites(string $path, Collection $certs): Collection
     {
-        $config = $this->config->read();
+        /** @var string $domain */
+        $domain = $this->config->get('domain');
 
         $this->files->ensureDirExists($path, user());
 
@@ -828,10 +836,10 @@ class Site
             return [$site => $realPath];
         })->filter(function ($path) {
             return $this->files->isDir($path);
-        })->map(function ($path, $site) use ($certs, $config) {
+        })->map(function ($path, $site) use ($certs, $domain) {
             $secured = $certs->has($site);
-            $url = ($secured ? 'https' : 'http').'://'.$site.'.'.$config['domain'];
-            $phpVersion = $this->getPhpVersion($site.'.'.$config['domain']);
+            $url = \sprintf('%s://%s.%s', $secured ? 'https' : 'http', $site, $domain);
+            $phpVersion = $this->getPhpVersion(\sprintf('%s.%s', $site, $domain));
 
             return [
                 'site'       => $site,
@@ -863,9 +871,10 @@ class Site
 
         $links = $this->getSites($this->sitesPath(), $certs);
 
-        $config = $this->config->read();
+        /** @var array $paths */
+        $paths = $this->config->get('paths');
         $parkedLinks = collect();
-        foreach (array_reverse($config['paths']) as $path) {
+        foreach (array_reverse($paths) as $path) {
             if ($path === $this->sitesPath()) {
                 continue;
             }

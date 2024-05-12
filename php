@@ -7,7 +7,7 @@ CONFIG_FILE="$HOME/.config/valet/config.json"
 
 # Check if the JSON file exists
 if [ -f "$CONFIG_FILE" ]; then
-    MATCH_FOUND=0
+    IS_PWD_MATCHED=false
 
     # Read the paths array from the JSON file
     paths=$(jq -r '.paths | .[]' "$CONFIG_FILE")
@@ -16,11 +16,11 @@ if [ -f "$CONFIG_FILE" ]; then
     for path in $paths
     do
         if [[ "$PWD" == "$path"* ]]; then
-            MATCH_FOUND=1
+            IS_PWD_MATCHED=true
             break
         fi
     done
-    if [ $MATCH_FOUND -eq 1 ]; then
+    if [ $IS_PWD_MATCHED == true ]; then
         SITE_NAME=$( basename $PWD );
         SELECTED_PHP=$DEFAULT_PHP_BINARY
         if jq -e '.isolated_versions | length > 0' "$CONFIG_FILE" >/dev/null; then
