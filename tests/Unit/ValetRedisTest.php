@@ -22,7 +22,6 @@ class ValetRedisTest extends TestCase
         parent::setUp();
 
         $this->packageManager = Mockery::mock(PackageManager::class);
-        $this->packageManager->redisPackageName = 'redis-server';
         $this->serviceManager = Mockery::mock(ServiceManager::class);
         $this->commandLine = Mockery::mock(CommandLine::class);
 
@@ -38,6 +37,12 @@ class ValetRedisTest extends TestCase
      */
     public function itWillInstallSuccessfully(): void
     {
+        $this->packageManager
+            ->shouldReceive('packageName')
+            ->once()
+            ->with('redis')
+            ->andReturn('redis-server');
+
         $this->packageManager
             ->shouldReceive('ensureInstalled')
             ->once()
@@ -57,6 +62,12 @@ class ValetRedisTest extends TestCase
     public function itWillValidateIfPackageIsInstalled(): void
     {
         $this->packageManager
+            ->shouldReceive('packageName')
+            ->once()
+            ->with('redis')
+            ->andReturn('redis-server');
+
+        $this->packageManager
             ->shouldReceive('installed')
             ->once()
             ->with('redis-server')
@@ -71,6 +82,12 @@ class ValetRedisTest extends TestCase
      */
     public function itWillRestartServiceSuccessfully(): void
     {
+        $this->packageManager
+            ->shouldReceive('packageName')
+            ->once()
+            ->with('redis')
+            ->andReturn('redis-server');
+
         $this->serviceManager
             ->shouldReceive('restart')
             ->once()
@@ -84,6 +101,12 @@ class ValetRedisTest extends TestCase
      */
     public function itWillStopServiceSuccessfully(): void
     {
+        $this->packageManager
+            ->shouldReceive('packageName')
+            ->once()
+            ->with('redis')
+            ->andReturn('redis-server');
+
         $this->serviceManager
             ->shouldReceive('stop')
             ->once()
@@ -97,6 +120,12 @@ class ValetRedisTest extends TestCase
      */
     public function itWillUninstallServiceSuccessfully(): void
     {
+        $this->packageManager
+            ->shouldReceive('packageName')
+            ->once()
+            ->with('redis')
+            ->andReturn('redis-server');
+
         $this->serviceManager
             ->shouldReceive('stop')
             ->once()

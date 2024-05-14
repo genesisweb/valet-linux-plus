@@ -44,8 +44,9 @@ class ValetRedis
      */
     public function install(): void
     {
-        $this->pm->ensureInstalled($this->pm->redisPackageName);
-        $this->sm->enable($this->pm->redisPackageName);
+        $packageName = $this->pm->packageName('redis');
+        $this->pm->ensureInstalled($packageName);
+        $this->sm->enable($packageName);
     }
 
     /**
@@ -53,7 +54,7 @@ class ValetRedis
      */
     public function installed(): bool
     {
-        return $this->pm->installed($this->pm->redisPackageName);
+        return $this->pm->installed($this->pm->packageName('redis'));
     }
 
     /**
@@ -61,7 +62,7 @@ class ValetRedis
      */
     public function restart(): void
     {
-        $this->sm->restart($this->pm->redisPackageName);
+        $this->sm->restart($this->pm->packageName('redis'));
     }
 
     /**
@@ -69,7 +70,7 @@ class ValetRedis
      */
     public function stop(): void
     {
-        $this->sm->stop($this->pm->redisPackageName);
+        $this->sm->stop($this->pm->packageName('redis'));
     }
 
     /**

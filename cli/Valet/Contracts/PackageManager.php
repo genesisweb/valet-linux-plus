@@ -43,4 +43,9 @@ interface PackageManager
      * Restart network manager in distro
      */
     public function restartNetworkManager(): void;
+
+    /**
+     * Get package name by service
+     */
+    public function packageName(string $name): string;
 }

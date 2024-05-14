@@ -19,22 +19,15 @@ class Pacman implements PackageManager
      */
     public $serviceManager;
     /**
-     * @var string
-     */
-    public $redisPackageName = 'redis';
-    /**
-     * @var string
-     */
-    public $mysqlPackageName = 'mysql';
-    /**
-     * @var string
-     */
-    public $mariaDBPackageName = 'mariadb';
-
-    /**
      * @var array
      */
     const PHP_FPM_PATTERN_BY_VERSION = [];
+
+    private const PACKAGES = [
+        'redis' => 'redis',
+        'mysql' => 'mysql',
+        'mariadb' => 'mariadb',
+    ];
 
     /**
      * Create a new Apt instance.
@@ -142,5 +135,16 @@ class Pacman implements PackageManager
     public function restartNetworkManager(): void
     {
         $this->serviceManager->restart('NetworkManager');
+    }
+
+    /**
+     * Get package name by service.
+     */
+    public function packageName(string $name): string
+    {
+        if (isset(self::PACKAGES[$name])) {
+            return self::PACKAGES[$name];
+        }
+        throw new \InvalidArgumentException(\sprintf('Package not found by %s', $name));
     }
 }

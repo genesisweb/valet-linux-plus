@@ -73,6 +73,7 @@ class NgrokTest extends TestCase
             )
             ->once();
 
+        \Valet\Facades\Filesystem::ensureDirExists(\sprintf('%s/bin', VALET_ROOT_PATH), user());
         $this->createFakeZip(\sprintf('%s/bin/ngrok-v3-stable-linux-amd64.tgz', VALET_ROOT_PATH));
 
         $this->filesystem

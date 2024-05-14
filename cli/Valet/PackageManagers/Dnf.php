@@ -19,22 +19,15 @@ class Dnf implements PackageManager
      */
     public $serviceManager;
     /**
-     * @var string
-     */
-    public $redisPackageName = 'redis';
-    /**
-     * @var string
-     */
-    public $mysqlPackageName = 'mysql-server';
-    /**
-     * @var string
-     */
-    public $mariaDBPackageName = 'mariadb-server';
-
-    /**
      * @var array
      */
     const PHP_FPM_PATTERN_BY_VERSION = [];
+
+    private const PACKAGES = [
+        'redis' => 'redis',
+        'mysql' => 'mysql-server',
+        'mariadb' => 'mariadb-server',
+    ];
 
     /**
      * Create a new Apt instance.
@@ -131,5 +124,16 @@ class Dnf implements PackageManager
     public function restartNetworkManager(): void
     {
         $this->serviceManager->restart('NetworkManager');
+    }
+
+    /**
+     * Get package name by service.
+     */
+    public function packageName(string $name): string
+    {
+        if (isset(self::PACKAGES[$name])) {
+            return self::PACKAGES[$name];
+        }
+        throw new \InvalidArgumentException(\sprintf('Package not found by %s', $name));
     }
 }
