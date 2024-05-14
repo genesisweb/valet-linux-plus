@@ -5,13 +5,13 @@ namespace Valet;
 use ConsoleComponents\Writer;
 use DomainException;
 use Exception;
-use Httpful\Request;
 use Illuminate\Container\Container;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Facades\Configuration as ConfigurationFacade;
 use Valet\Facades\Nginx as NginxFacade;
 use Valet\Facades\PhpFpm as PhpFpmFacade;
+use Valet\Facades\Request as RequestFacade;
 use Valet\PackageManagers\Apt;
 use Valet\PackageManagers\Dnf;
 use Valet\PackageManagers\Eopkg;
@@ -120,7 +120,7 @@ class Valet
      */
     public function onLatestVersion(string $currentVersion): bool
     {
-        $response = Request::get($this->github)->send();
+        $response = RequestFacade::get($this->github)->send();
         $currentVersion = str_replace('v', '', $currentVersion);
         $latestVersion = isset($response->body->tag_name) ? trim($response->body->tag_name) : 'v1.0.0';
         $latestVersion = str_replace('v', '', $latestVersion);
@@ -135,7 +135,7 @@ class Valet
      */
     public function getLatestVersion()
     {
-        $response = Request::get($this->github)->send();
+        $response = RequestFacade::get($this->github)->send();
 
         return isset($response->body->tag_name) ? trim($response->body->tag_name) : false;
     }

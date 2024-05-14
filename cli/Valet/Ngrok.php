@@ -5,7 +5,7 @@ namespace Valet;
 use ConsoleComponents\Writer;
 use DomainException;
 use Exception;
-use Httpful\Request;
+use Valet\Facades\Request as RequestFacade;
 
 class Ngrok
 {
@@ -40,18 +40,18 @@ class Ngrok
         }
 
         Writer::twoColumnDetail('Ngrok', 'Installing');
-        $this->files->ensureDirExists(\sprintf('%s/bin', VALET_ROOT_PATH));
+        $this->files->ensureDirExists(\sprintf('%s/bin', VALET_ROOT_PATH), user());
 
-        $response = Request::get(self::BINARY_DOWNLOAD_LINK)->send();
+        $response = RequestFacade::get(self::BINARY_DOWNLOAD_LINK)->send();
         if ($response->hasErrors()) {
             Writer::twoColumnDetail('Ngrok', 'Failed');
             return;
         }
         $zipFile = \sprintf('%s/bin/%s', VALET_ROOT_PATH, basename(self::BINARY_DOWNLOAD_LINK));
 
-        $this->files->put($zipFile, $response->raw_body);
-        $phar = new \PharData($zipFile);
+        $this->files->putAsUser($zipFile, $response->raw_body);
 
+        $phar = new \PharData($zipFile);
         $phar->extractTo(VALET_ROOT_PATH.'/bin/');
 
         $this->files->remove($zipFile);
@@ -64,7 +64,7 @@ class Ngrok
     public function currentTunnelUrl(): ?string
     {
         return retry(20, function () {
-            $body = Request::get(self::TUNNEL_ENDPOINT)->send()->body;
+            $body = RequestFacade::get(self::TUNNEL_ENDPOINT)->send()->body;
 
             // If there are active tunnels on the Ngrok instance we will spin through them and
             // find the one responding on HTTP. Each tunnel has an HTTP and a HTTPS address
@@ -82,7 +82,9 @@ class Ngrok
      */
     public function setAuthToken(string $authToken): void
     {
-        $this->cli->run(__DIR__.'/../../bin/ngrok config add-authtoken '.$authToken);
+        $this->cli->run(
+            \sprintf('%s/bin/ngrok config add-authtoken %s', VALET_ROOT_PATH, $authToken)
+        );
     }
 
     /**

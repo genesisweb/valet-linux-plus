@@ -12,11 +12,13 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 if (! defined('VALET_HOME_PATH')) {
     if (testing()) {
         define('VALET_HOME_PATH', __DIR__.'/../../tests/config/valet');
+        define('OLD_VALET_HOME_PATH', __DIR__.'/../../tests/old-config/valet');
+
     } else {
         define('VALET_HOME_PATH', $_SERVER['HOME'].'/.config/valet');
+        define('OLD_VALET_HOME_PATH', $_SERVER['HOME'].'/.valet');
     }
 }
-define('OLD_VALET_HOME_PATH', $_SERVER['HOME'].'/.valet');
 
 if (! defined('VALET_STATIC_PREFIX')) {
     define('VALET_STATIC_PREFIX', '41c270e4-5535-4daa-b23e-c269744c2f45');
