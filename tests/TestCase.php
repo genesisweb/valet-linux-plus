@@ -30,7 +30,7 @@ class TestCase extends PhpUnitTestCase
     public function prepTestConfig(): void
     {
         require_once __DIR__.'/../cli/includes/helpers.php';
-        Container::setInstance(new Container); // Reset app container from previous tests
+        Container::setInstance(new Container()); // Reset app container from previous tests
         $files = new Filesystem();
         if ($files->isDir(VALET_HOME_PATH)) {
             $files->remove(VALET_HOME_PATH);

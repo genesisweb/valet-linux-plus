@@ -3,6 +3,9 @@
 namespace Valet\Tests\Unit;
 
 use ConsoleComponents\Writer;
+use Httpful\Handlers\JsonHandler;
+use Httpful\Httpful;
+use Httpful\Mime;
 use Httpful\Response;
 use Mockery;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -141,17 +144,18 @@ class NgrokTest extends TestCase
     {
         $request = Mockery::mock(Request::class);
         swap(Request::class, $request);
-        \Httpful\Httpful::register(\Httpful\Mime::JSON, new \Httpful\Handlers\JsonHandler(array('decode_as_array' => false)));
+        Httpful::register(Mime::JSON, new JsonHandler(array('decode_as_array' => false)));
 
         $request->shouldReceive('get')
             ->once()
             ->with('http://127.0.0.1:4040/api/tunnels')
             ->andReturnSelf();
 
+        $mockResponse = $this->getFile('ngrok_response.json');
         $request->shouldReceive('send')
             ->once()
             ->withNoArgs()
-            ->andReturn(new Response('{"tunnels":[{"name":"command_line","ID":"204020b4b272cf3ed13630aa5c18772b","uri":"/api/tunnels/command_line","public_url":"https://33e2-2405-201-2024-a899-720-a588-f13d-82fe.ngrok-free.app","proto":"http","config":{"addr":"http://info.localhost:80","inspect":true},"metrics":{"conns":{"count":0,"gauge":0,"rate1":0,"rate5":0,"rate15":0,"p50":0,"p90":0,"p95":0,"p99":0},"http":{"count":0,"rate1":0,"rate5":0,"rate15":0,"p50":0,"p90":0,"p95":0,"p99":0}}}],"uri":"/api/tunnels"}', "HTTP/1.1 200 OK\r\n
+            ->andReturn(new Response((string) $mockResponse, "HTTP/1.1 200 OK\r\n
 Content-Type: application/json\r\n
 Date: Tue, 14 May 2024 12:13:28 GMT\r\n
 Content-Length: 477
@@ -183,5 +187,10 @@ Content-Length: 477
         $zip->open($file, \ZipArchive::CREATE);
         $zip->addFromString('sample_file', 'sample content');
         $zip->close();
+    }
+
+    private function getFile(string $fileName): string|false
+    {
+        return file_get_contents(__DIR__ . '/MockResponse/' . $fileName);
     }
 }
