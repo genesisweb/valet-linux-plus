@@ -8,11 +8,13 @@ use Valet\CommandLine;
 use Valet\Configuration;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
+use Valet\DevTools;
 use Valet\Filesystem;
 use Valet\Nginx;
 use Valet\PhpFpm;
 use Valet\Site;
 use Valet\Tests\TestCase;
+use function Valet\swap;
 use function Valet\user;
 
 class PhpFpmTest extends TestCase
@@ -514,5 +516,49 @@ class PhpFpmTest extends TestCase
         $normalizedVersion = $this->phpFpm->normalizePhpVersion($version);
 
         $this->assertSame('', $normalizedVersion);
+    }
+
+    public function executableVersionProvider(): array
+    {
+        return [
+            [
+                '8.1',
+                'valet81.sock',
+            ],
+            [
+                '8.2',
+                'valet82.sock',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider executableVersionProvider
+     */
+    public function itWillGetExecutablePath(string $version)
+    {
+        $devTools = Mockery::mock(DevTools::class);
+        swap(DevTools::class, $devTools);
+
+        $devTools->shouldReceive('getBin')
+            ->with('php'.$version, ['/usr/local/bin/php'])
+            ->once()
+            ->andReturn('/usr/bin/php'.$version);
+
+        $binFile = $this->phpFpm->getPhpExecutablePath($version);
+
+        $this->assertSame('/usr/bin/php'.$version, $binFile);
+    }
+
+    /**
+     * @test
+     * @dataProvider executableVersionProvider
+     */
+    public function itWillGetFpmSocketFile(string $version, string $expectedSocketFile)
+    {
+        $socketFile = $this->phpFpm->fpmSocketFile($version);
+
+        $this->assertSame(VALET_HOME_PATH.'/'.$expectedSocketFile, $socketFile);
     }
 }
