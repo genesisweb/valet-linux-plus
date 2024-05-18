@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
  * @method static void         restart($version = null)
  * @method static void         stop($version = null)
  * @method static void         status($version = null)
- * @method static void         switchVersion(string $version = null, bool $updateCli = null, bool $ignoreExt = null)
+ * @method static void         switchVersion(string $version, bool $updateCli = false, bool $ignoreExt = false)
  * @method static string       getCurrentVersion()
  * @method static void         isolateDirectory($site, $phpVersion, $secure = false)
  * @method static Collection   isolatedDirectories()

@@ -549,7 +549,7 @@ if (is_dir(VALET_HOME_PATH)) {
     })->descriptions(
         sprintf(
             'Set the PHP version to use, enter "default" or leave empty to use version: %s',
-            PhpFpm::getCurrentVersion()
+            PHP_VERSION
         ),
         [
             '--update-cli'    => 'Updates CLI version as well',

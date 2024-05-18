@@ -3,6 +3,9 @@ Remain Items:
 - Enable unit coverage report
 - Add Infection
 - Valet php extension install separately so that if not installed we can install it via valet install command. (Optional)
+- Improve valet uninstall experience
+  - User should be able to select which services they want to uninstall
+
 
 Done Items:
 - Implement termwind -- Done
