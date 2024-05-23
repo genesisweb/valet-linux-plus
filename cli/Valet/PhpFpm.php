@@ -243,7 +243,8 @@ class PhpFpm
         preg_match(
             '/^(?:php[@-]?)?(?<MAJOR_VERSION>[\d]{1}).?(?<MINOR_VERSION>[\d]{1})$/i',
             $version,
-            $matches);
+            $matches
+        );
 
         if (!isset($matches['MAJOR_VERSION'], $matches['MINOR_VERSION'])) {
             return '';
@@ -283,16 +284,25 @@ class PhpFpm
     public function updateHomePath(string $oldHomePath, string $newHomePath): void
     {
         foreach (self::ISOLATION_SUPPORTED_PHP_VERSIONS as $version) {
-            try {
-                $confPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
-                if ($this->files->exists($confPath)) {
-                    $valetConf = $this->files->get($confPath);
-                    $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
-                    $this->files->put($confPath, $valetConf);
-                }
-            } catch (\DomainException $exception) {
+            $confPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
+            if ($this->files->exists($confPath)) {
+                $valetConf = $this->files->get($confPath);
+                $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
+                $this->files->put($confPath, $valetConf);
             }
         }
+    }
+
+    /**
+     * Validate PHP version.
+     */
+    public function validateVersion(string $version): bool
+    {
+        if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -400,6 +410,7 @@ class PhpFpm
             $versions[] = $currentVersion;
         }
 
+        /** @var array<int, string> $versions */
         return $versions;
     }
 
@@ -430,18 +441,6 @@ class PhpFpm
         });
 
         return $confDir;
-    }
-
-    /**
-     * Validate PHP version.
-     */
-    public function validateVersion(string $version): bool
-    {
-        if (!in_array($version, self::SUPPORTED_PHP_VERSIONS)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**

@@ -2,8 +2,10 @@
 
 namespace Valet\Tests\Unit;
 
+use ConsoleComponents\Writer;
 use Mockery;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Valet\CommandLine;
 use Valet\Configuration;
 use Valet\Contracts\PackageManager;
@@ -14,6 +16,7 @@ use Valet\Nginx;
 use Valet\PhpFpm;
 use Valet\Site;
 use Valet\Tests\TestCase;
+
 use function Valet\swap;
 use function Valet\user;
 
@@ -154,7 +157,7 @@ class PhpFpmTest extends TestCase
             ->once()
             ->with(
                 \sprintf(
-                '%1$scli %1$smysql %1$sgd %1$szip %1$sxml %1$scurl %1$smbstring %1$spgsql %1$sintl %1$sposix',
+                    '%1$scli %1$smysql %1$sgd %1$szip %1$sxml %1$scurl %1$smbstring %1$spgsql %1$sintl %1$sposix',
                     $prefix
                 )
             );
@@ -393,7 +396,7 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider versionProvider
      */
-    public function itWillRestartSuccessfully(string $version, string $expectedVersion)
+    public function itWillRestartSuccessfully(string $version, string $expectedVersion): void
     {
         $fpmName = 'php'.$expectedVersion.'-fpm';
 
@@ -414,7 +417,7 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider versionProvider
      */
-    public function itWillStopSuccessfully(string $version, string $expectedVersion)
+    public function itWillStopSuccessfully(string $version, string $expectedVersion): void
     {
         $fpmName = 'php'.$expectedVersion.'-fpm';
 
@@ -435,7 +438,7 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider versionProvider
      */
-    public function itWillGetStatusSuccessfully(string $version, string $expectedVersion)
+    public function itWillGetStatusSuccessfully(string $version, string $expectedVersion): void
     {
         $fpmName = 'php'.$expectedVersion.'-fpm';
 
@@ -450,6 +453,275 @@ class PhpFpmTest extends TestCase
             ->once();
 
         $this->phpFpm->status($expectedVersion);
+    }
+
+    /**
+     * @test
+     */
+    public function itWillIsolateDirectory(): void
+    {
+        $this->site
+            ->shouldReceive('getSiteUrl')
+            ->with('site')
+            ->once()
+            ->andReturn('site.test');
+
+        $this->packageManager
+            ->shouldReceive('getPhpFpmName')
+            ->with('7.2')
+            ->once()
+            ->andReturn('php7.2-fpm');
+
+        $this->packageManager
+            ->shouldReceive('installed')
+            ->with('php7.2-fpm')
+            ->once()
+            ->andReturnTrue();
+
+        $this->site
+            ->shouldReceive('customPhpVersion')
+            ->with('site.test')
+            ->once()
+            ->andReturnNull();
+
+        $this->site
+            ->shouldReceive('isolate')
+            ->with('site.test', '7.2', true)
+            ->once()
+            ->andReturnNull();
+
+        $this->packageManager
+            ->shouldReceive('getPhpFpmName')
+            ->with('7.2')
+            ->once()
+            ->andReturn('php7.2-fpm');
+
+        $this->serviceManager
+            ->shouldReceive('restart')
+            ->with('php7.2-fpm')
+            ->once();
+
+        $this->nginx
+            ->shouldReceive('restart')
+            ->withNoArgs()
+            ->once();
+
+        $this->config
+            ->shouldReceive('get')
+            ->with('domain')
+            ->once()
+            ->andReturn('test');
+
+        $devTools = Mockery::mock(DevTools::class);
+        swap(DevTools::class, $devTools);
+
+        $devTools->shouldReceive('getBin')
+            ->with('php7.2', ['/usr/local/bin/php'])
+            ->once()
+            ->andReturn('/usr/bin/php7.2');
+
+        $this->config
+            ->shouldReceive('get')
+            ->with('isolated_versions', [])
+            ->once()
+            ->andReturn([]);
+
+        $this->config
+            ->shouldReceive('set')
+            ->with('isolated_versions', ['site' => '/usr/bin/php7.2'])
+            ->once();
+
+        $return = $this->phpFpm->isolateDirectory('site', '7.2', true);
+
+        $this->assertTrue($return);
+    }
+
+    /**
+     * @test
+     */
+    public function itWillThrowExceptionWhenInvalidSiteSelected(): void
+    {
+        Writer::fake();
+
+        $this->site
+            ->shouldReceive('getSiteUrl')
+            ->with('site')
+            ->once()
+            ->andThrows(new \DomainException('invalid-directory'));
+
+        $this->packageManager
+            ->shouldNotReceive('getPhpFpmName');
+
+        $this->packageManager
+            ->shouldNotReceive('installed');
+
+        $this->site
+            ->shouldNotReceive('customPhpVersion');
+
+        $this->site
+            ->shouldNotReceive('isolate');
+
+        $this->serviceManager
+            ->shouldNotReceive('restart');
+
+        $this->nginx
+            ->shouldNotReceive('restart');
+
+        $this->config
+            ->shouldNotReceive('get');
+
+        $this->config
+            ->shouldNotReceive('set');
+
+        $return = $this->phpFpm->isolateDirectory('site', '7.2', true);
+
+        $this->assertFalse($return);
+
+        /** @var BufferedOutput $output */
+        $output = Writer::output();
+
+        $this->assertStringContainsString('invalid-directory', $output->fetch());
+    }
+
+    /**
+     * @test
+     */
+    public function itWillThrowExceptionWhenInvalidVersionGiven(): void
+    {
+        Writer::fake();
+
+        $this->site
+            ->shouldReceive('getSiteUrl')
+            ->with('site')
+            ->once()
+            ->andReturn('site.test');
+
+        $this->packageManager
+            ->shouldNotReceive('getPhpFpmName');
+
+        $this->packageManager
+            ->shouldNotReceive('installed');
+
+        $this->site
+            ->shouldNotReceive('customPhpVersion');
+
+        $this->site
+            ->shouldNotReceive('isolate');
+
+        $this->serviceManager
+            ->shouldNotReceive('restart');
+
+        $this->nginx
+            ->shouldNotReceive('restart');
+
+        $this->config
+            ->shouldNotReceive('get');
+
+        $this->config
+            ->shouldNotReceive('set');
+
+        $return = $this->phpFpm->isolateDirectory('site', '5.6', true);
+
+        $this->assertFalse($return);
+
+        /** @var BufferedOutput $output */
+        $output = Writer::output();
+
+        $this->assertStringContainsString('Invalid version [5.6] used. Supported versions are', $output->fetch());
+    }
+
+    /**
+     * @test
+     */
+    public function itWillUnIsolateDirectory(): void
+    {
+        $this->site
+            ->shouldReceive('getSiteUrl')
+            ->with('site')
+            ->once()
+            ->andReturn('site.test');
+
+        $this->site
+            ->shouldReceive('customPhpVersion')
+            ->with('site.test')
+            ->once()
+            ->andReturnNull();
+
+        $this->site
+            ->shouldReceive('removeIsolation')
+            ->with('site.test')
+            ->once()
+            ->andReturnNull();
+
+        $this->nginx
+            ->shouldReceive('restart')
+            ->withNoArgs()
+            ->once();
+
+        $this->config
+            ->shouldReceive('get')
+            ->with('domain')
+            ->once()
+            ->andReturn('test');
+
+        $this->config
+            ->shouldReceive('get')
+            ->with('isolated_versions', [])
+            ->once()
+            ->andReturn(['site' => '/usr/bin/php7.2']);
+
+        $this->config
+            ->shouldReceive('set')
+            ->with('isolated_versions', [])
+            ->once();
+
+        $this->phpFpm->unIsolateDirectory('site');
+    }
+
+    /**
+     * @test
+     */
+    public function itWillListIsolatedDirectories(): void
+    {
+        $sites = collect([
+            'fpm-site.test',
+            'second.test',
+        ]);
+        $this->nginx
+            ->shouldReceive('configuredSites')
+            ->withNoArgs()
+            ->once()
+            ->andReturn($sites);
+
+        foreach ($sites->toArray() as $site) {
+            $this->filesystem
+                ->shouldReceive('get')
+                ->with(VALET_HOME_PATH.'/Nginx/'.$site)
+                ->once()
+                ->andReturn('nginx-content ISOLATED_PHP_VERSION');
+
+            $this->site
+                ->shouldReceive('customPhpVersion')
+                ->with($site)
+                ->once()
+                ->andReturn('7.2');
+        }
+
+        $output = $this->phpFpm->isolatedDirectories();
+
+        $this->assertSame(
+            [
+                [
+                    'url' => 'fpm-site.test',
+                    'version' => '7.2',
+                ],
+                [
+                    'url' => 'second.test',
+                    'version' => '7.2',
+                ],
+            ],
+            $output->toArray()
+        );
     }
 
     public function socketFileVersionProvider(): array
@@ -536,7 +808,7 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider executableVersionProvider
      */
-    public function itWillGetExecutablePath(string $version)
+    public function itWillGetExecutablePath(string $version): void
     {
         $devTools = Mockery::mock(DevTools::class);
         swap(DevTools::class, $devTools);
@@ -555,10 +827,71 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider executableVersionProvider
      */
-    public function itWillGetFpmSocketFile(string $version, string $expectedSocketFile)
+    public function itWillGetFpmSocketFile(string $version, string $expectedSocketFile): void
     {
         $socketFile = $this->phpFpm->fpmSocketFile($version);
 
         $this->assertSame(VALET_HOME_PATH.'/'.$expectedSocketFile, $socketFile);
+    }
+
+    public function versionDataProvider(): array
+    {
+        return [
+            [
+                '8.2',
+            ],
+            [
+                '8.3',
+            ]
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider versionDataProvider
+     */
+    public function itWillValidateVersion(string $version): void
+    {
+        $isValid = $this->phpFpm->validateVersion($version);
+
+        $this->assertTrue($isValid);
+    }
+
+    public function deprecatedVersionDataProvider(): array
+    {
+        return [
+            [
+                '7.0',
+            ],
+            [
+                '7.1',
+            ],
+            [
+                '7.2',
+            ],
+            [
+                '7.3',
+            ],
+            [
+                '7.4',
+            ],
+            [
+                '8.0',
+            ],
+            [
+                '8.1',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider deprecatedVersionDataProvider
+     */
+    public function itWillValidateDeprecatedVersion(string $version): void
+    {
+        $isValid = $this->phpFpm->validateVersion($version);
+
+        $this->assertFalse($isValid);
     }
 }

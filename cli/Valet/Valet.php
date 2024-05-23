@@ -63,7 +63,7 @@ class Valet
      */
     public function symlinkToUsersBin(): void
     {
-        $this->cli->run('ln -snf '.realpath(__DIR__.'/../../valet').' '.$this->valetBin);
+        $this->cli->run('ln -snf '.realpath(VALET_ROOT_PATH.'/valet').' '.$this->valetBin);
     }
 
     /**
@@ -80,7 +80,7 @@ class Valet
             ConfigurationFacade::set('fallback_binary', $fallbackBin);
         }
 
-        $this->cli->run('ln -snf '.realpath(__DIR__.'/../../php').' '.$this->phpBin);
+        $this->cli->run('ln -snf '.realpath(VALET_ROOT_PATH.'/php').' '.$this->phpBin);
     }
 
     /**
