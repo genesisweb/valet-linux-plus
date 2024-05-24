@@ -43,4 +43,4 @@ jobs:
           sudo apt-get install -y network-manager libnss3-tools jq xsel
           composer install --no-interaction --prefer-dist
       - name: CS Fixer
-        run: vendor/bin/php-cs-fixer check
+        run: vendor/bin/php-cs-fixer check --config=.php-cs-fixer.dist.php
