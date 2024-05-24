@@ -183,6 +183,12 @@ class PhpFpmTest extends TestCase
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
         $this->filesystem
+            ->shouldReceive('isDir')
+            ->once()
+            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d')
+            ->andReturnTrue();
+
+        $this->filesystem
             ->shouldReceive('putAsUser')
             ->once()
             ->with(
@@ -205,6 +211,12 @@ class PhpFpmTest extends TestCase
      */
     public function itWillUninstallSuccessfully(string $version, string $expectedVersion): void
     {
+        $this->filesystem
+            ->shouldReceive('isDir')
+            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d')
+            ->once()
+            ->andReturnTrue();
+
         $this->filesystem
             ->shouldReceive('exists')
             ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf')
@@ -240,6 +252,7 @@ class PhpFpmTest extends TestCase
         string $expectedSocketFileName,
         string $currentVersion
     ): void {
+        Writer::fake();
         $this->config
             ->shouldReceive('get')
             ->with('php_version', PHP_MAJOR_VERSION. '.'.PHP_MINOR_VERSION)
@@ -297,6 +310,14 @@ class PhpFpmTest extends TestCase
             ->once()
             ->with(VALET_ROOT_PATH.'/cli/stubs/fpm.conf')
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
+
+        $this->filesystem
+            ->shouldReceive('isDir')
+            ->once()
+            ->with(
+                '/etc/php/'.$expectedVersion.'/fpm/pool.d',
+            )
+            ->andReturnTrue();
 
         $this->filesystem
             ->shouldReceive('putAsUser')

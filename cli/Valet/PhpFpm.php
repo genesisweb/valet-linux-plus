@@ -435,7 +435,7 @@ class PhpFpm
             '/etc/php-fpm.d', // Fedora
             '/etc/php/php-fpm.d', // Arch
         ])->first(function ($path) {
-            return is_dir($path);
+            return $this->files->isDir($path);
         }, function () {
             throw new \DomainException('Unable to determine PHP-FPM configuration folder.');
         });
