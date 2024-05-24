@@ -30,10 +30,6 @@ class Site
 
     /**
      * Create a new Site instance.
-     *
-     * @param Configuration $config
-     * @param CommandLine   $cli
-     * @param Filesystem    $files
      */
     public function __construct(Configuration $config, CommandLine $cli, Filesystem $files)
     {
@@ -209,11 +205,6 @@ class Site
 
     /**
      * Re-secure all currently secured sites with a fresh domain.
-     *
-     * @param string $oldDomain
-     * @param string $domain
-     *
-     * @return void
      */
     public function resecureForNewDomain(string $oldDomain, string $domain): void
     {
@@ -430,7 +421,7 @@ class Site
 
     /**
      * Prepare Nginx Conf based on existing config file.
-     **/
+     */
     private function prepareConf(string $url, bool $requireSecure = false): ?string
     {
         if (!$this->files->exists($this->nginxPath($url))) {

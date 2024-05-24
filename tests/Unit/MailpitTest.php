@@ -12,6 +12,7 @@ use Valet\Filesystem;
 use Valet\Mailpit;
 use Valet\Site;
 use Valet\Tests\TestCase;
+
 use function Valet\swap;
 
 class MailpitTest extends TestCase

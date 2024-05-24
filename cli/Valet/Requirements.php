@@ -17,8 +17,6 @@ class Requirements
 
     /**
      * Create a new Warning instance.
-     *
-     * @param CommandLine $cli
      */
     public function __construct(CommandLine $cli)
     {

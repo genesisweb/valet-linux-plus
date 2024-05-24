@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Valet\Configuration;
 use Valet\Filesystem;
 use Valet\Tests\TestCase;
+
 use function Valet\user;
 
 class ConfigurationTest extends TestCase
@@ -408,7 +409,6 @@ class ConfigurationTest extends TestCase
             ->once()
             ->with(VALET_HOME_PATH.'/config.json')
             ->andReturn(json_encode($defaultConfig));
-
 
         $domain = $this->configuration->parseDomain($siteName);
 

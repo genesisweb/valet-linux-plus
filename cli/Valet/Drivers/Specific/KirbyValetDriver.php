@@ -21,7 +21,8 @@ class KirbyValetDriver extends ValetDriver
     {
         if ($this->isActualFile($staticFilePath = $sitePath.$uri)) {
             return $staticFilePath;
-        } elseif ($this->isActualFile($staticFilePath = $sitePath.'/public'.$uri)) {
+        }
+        if ($this->isActualFile($staticFilePath = $sitePath.'/public'.$uri)) {
             return $staticFilePath;
         }
 

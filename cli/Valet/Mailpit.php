@@ -2,7 +2,6 @@
 
 namespace Valet;
 
-use ConsoleComponents\Writer;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -34,11 +33,6 @@ class Mailpit
 
     /**
      * Create a new Mailpit instance.
-     *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
      *
      * @return void
      */
@@ -78,8 +72,6 @@ class Mailpit
 
     /**
      * Start the Mailpit service.
-     *
-     * @return void
      */
     public function start(): void
     {
@@ -88,8 +80,6 @@ class Mailpit
 
     /**
      * Restart the Mailpit service.
-     *
-     * @return void
      */
     public function restart(): void
     {
@@ -98,8 +88,6 @@ class Mailpit
 
     /**
      * Stop the Mailpit service.
-     *
-     * @return void
      */
     public function stop(): void
     {
@@ -108,8 +96,6 @@ class Mailpit
 
     /**
      * Mailpit service status.
-     *
-     * @return void
      */
     public function status(): void
     {
@@ -118,8 +104,6 @@ class Mailpit
 
     /**
      * Prepare Mailpit for uninstall.
-     *
-     * @return void
      */
     public function uninstall(): void
     {
@@ -176,9 +160,6 @@ class Mailpit
         Site::proxyCreate("mails.$domain", 'http://localhost:8025', true);
     }
 
-    /**
-     * @return bool
-     */
     private function isAvailable(): bool
     {
         try {

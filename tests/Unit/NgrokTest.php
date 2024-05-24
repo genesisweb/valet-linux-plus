@@ -15,6 +15,7 @@ use Valet\Filesystem;
 use Valet\Ngrok;
 use Valet\Request;
 use Valet\Tests\TestCase;
+
 use function Valet\swap;
 use function Valet\user;
 

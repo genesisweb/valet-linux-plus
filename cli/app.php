@@ -76,7 +76,6 @@ $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     '--ignore-selinux' => 'Skip SELinux checks',
 ]);
 
-
 /**
  * Most commands are available only if valet is installed.
  */
@@ -430,7 +429,6 @@ if (is_dir(VALET_HOME_PATH)) {
         if (!str_ends_with($domain, '.'.$tld)) {
             $domain .= '.'.$tld;
         }
-
 
         Site::proxyDelete($domain);
         Nginx::restart();

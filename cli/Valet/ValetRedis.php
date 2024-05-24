@@ -26,10 +26,6 @@ class ValetRedis
     /**
      * Create a new PHP FPM class instance.
      *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli)

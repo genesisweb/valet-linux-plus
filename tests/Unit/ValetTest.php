@@ -14,8 +14,8 @@ use Valet\Filesystem;
 use Valet\Request;
 use Valet\Tests\TestCase;
 use Valet\Valet;
+
 use function Valet\swap;
-use function Valet\user;
 
 class ValetTest extends TestCase
 {
@@ -125,13 +125,12 @@ class ValetTest extends TestCase
                 ->andReturnFalse();
         }
 
-
         $extensions = $this->valet->extensions();
 
         $this->assertSame([
             VALET_HOME_PATH.'/Extensions/ext-1.php',
             VALET_HOME_PATH.'/Extensions/ext-2.php',
-        ],$extensions);
+        ], $extensions);
     }
 
     public function versionDataProvider(): array
@@ -174,7 +173,6 @@ Date: Tue, 14 May 2024 12:13:28 GMT\r\n
 Content-Length: 477
 ", $request));
 
-
         $isLatest = $this->valet->onLatestVersion($version);
 
         $this->assertSame($expectedResponse, $isLatest);
@@ -204,7 +202,6 @@ Content-Type: application/json\r\n
 Date: Tue, 14 May 2024 12:13:28 GMT\r\n
 Content-Length: 477
 ", $request));
-
 
         $response = $this->valet->getLatestVersion();
 

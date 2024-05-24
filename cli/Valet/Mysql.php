@@ -3,7 +3,6 @@
 namespace Valet;
 
 use ConsoleComponents\Writer;
-use Illuminate\Support\Collection;
 use PDO;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -28,12 +27,6 @@ class Mysql
 
     /**
      * Create a new instance.
-     *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
-     * @param Configuration  $configuration
      */
     public function __construct(
         PackageManager $pm,
@@ -150,10 +143,9 @@ class Mysql
             if (!$confirm) {
                 Writer::warn('Valet database user is not configured');
                 return;
-            } else {
-                $this->configure($force);
-                return;
             }
+            $this->configure($force);
+            return;
         }
         $config['user'] = $user;
         $config['password'] = $password;
@@ -272,8 +264,6 @@ class Mysql
 
     /**
      * Get a list of databases.
-     *
-     * @return array
      */
     public function getDatabases(): array
     {

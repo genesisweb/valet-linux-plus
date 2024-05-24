@@ -13,6 +13,7 @@ use Valet\Filesystem;
 use Valet\Mysql;
 use Valet\PhpFpm;
 use Valet\Tests\TestCase;
+
 use function Valet\swap;
 
 class MysqlTest extends TestCase

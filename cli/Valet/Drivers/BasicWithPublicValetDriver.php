@@ -22,7 +22,8 @@ class BasicWithPublicValetDriver extends ValetDriver
 
         if ($this->isActualFile($publicPath)) {
             return $publicPath;
-        } elseif (file_exists($publicPath.'/index.html')) {
+        }
+        if (file_exists($publicPath.'/index.html')) {
             return $publicPath.'/index.html';
         }
 

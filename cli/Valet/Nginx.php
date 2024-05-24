@@ -43,13 +43,6 @@ class Nginx
     /**
      * Create a new Nginx instance.
      *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
-     * @param Configuration  $configuration
-     * @param Site           $site
-     *
      * @return void
      */
     public function __construct(

@@ -133,6 +133,7 @@ class PhpFpm
 
     /**
      * Restart the PHP FPM process.
+     * @param null|mixed $version
      */
     public function restart($version = null): void
     {
@@ -141,6 +142,7 @@ class PhpFpm
 
     /**
      * Stop the PHP FPM process.
+     * @param null|mixed $version
      */
     public function stop($version = null): void
     {
@@ -149,6 +151,7 @@ class PhpFpm
 
     /**
      * PHP-FPM service status.
+     * @param null|mixed $version
      */
     public function status($version = null): void
     {
@@ -423,7 +426,7 @@ class PhpFpm
         $versionWithoutDot = preg_replace('~[^\d]~', '', $version);
 
         /** @var string $confDir */
-        $confDir = collect([
+        return collect([
             '/etc/php/'.$version.'/fpm/pool.d', // Ubuntu
             '/etc/php'.$version.'/fpm/pool.d', // Ubuntu
             '/etc/php'.$version.'/php-fpm.d', // Manjaro
@@ -439,8 +442,6 @@ class PhpFpm
         }, function () {
             throw new \DomainException('Unable to determine PHP-FPM configuration folder.');
         });
-
-        return $confDir;
     }
 
     /**

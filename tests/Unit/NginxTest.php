@@ -13,6 +13,7 @@ use Valet\Nginx;
 use Valet\PhpFpm;
 use Valet\Site;
 use Valet\Tests\TestCase;
+
 use function Valet\swap;
 
 class NginxTest extends TestCase

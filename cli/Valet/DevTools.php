@@ -47,7 +47,6 @@ class DevTools
 
     /**
      * @param string[] $ignoredServices
-     * @return false|string
      */
     public function getBin(string $service, array $ignoredServices = []): false|string
     {

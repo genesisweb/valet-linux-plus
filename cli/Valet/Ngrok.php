@@ -28,7 +28,6 @@ class Ngrok
         $this->files = $filesystem;
     }
 
-
     /**
      * Install Ngrok binary
      * @throws Exception
@@ -71,9 +70,8 @@ class Ngrok
             // but for local testing purposes we just desire the plain HTTP URL endpoint.
             if (isset($body->tunnels) && count($body->tunnels) > 0) {
                 return $this->findHttpTunnelUrl($body->tunnels);
-            } else {
-                throw new DomainException('Tunnel not established.');
             }
+            throw new DomainException('Tunnel not established.');
         }, 250);
     }
 

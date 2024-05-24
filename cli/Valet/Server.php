@@ -204,7 +204,7 @@ class Server
 
     /**
      * Return the default site path for uncaught URLs, if it's set.
-     **/
+     */
     public function defaultSitePath(): ?string
     {
         if (isset($this->config['default'])

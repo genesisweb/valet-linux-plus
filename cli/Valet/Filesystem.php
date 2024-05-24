@@ -4,10 +4,10 @@ namespace Valet;
 
 use ArrayObject;
 use ConsoleComponents\Writer;
-use Valet\Facades\CommandLine;
 use Exception;
 use FilesystemIterator;
 use Traversable;
+use Valet\Facades\CommandLine;
 
 /**
  * Class Filesystem.
@@ -20,8 +20,6 @@ class Filesystem
      * @param string $files
      *
      * @throws Exception
-     *
-     * @return void
      */
     public function remove($files): void
     {
@@ -146,11 +144,6 @@ class Filesystem
 
     /**
      * Write to the given file as the non-root user.
-     *
-     * @param string $path
-     * @param string $contents
-     *
-     * @return string
      */
     public function putAsUser(string $path, string $contents): string
     {
@@ -345,10 +338,6 @@ class Filesystem
 
     /**
      * Resolve the given symbolic link.
-     *
-     * @param string $path
-     *
-     * @return string
      */
     public function readLink(string $path): string
     {
@@ -363,10 +352,6 @@ class Filesystem
 
     /**
      * Remove all the broken symbolic links at the given path.
-     *
-     * @param string $path
-     *
-     * @return void
      */
     public function removeBrokenLinksAt(string $path): void
     {

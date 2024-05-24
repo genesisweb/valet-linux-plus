@@ -5,8 +5,8 @@ namespace Valet\Tests;
 use ConsoleComponents\Writer;
 use Mockery;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Valet\DnsMasq;
 use Valet\Configuration;
+use Valet\DnsMasq;
 use Valet\Facades\Configuration as ConfigurationFacade;
 use Valet\Filesystem;
 use Valet\Mysql;
@@ -14,6 +14,7 @@ use Valet\Nginx;
 use Valet\Ngrok;
 use Valet\PhpFpm;
 use Valet\Site;
+
 use function Valet\swap;
 
 class CliTest extends TestCase
@@ -92,7 +93,6 @@ class CliTest extends TestCase
         $this->assertStringContainsString('Current Nginx port (HTTP): 80', $content);
         $this->assertStringContainsString('Current Nginx port (HTTPS): 443', $content);
     }
-
 
     public function nginxPortDataProvider(): array
     {

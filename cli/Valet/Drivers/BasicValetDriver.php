@@ -30,7 +30,8 @@ class BasicValetDriver extends ValetDriver
     {
         if (file_exists($sitePath.rtrim($uri, '/').'/index.html')) {
             return $sitePath.rtrim($uri, '/').'/index.html';
-        } elseif ($this->isActualFile($sitePath.$uri)) {
+        }
+        if ($this->isActualFile($sitePath.$uri)) {
             return $sitePath.$uri;
         }
 
