@@ -6,12 +6,11 @@ jobs:
   build:
     name: Build & Test on Ubuntu 22.04
     runs-on: ubuntu-22.04
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'master'
     strategy:
       matrix:
         php:
-          - 8.0
-          - 8.1
+          - 8.2
+          - 8.3
     steps:
       - uses: actions/checkout@v2
       - name: Set up PHP
