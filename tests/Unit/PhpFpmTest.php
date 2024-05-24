@@ -17,6 +17,7 @@ use Valet\PhpFpm;
 use Valet\Site;
 use Valet\Tests\TestCase;
 
+use function Valet\group;
 use function Valet\swap;
 use function Valet\user;
 
@@ -124,8 +125,11 @@ class PhpFpmTest extends TestCase
      * @test
      * @dataProvider versionProvider
      */
-    public function itWillInstallSuccessfully(string $version, string $expectedVersion, string $expectedSocketFileName): void
-    {
+    public function itWillInstallSuccessfully(
+        string $version,
+        string $expectedVersion,
+        string $expectedSocketFileName
+    ): void {
         $fpmName = \sprintf('php%s-fpm', $expectedVersion);
         $prefix = \sprintf('php%s-', $expectedVersion);
         $this->packageManager
@@ -183,7 +187,7 @@ class PhpFpmTest extends TestCase
             ->once()
             ->with(
                 '/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf',
-                \sprintf('fpm.conf content %s %s %s', user(), user(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
+                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
             )
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
@@ -299,7 +303,7 @@ class PhpFpmTest extends TestCase
             ->once()
             ->with(
                 '/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf',
-                \sprintf('fpm.conf content %s %s %s', user(), user(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
+                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
             )
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
