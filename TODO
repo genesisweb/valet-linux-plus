@@ -1,10 +1,12 @@
 Remain Items:
 - Add relevant test cases
+  -
 - Enable unit coverage report
 - Add Infection
 - Valet php extension install separately so that if not installed we can install it via valet install command. (Optional)
 - Improve valet uninstall experience
   - User should be able to select which services they want to uninstall
+- mbstring extension was not installed in system, but composer install command fail to stop process as it was mentioned in required json
 
 
 Done Items:

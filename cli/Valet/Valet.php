@@ -23,34 +23,14 @@ use Valet\ServiceManagers\Systemd;
 
 class Valet
 {
-    /**
-     * @var CommandLine
-     */
-    public $cli;
-    /**
-     * @var Filesystem
-     */
-    public $files;
-
-    /**
-     * @var string
-     */
-    private $valetBin = '/usr/local/bin/valet';
-    private $phpBin = '/usr/local/bin/php';
-    /**
-     * @var string
-     */
-    private $sudoers = '/etc/sudoers.d/valet';
-    /**
-     * @var string
-     */
-    private $github = 'https://api.github.com/repos/genesisweb/valet-linux-plus/releases/latest';
+    public CommandLine $cli;
+    public Filesystem $files;
+    private string $valetBin = '/usr/local/bin/valet';
+    private string $phpBin = '/usr/local/bin/php';
+    private string $github = 'https://api.github.com/repos/genesisweb/valet-linux-plus/releases/latest';
 
     /**
      * Create a new Valet instance.
-     *
-     * @param CommandLine $cli
-     * @param Filesystem  $files
      */
     public function __construct(CommandLine $cli, Filesystem $files)
     {
@@ -91,7 +71,6 @@ class Valet
     {
         $this->files->unlink($this->valetBin);
         $this->files->unlink($this->phpBin);
-        $this->files->unlink($this->sudoers);
     }
 
     /**
@@ -106,7 +85,7 @@ class Valet
 
         return collect($this->files->scandir(VALET_HOME_PATH.'/Extensions'))
                     ->reject(function ($file) {
-                        return is_dir($file);
+                        return $this->files->isDir($file);
                     })
                     ->map(function ($file) {
                         return VALET_HOME_PATH.'/Extensions/'.$file;
@@ -121,6 +100,7 @@ class Valet
     public function onLatestVersion(string $currentVersion): bool
     {
         $response = RequestFacade::get($this->github)->send();
+
         $currentVersion = str_replace('v', '', $currentVersion);
         $latestVersion = isset($response->body->tag_name) ? trim($response->body->tag_name) : 'v1.0.0';
         $latestVersion = str_replace('v', '', $latestVersion);
