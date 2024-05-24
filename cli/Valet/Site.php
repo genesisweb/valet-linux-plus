@@ -834,9 +834,7 @@ class Site
     {
         $defaultPhpVersion = PhpFpmFacade::getCurrentVersion();
         $customPhpVersion = $this->customPhpVersion($url);
-        $phpVersion = PhpFpmFacade::normalizePhpVersion($customPhpVersion ?? $defaultPhpVersion);
-
-        return $phpVersion;
+        return PhpFpmFacade::normalizePhpVersion($customPhpVersion ?? $defaultPhpVersion);
     }
 
     private function parked(): Collection
