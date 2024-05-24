@@ -570,7 +570,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Create new database in MySQL.
      */
     $app->command('db:create [databaseName]', function ($databaseName) {
-        $databaseName = $databaseName ?:basename((string)getcwd());
+        $databaseName = $databaseName ?: basename((string)getcwd());
 
         $isCreated = Mysql::createDatabase($databaseName);
         if ($isCreated) {
@@ -582,7 +582,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Drop database in MySQL.
      */
     $app->command('db:drop [databaseName] [-y|--yes]', function ($databaseName, $yes) {
-        $databaseName = $databaseName ?:basename((string)getcwd());
+        $databaseName = $databaseName ?: basename((string)getcwd());
 
         if (!$yes) {
             $confirm = Writer::confirm(\sprintf('Are you sure you want to delete [%s] database?', $databaseName));
@@ -602,7 +602,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Reset database in MySQL.
      */
     $app->command('db:reset [databaseName] [-y|--yes]', function ($databaseName, $yes) {
-        $databaseName = $databaseName ?:basename((string)getcwd());
+        $databaseName = $databaseName ?: basename((string)getcwd());
 
         if (!$yes) {
             $confirm = Writer::confirm(\sprintf('Are you sure you want to reset [%s] database?', $databaseName));
@@ -661,7 +661,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('db:export [databaseName] [--sql]', function ($databaseName, $sql) {
         Writer::info('Exporting database...');
-        $databaseName = $databaseName ?:basename((string)getcwd());
+        $databaseName = $databaseName ?: basename((string)getcwd());
 
         $data = Mysql::exportDatabase($databaseName, $sql);
 

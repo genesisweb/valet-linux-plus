@@ -30,7 +30,7 @@ class Mailpit
     /**
      * @var string
      */
-    const SERVICE_NAME = 'mailpit';
+    public const SERVICE_NAME = 'mailpit';
 
     /**
      * Create a new Mailpit instance.

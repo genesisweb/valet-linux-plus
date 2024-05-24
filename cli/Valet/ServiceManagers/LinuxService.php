@@ -94,7 +94,7 @@ class LinuxService implements ServiceManager
     public function disabled(string $service): bool
     {
         $service = $this->getRealService($service);
-// TODO: Do not use systemctl and stop using linux service class if systemd is available on all minimum versions
+        // TODO: Do not use systemctl and stop using linux service class if systemd is available on all minimum versions
         return !str_contains(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled');
     }
 

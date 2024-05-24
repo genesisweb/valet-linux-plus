@@ -36,9 +36,9 @@ class Nginx
     /**
      * @var string
      */
-    const NGINX_CONF = '/etc/nginx/nginx.conf';
-    const SITES_AVAILABLE_CONF = '/etc/nginx/sites-available/valet.conf';
-    const SITES_ENABLED_CONF = '/etc/nginx/sites-enabled/valet.conf';
+    public const NGINX_CONF = '/etc/nginx/nginx.conf';
+    public const SITES_AVAILABLE_CONF = '/etc/nginx/sites-available/valet.conf';
+    public const SITES_ENABLED_CONF = '/etc/nginx/sites-enabled/valet.conf';
 
     /**
      * Create a new Nginx instance.

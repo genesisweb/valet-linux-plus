@@ -52,10 +52,10 @@ abstract class ValetDriver
 
         foreach ($drivers as $driver) {
             if ($driver === 'LocalValetDriver') {
-                $driver = new $driver;
+                $driver = new $driver();
             } else {
                 $className = "Valet\Drivers\\{$driver}";
-                $driver = new $className;
+                $driver = new $className();
             }
 
             if ($driver->serves($sitePath, $siteName, $driver->mutateUri($uri))) {

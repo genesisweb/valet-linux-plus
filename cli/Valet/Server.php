@@ -104,7 +104,7 @@ class Server
     public function siteNameFromHttpHost(string $httpHost): string
     {
         $siteName = basename(
-        // Filter host to support wildcard dns feature
+            // Filter host to support wildcard dns feature
             $this->allowWildcardDnsDomains($httpHost),
             '.'.$this->config['domain']
         );

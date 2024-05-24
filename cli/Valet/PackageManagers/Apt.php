@@ -28,7 +28,7 @@ class Apt implements PackageManager
     /**
      * @var array
      */
-    const PHP_FPM_PATTERN_BY_VERSION = [];
+    public const PHP_FPM_PATTERN_BY_VERSION = [];
 
     /**
      * Create a new Apt instance.

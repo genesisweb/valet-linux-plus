@@ -1,4 +1,5 @@
 <?php
+
 // DEVELOPER NOTE: Do not use latest php's functions in this file, as this file works with isolated versions
 require_once './cli/Valet/Drivers/ValetDriver.php';
 

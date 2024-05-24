@@ -27,11 +27,11 @@ class PhpFpm
         '7.0', '7.1', '7.2', '7.3', '7.4', '8.0', '8.1', ...self::SUPPORTED_PHP_VERSIONS
     ];
 
-    const COMMON_EXTENSIONS = [
+    public const COMMON_EXTENSIONS = [
         'cli', 'mysql', 'gd', 'zip', 'xml', 'curl', 'mbstring', 'pgsql', 'intl', 'posix',
     ];
 
-    const FPM_CONFIG_FILE_NAME = 'valet.conf';
+    public const FPM_CONFIG_FILE_NAME = 'valet.conf';
 
     /**
      * Create a new PHP FPM class instance.

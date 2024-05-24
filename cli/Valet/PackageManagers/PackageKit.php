@@ -21,7 +21,7 @@ class PackageKit implements PackageManager
     /**
      * @var array
      */
-    const PHP_FPM_PATTERN_BY_VERSION = [];
+    public const PHP_FPM_PATTERN_BY_VERSION = [];
 
     private const PACKAGES = [
         'redis' => 'redis-server',

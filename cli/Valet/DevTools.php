@@ -12,21 +12,22 @@ class DevTools
     /**
      * Sublime binary selector.\
      */
-    const VS_CODE = 'code';
+    public const VS_CODE = 'code';
+
     /**
      * Sublime binary selector.
      */
-    const SUBLIME = 'subl';
+    public const SUBLIME = 'subl';
 
     /**
      * PHPStorm binary selector.
      */
-    const PHP_STORM = 'phpstorm.sh';
+    public const PHP_STORM = 'phpstorm.sh';
 
     /**
      * Atom binary selector.
      */
-    const ATOM = 'atom';
+    public const ATOM = 'atom';
 
     public PackageManager $pm;
     public ServiceManager $sm;
