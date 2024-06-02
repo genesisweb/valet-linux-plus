@@ -14,6 +14,10 @@ use Valet\Nginx;
 use Valet\Ngrok;
 use Valet\PhpFpm;
 use Valet\Site;
+use Valet\SiteIsolate;
+use Valet\SiteLink;
+use Valet\SiteProxy;
+use Valet\SiteSecure;
 
 use function Valet\swap;
 
@@ -53,9 +57,9 @@ class CliTest extends TestCase
         $config->shouldReceive('set')->with('domain', 'localhost')->once();
         swap(Configuration::class, $config);
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('resecureForNewDomain')->with('test', 'localhost')->once();
-        swap(Site::class, $site);
+        $siteSecure = Mockery::mock(SiteSecure::class);
+        $siteSecure->shouldReceive('reSecureForNewDomain')->with('test', 'localhost')->once();
+        swap(SiteSecure::class, $siteSecure);
 
         $phpFpm = Mockery::mock(PhpFpm::class);
         $phpFpm->shouldReceive('restart')->withNoArgs()->once();
@@ -107,8 +111,8 @@ class CliTest extends TestCase
      * @dataProvider nginxPortDataProvider
      */
     public function itWillUpdateNginxPortSuccessfully(
-        int    $port,
-        bool   $isHttps,
+        int $port,
+        bool $isHttps,
         string $updateKey,
         string $expectedOutput
     ): void {
@@ -127,9 +131,9 @@ class CliTest extends TestCase
         $config->shouldReceive('set')->with($updateKey, $port)->once();
         swap(Configuration::class, $config);
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('regenerateSecuredSitesConfig')->withNoArgs()->once();
-        swap(Site::class, $site);
+        $siteSecure = Mockery::mock(SiteSecure::class);
+        $siteSecure->shouldReceive('regenerateSecuredSitesConfig')->withNoArgs()->once();
+        swap(SiteSecure::class, $siteSecure);
 
         $phpFpm = Mockery::mock(PhpFpm::class);
         $phpFpm->shouldReceive('restart')->withNoArgs()->once();
@@ -287,15 +291,15 @@ class CliTest extends TestCase
     public function itWillCreateNginxProxy(
         string $domain,
         string $host,
-        bool   $isSecure,
+        bool $isSecure,
         string $expectedDomain,
         string $expectedMessage
     ): void {
         Writer::fake();
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('proxyCreate')->with($expectedDomain, $host, $isSecure)->once();
-        swap(Site::class, $site);
+        $siteProxy = Mockery::mock(SiteProxy::class);
+        $siteProxy->shouldReceive('proxyCreate')->with($expectedDomain, $host, $isSecure)->once();
+        swap(SiteProxy::class, $siteProxy);
 
         $nginx = Mockery::mock(Nginx::class);
         $nginx->shouldReceive('restart')->withNoArgs()->once();
@@ -343,7 +347,7 @@ class CliTest extends TestCase
      * @dataProvider invalidProxyDataProvider
      */
     public function itWillFailToProxyDomainWhenValidParametersNotAvailable(
-        array  $overrides,
+        array $overrides,
         string $expectedMessage
     ): void {
         Writer::fake();
@@ -396,9 +400,9 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('proxyDelete')->with($expectedDomain)->once();
-        swap(Site::class, $site);
+        $siteSecure = Mockery::mock(SiteSecure::class);
+        $siteSecure->shouldReceive('unsecure')->with($expectedDomain)->once();
+        swap(SiteSecure::class, $siteSecure);
 
         $nginx = Mockery::mock(Nginx::class);
         $nginx->shouldReceive('restart')->withNoArgs()->once();
@@ -434,7 +438,7 @@ class CliTest extends TestCase
      * @dataProvider invalidUnproxyDataProvider
      */
     public function itWillFailToUnproxyDomainWhenValidParametersNotAvailable(
-        array  $overrides,
+        array $overrides,
         string $expectedMessage
     ): void {
         Writer::fake();
@@ -469,8 +473,8 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('proxies')->withNoArgs()->once()->andReturn(collect([
+        $siteProxies = Mockery::mock(SiteProxy::class);
+        $siteProxies->shouldReceive('proxies')->withNoArgs()->once()->andReturn(collect([
             [
                 'url'     => 'https://mails.localhost',
                 'secured' => '✓',
@@ -482,7 +486,7 @@ class CliTest extends TestCase
                 'path'    => 'http://127.0.0.1:8888',
             ],
         ]));
-        swap(Site::class, $site);
+        swap(SiteProxy::class, $siteProxies);
 
         $this->tester->run(['command' => 'proxies']);
 
@@ -512,9 +516,12 @@ class CliTest extends TestCase
         $currentDirectory = getcwd();
         $domainName = basename($currentDirectory);
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('link')->with($currentDirectory, $domainName)->once()->andReturn('direct-path');
-        swap(Site::class, $site);
+        $siteLink = Mockery::mock(SiteLink::class);
+        $siteLink->shouldReceive('link')
+            ->with($currentDirectory, $domainName)
+            ->once()
+            ->andReturn('direct-path');
+        swap(SiteLink::class, $siteLink);
 
         $this->tester->run(['command' => 'link']);
 
@@ -525,7 +532,7 @@ class CliTest extends TestCase
 
         $content = $output->fetch();
         $this->assertStringContainsString(
-            'A ['.$domainName.'] symbolic link has been created in [direct-path]',
+            'A [' . $domainName . '] symbolic link has been created in [direct-path]',
             $content
         );
     }
@@ -539,9 +546,9 @@ class CliTest extends TestCase
 
         $domainName = basename(getcwd());
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('unlink')->with($domainName)->once();
-        swap(Site::class, $site);
+        $siteLink = Mockery::mock(SiteLink::class);
+        $siteLink->shouldReceive('unlink')->with($domainName)->once();
+        swap(SiteLink::class, $siteLink);
 
         $this->tester->run(['command' => 'unlink']);
 
@@ -552,7 +559,7 @@ class CliTest extends TestCase
 
         $content = $output->fetch();
         $this->assertStringContainsString(
-            'The ['.$domainName.'] symbolic link has been removed',
+            'The [' . $domainName . '] symbolic link has been removed',
             $content
         );
     }
@@ -564,17 +571,15 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $site = Mockery::mock(Site::class);
-        $site->shouldReceive('links')->withNoArgs()->once()->andReturn(collect([
+        $siteLink = Mockery::mock(SiteLink::class);
+        $siteLink->shouldReceive('links')->withNoArgs()->once()->andReturn(collect([
             [
-                'site'       => 'scripts',
-                'secured'    => '',
                 'url'        => 'http://scripts.test',
+                'secured'    => '✕',
                 'path'       => '/test/path',
-                'phpVersion' => '8.2',
             ],
         ]));
-        swap(Site::class, $site);
+        swap(SiteLink::class, $siteLink);
 
         $this->tester->run(['command' => 'links']);
 
@@ -585,7 +590,7 @@ class CliTest extends TestCase
 
         $content = $output->fetch();
         $this->assertStringContainsString(
-            'scripts |     | http://scripts.test | /test/path | 8.2',
+            'http://scripts.test | ✕   | /test/path',
             $content
         );
     }
@@ -598,12 +603,6 @@ class CliTest extends TestCase
                     'domain' => 'test-domain',
                 ],
                 'The [test-domain.test] site has been secured with a fresh TLS certificate',
-            ],
-            [
-                [
-                    'domain' => null,
-                ],
-                'The [dir-name.test] site has been secured with a fresh TLS certificate',
             ],
         ];
     }
@@ -618,14 +617,9 @@ class CliTest extends TestCase
 
         $domain = array_key_exists('domain', $overrides) ? $overrides['domain'] : 'test-domain';
 
-        $site = Mockery::mock(Site::class);
-        if ($domain === null) {
-            $site->shouldReceive('host')->with(getcwd())->once()->andReturn('dir-name');
-            $site->shouldReceive('secure')->with('dir-name.test')->once();
-        } else {
-            $site->shouldReceive('secure')->with($domain.'.test')->once();
-        }
-        swap(Site::class, $site);
+        $siteSecure = Mockery::mock(SiteSecure::class);
+        $siteSecure->shouldReceive('secure')->with($domain . '.test')->once();
+        swap(SiteSecure::class, $siteSecure);
 
         $nginx = Mockery::mock(Nginx::class);
         $nginx->shouldReceive('restart')->withNoArgs()->once();
@@ -653,12 +647,6 @@ class CliTest extends TestCase
                 ],
                 'The [test-domain.test] site will now serve traffic over HTTP',
             ],
-            [
-                [
-                    'domain' => null,
-                ],
-                'The [dir-name.test] site will now serve traffic over HTTP',
-            ],
         ];
     }
 
@@ -672,14 +660,9 @@ class CliTest extends TestCase
 
         $domain = array_key_exists('domain', $overrides) ? $overrides['domain'] : 'test-domain';
 
-        $site = Mockery::mock(Site::class);
-        if ($domain === null) {
-            $site->shouldReceive('host')->with(getcwd())->once()->andReturn('dir-name');
-            $site->shouldReceive('unsecure')->with('dir-name.test', true)->once();
-        } else {
-            $site->shouldReceive('unsecure')->with($domain.'.test', true)->once();
-        }
-        swap(Site::class, $site);
+        $siteSecure = Mockery::mock(SiteSecure::class);
+        $siteSecure->shouldReceive('unsecure')->with($domain . '.test', true)->once();
+        swap(SiteSecure::class, $siteSecure);
 
         $nginx = Mockery::mock(Nginx::class);
         $nginx->shouldReceive('restart')->withNoArgs()->once();
@@ -711,7 +694,7 @@ class CliTest extends TestCase
                 [
                     'domain' => null,
                 ],
-                'dir-name.test is secured',
+                'valet-linux-plus.test is secured',
             ],
             [
                 [
@@ -732,16 +715,13 @@ class CliTest extends TestCase
 
         $domain = array_key_exists('domain', $overrides) ? $overrides['domain'] : 'test-domain';
 
-        $site = Mockery::mock(Site::class);
-        if ($domain === null) {
-            $site->shouldReceive('host')->with(getcwd())->once()->andReturn('dir-name');
-        }
-        $site->shouldReceive('secured')->withNoArgs()->once()->andReturn(collect([
+        $siteSecured = Mockery::mock(SiteSecure::class);
+        $siteSecured->shouldReceive('secured')->withNoArgs()->once()->andReturn(collect([
             'domain-1.test',
             'domain-2.test',
-            'dir-name.test',
+            'valet-linux-plus.test',
         ]));
-        swap(Site::class, $site);
+        swap(SiteSecure::class, $siteSecured);
 
         $this->tester->run(['command' => 'secured', 'site' => $domain]);
 
@@ -1025,16 +1005,19 @@ class CliTest extends TestCase
      * @dataProvider isolateDirectoryDataProvider
      */
     public function itWillIsolatePhpVersion(
-        string  $phpVersion,
+        string $phpVersion,
         ?string $siteName,
-        string  $expectedSiteName,
-        bool    $isSecure
+        string $expectedSiteName,
+        bool $isSecure
     ): void {
         Writer::fake();
 
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('isolateDirectory')->with($expectedSiteName, $phpVersion, $isSecure)->once()->andReturnTrue();
-        swap(PhpFpm::class, $phpFpm);
+        $siteIsolate = Mockery::mock(SiteIsolate::class);
+        $siteIsolate->shouldReceive('isolateDirectory')
+            ->with($expectedSiteName, $phpVersion, $isSecure)
+            ->once()
+            ->andReturnTrue();
+        swap(SiteIsolate::class, $siteIsolate);
 
         $arguments = [
             'phpVersion' => $phpVersion,
@@ -1068,9 +1051,9 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('isolateDirectory')->never();
-        swap(PhpFpm::class, $phpFpm);
+        $siteIsolate = Mockery::mock(SiteIsolate::class);
+        $siteIsolate->shouldReceive('isolateDirectory')->never();
+        swap(SiteIsolate::class, $siteIsolate);
 
         $this->tester->run(['command' => 'isolate']);
 
@@ -1108,9 +1091,9 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('unIsolateDirectory')->with($expectedDomainName)->once()->andReturnTrue();
-        swap(PhpFpm::class, $phpFpm);
+        $siteIsolate = Mockery::mock(SiteIsolate::class);
+        $siteIsolate->shouldReceive('unIsolateDirectory')->with($expectedDomainName)->once()->andReturnTrue();
+        swap(SiteIsolate::class, $siteIsolate);
 
         $arguments = [];
         if ($domainName) {
@@ -1137,22 +1120,24 @@ class CliTest extends TestCase
     {
         Writer::fake();
 
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('isolatedDirectories')
+        $siteIsolate = Mockery::mock(SiteIsolate::class);
+        $siteIsolate->shouldReceive('isolatedDirectories')
             ->withNoArgs()
             ->andReturn(
                 collect([
                     [
                         'url'     => 'fpm-site.test',
+                        'secured'     => '✓',
                         'version' => '7.2',
                     ],
                     [
                         'url'     => 'second.test',
+                        'secured'     => '✕',
                         'version' => '8.1'
                     ]
                 ])
             )->once();
-        swap(PhpFpm::class, $phpFpm);
+        swap(SiteIsolate::class, $siteIsolate);
 
         $this->tester->run(['command' => 'isolated']);
 
@@ -1162,8 +1147,8 @@ class CliTest extends TestCase
         $output = Writer::output();
 
         $content = $output->fetch();
-        $this->assertStringContainsString('fpm-site.test | 7.2', $content);
-        $this->assertStringContainsString('second.test   | 8.1', $content);
+        $this->assertStringContainsString('fpm-site.test | ✓   | 7.2', $content);
+        $this->assertStringContainsString('second.test   | ✕   | 8.1', $content);
     }
 
     /**

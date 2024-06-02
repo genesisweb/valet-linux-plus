@@ -43,7 +43,7 @@ class Valet
      */
     public function symlinkToUsersBin(): void
     {
-        $this->cli->run('ln -snf '.realpath(VALET_ROOT_PATH.'/valet').' '.$this->valetBin);
+        $this->cli->run('ln -snf ' . realpath(VALET_ROOT_PATH . '/valet') . ' ' . $this->valetBin);
     }
 
     /**
@@ -54,13 +54,13 @@ class Valet
         $fallbackBin = '/usr/bin/php';
         $phpBin = $_SERVER['_'] ?? $fallbackBin;
         $phpBin = $this->files->realpath($phpBin);
-        if ($phpBin !== VALET_ROOT_PATH.'php') {
+        if ($phpBin !== VALET_ROOT_PATH . 'php') {
             ConfigurationFacade::set('fallback_binary', $phpBin);
         } else {
             ConfigurationFacade::set('fallback_binary', $fallbackBin);
         }
 
-        $this->cli->run('ln -snf '.realpath(VALET_ROOT_PATH.'/php').' '.$this->phpBin);
+        $this->cli->run('ln -snf ' . realpath(VALET_ROOT_PATH . '/php') . ' ' . $this->phpBin);
     }
 
     /**
@@ -79,16 +79,16 @@ class Valet
      */
     public function extensions(): array
     {
-        if (!$this->files->isDir(VALET_HOME_PATH.'/Extensions')) {
+        if (!$this->files->isDir(VALET_HOME_PATH . '/Extensions')) {
             return [];
         }
 
-        return collect($this->files->scandir(VALET_HOME_PATH.'/Extensions'))
+        return collect($this->files->scandir(VALET_HOME_PATH . '/Extensions'))
                     ->reject(function ($file) {
                         return $this->files->isDir($file);
                     })
                     ->map(function ($file) {
-                        return VALET_HOME_PATH.'/Extensions/'.$file;
+                        return VALET_HOME_PATH . '/Extensions/' . $file;
                     })
                     ->values()->all();
     }
@@ -182,7 +182,7 @@ class Valet
     {
         $newHomePath = VALET_HOME_PATH;
         $oldHomePath = OLD_VALET_HOME_PATH;
-        $nginxPath = $newHomePath.'/Nginx';
+        $nginxPath = $newHomePath . '/Nginx';
 
         $siteConfigs = $this->files->scandir($nginxPath);
         foreach ($siteConfigs as $siteConfig) {

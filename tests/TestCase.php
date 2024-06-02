@@ -29,7 +29,7 @@ class TestCase extends PhpUnitTestCase
      */
     public function prepTestConfig(): void
     {
-        require_once __DIR__.'/../cli/includes/helpers.php';
+        require_once __DIR__ . '/../cli/includes/helpers.php';
         Container::setInstance(new Container()); // Reset app container from previous tests
         $files = new Filesystem();
         if ($files->isDir(VALET_HOME_PATH)) {
@@ -39,9 +39,9 @@ class TestCase extends PhpUnitTestCase
         Configuration::install();
 
         // Keep this file empty, as it's tailed in a test
-        $files->touch(VALET_HOME_PATH.'/Log/nginx-error.log');
+        $files->touch(VALET_HOME_PATH . '/Log/nginx-error.log');
 
-        require __DIR__.'/../cli/app.php';
+        require __DIR__ . '/../cli/app.php';
 
         /** @var Application $app */
         $this->app = $app;

@@ -2,8 +2,6 @@
 
 namespace Valet\Facades;
 
-use Illuminate\Support\Collection;
-
 /**
  * Class PhpFpm.
  *
@@ -14,15 +12,13 @@ use Illuminate\Support\Collection;
  * @method static void         status($version = null)
  * @method static void         switchVersion(string $version, bool $updateCli = false, bool $ignoreExt = false)
  * @method static string       getCurrentVersion()
- * @method static void         isolateDirectory($site, $phpVersion, $secure = false)
- * @method static Collection   isolatedDirectories()
- * @method static void         unIsolateDirectory($site)
  * @method static false|string getPhpExecutablePath($version = null)
  * @method static string       socketFileName($version = null)
  * @method static string       normalizePhpVersion(string $version)
  * @method static string       validateVersion($version)
  * @method static string       fpmSocketFile($version)
  * @method static void         updateHomePath(string $oldHomePath, string $newHomePath)
+ * @method static void         stopIfUnused(string $version)
  */
 class PhpFpm extends Facade
 {

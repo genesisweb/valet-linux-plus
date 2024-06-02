@@ -179,21 +179,21 @@ class PhpFpmTest extends TestCase
         $this->filesystem
             ->shouldReceive('get')
             ->once()
-            ->with(VALET_ROOT_PATH.'/cli/stubs/fpm.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/fpm.conf')
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
         $this->filesystem
             ->shouldReceive('isDir')
             ->once()
-            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d')
+            ->with('/etc/php/' . $expectedVersion . '/fpm/pool.d')
             ->andReturnTrue();
 
         $this->filesystem
             ->shouldReceive('putAsUser')
             ->once()
             ->with(
-                '/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf',
-                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
+                '/etc/php/' . $expectedVersion . '/fpm/pool.d/valet.conf',
+                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH . '/' . $expectedSocketFileName),
             )
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
@@ -213,30 +213,30 @@ class PhpFpmTest extends TestCase
     {
         $this->filesystem
             ->shouldReceive('isDir')
-            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d')
+            ->with('/etc/php/' . $expectedVersion . '/fpm/pool.d')
             ->once()
             ->andReturnTrue();
 
         $this->filesystem
             ->shouldReceive('exists')
-            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf')
+            ->with('/etc/php/' . $expectedVersion . '/fpm/pool.d/valet.conf')
             ->once()
             ->andReturnTrue();
 
         $this->filesystem
             ->shouldReceive('unlink')
-            ->with('/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf')
+            ->with('/etc/php/' . $expectedVersion . '/fpm/pool.d/valet.conf')
             ->once();
 
         $this->packageManager
             ->shouldReceive('getPhpFpmName')
             ->with($expectedVersion)
             ->once()
-            ->andReturn('php'.$expectedVersion.'-fpm');
+            ->andReturn('php' . $expectedVersion . '-fpm');
 
         $this->serviceManager
             ->shouldReceive('stop')
-            ->with('php'.$expectedVersion.'-fpm')
+            ->with('php' . $expectedVersion . '-fpm')
             ->once();
 
         $this->phpFpm->uninstall($version);
@@ -255,7 +255,7 @@ class PhpFpmTest extends TestCase
         Writer::fake();
         $this->config
             ->shouldReceive('get')
-            ->with('php_version', PHP_MAJOR_VERSION. '.'.PHP_MINOR_VERSION)
+            ->with('php_version', PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION)
             ->once()
             ->andReturn($currentVersion);
 
@@ -308,14 +308,14 @@ class PhpFpmTest extends TestCase
         $this->filesystem
             ->shouldReceive('get')
             ->once()
-            ->with(VALET_ROOT_PATH.'/cli/stubs/fpm.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/fpm.conf')
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
         $this->filesystem
             ->shouldReceive('isDir')
             ->once()
             ->with(
-                '/etc/php/'.$expectedVersion.'/fpm/pool.d',
+                '/etc/php/' . $expectedVersion . '/fpm/pool.d',
             )
             ->andReturnTrue();
 
@@ -323,8 +323,8 @@ class PhpFpmTest extends TestCase
             ->shouldReceive('putAsUser')
             ->once()
             ->with(
-                '/etc/php/'.$expectedVersion.'/fpm/pool.d/valet.conf',
-                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH.'/'.$expectedSocketFileName),
+                '/etc/php/' . $expectedVersion . '/fpm/pool.d/valet.conf',
+                \sprintf('fpm.conf content %s %s %s', user(), group(), VALET_HOME_PATH . '/' . $expectedSocketFileName),
             )
             ->andReturn('fpm.conf content VALET_USER VALET_GROUP VALET_FPM_SOCKET_FILE');
 
@@ -365,22 +365,25 @@ class PhpFpmTest extends TestCase
             ->twice()
             ->andReturn(collect(array_keys($configuredSites)));
 
-        foreach($configuredSites as $configuredSite => $siteData) {
+        foreach ($configuredSites as $configuredSite => $siteData) {
             $this->filesystem
                 ->shouldReceive('get')
                 ->twice()
-                ->with(VALET_HOME_PATH.'/Nginx/'.$configuredSite)
-                ->andReturn('content unix:'.$siteData['socket_file']);
+                ->with(VALET_HOME_PATH . '/Nginx/' . $configuredSite)
+                ->andReturn('content unix:' . $siteData['socket_file']);
 
             $this->filesystem
                 ->shouldReceive('put')
                 ->once()
-                ->with(VALET_HOME_PATH.'/Nginx/'.$configuredSite, 'content unix:'.VALET_HOME_PATH.'/'.$expectedSocketFileName);
+                ->with(
+                    VALET_HOME_PATH . '/Nginx/' . $configuredSite,
+                    'content unix:' . VALET_HOME_PATH . '/' . $expectedSocketFileName
+                );
         }
 
         $this->config
             ->shouldReceive('get')
-            ->with('php_version', PHP_MAJOR_VERSION. '.'.PHP_MINOR_VERSION)
+            ->with('php_version', PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION)
             ->once()
             ->andReturn($expectedVersion);
 
@@ -388,11 +391,11 @@ class PhpFpmTest extends TestCase
             ->shouldReceive('getPhpFpmName')
             ->with($currentVersion)
             ->once()
-            ->andReturn('php'.$currentVersion.'-fpm');
+            ->andReturn('php' . $currentVersion . '-fpm');
 
         $this->serviceManager
             ->shouldReceive('stop')
-            ->with('php'.$currentVersion.'-fpm')
+            ->with('php' . $currentVersion . '-fpm')
             ->once();
 
         $this->nginx
@@ -411,7 +414,7 @@ class PhpFpmTest extends TestCase
 
         $this->commandLine
             ->shouldReceive('run')
-            ->with('update-alternatives --set php /usr/bin/php'.$expectedVersion)
+            ->with('update-alternatives --set php /usr/bin/php' . $expectedVersion)
             ->once();
 
         $this->phpFpm->switchVersion($version, true);
@@ -423,7 +426,7 @@ class PhpFpmTest extends TestCase
      */
     public function itWillRestartSuccessfully(string $version, string $expectedVersion): void
     {
-        $fpmName = 'php'.$expectedVersion.'-fpm';
+        $fpmName = 'php' . $expectedVersion . '-fpm';
 
         $this->packageManager
             ->shouldReceive('getPhpFpmName')
@@ -444,7 +447,7 @@ class PhpFpmTest extends TestCase
      */
     public function itWillStopSuccessfully(string $version, string $expectedVersion): void
     {
-        $fpmName = 'php'.$expectedVersion.'-fpm';
+        $fpmName = 'php' . $expectedVersion . '-fpm';
 
         $this->packageManager
             ->shouldReceive('getPhpFpmName')
@@ -465,7 +468,7 @@ class PhpFpmTest extends TestCase
      */
     public function itWillGetStatusSuccessfully(string $version, string $expectedVersion): void
     {
-        $fpmName = 'php'.$expectedVersion.'-fpm';
+        $fpmName = 'php' . $expectedVersion . '-fpm';
 
         $this->packageManager
             ->shouldReceive('getPhpFpmName')
@@ -478,275 +481,6 @@ class PhpFpmTest extends TestCase
             ->once();
 
         $this->phpFpm->status($expectedVersion);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillIsolateDirectory(): void
-    {
-        $this->site
-            ->shouldReceive('getSiteUrl')
-            ->with('site')
-            ->once()
-            ->andReturn('site.test');
-
-        $this->packageManager
-            ->shouldReceive('getPhpFpmName')
-            ->with('7.2')
-            ->once()
-            ->andReturn('php7.2-fpm');
-
-        $this->packageManager
-            ->shouldReceive('installed')
-            ->with('php7.2-fpm')
-            ->once()
-            ->andReturnTrue();
-
-        $this->site
-            ->shouldReceive('customPhpVersion')
-            ->with('site.test')
-            ->once()
-            ->andReturnNull();
-
-        $this->site
-            ->shouldReceive('isolate')
-            ->with('site.test', '7.2', true)
-            ->once()
-            ->andReturnNull();
-
-        $this->packageManager
-            ->shouldReceive('getPhpFpmName')
-            ->with('7.2')
-            ->once()
-            ->andReturn('php7.2-fpm');
-
-        $this->serviceManager
-            ->shouldReceive('restart')
-            ->with('php7.2-fpm')
-            ->once();
-
-        $this->nginx
-            ->shouldReceive('restart')
-            ->withNoArgs()
-            ->once();
-
-        $this->config
-            ->shouldReceive('get')
-            ->with('domain')
-            ->once()
-            ->andReturn('test');
-
-        $devTools = Mockery::mock(DevTools::class);
-        swap(DevTools::class, $devTools);
-
-        $devTools->shouldReceive('getBin')
-            ->with('php7.2', ['/usr/local/bin/php'])
-            ->once()
-            ->andReturn('/usr/bin/php7.2');
-
-        $this->config
-            ->shouldReceive('get')
-            ->with('isolated_versions', [])
-            ->once()
-            ->andReturn([]);
-
-        $this->config
-            ->shouldReceive('set')
-            ->with('isolated_versions', ['site' => '/usr/bin/php7.2'])
-            ->once();
-
-        $return = $this->phpFpm->isolateDirectory('site', '7.2', true);
-
-        $this->assertTrue($return);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillThrowExceptionWhenInvalidSiteSelected(): void
-    {
-        Writer::fake();
-
-        $this->site
-            ->shouldReceive('getSiteUrl')
-            ->with('site')
-            ->once()
-            ->andThrows(new \DomainException('invalid-directory'));
-
-        $this->packageManager
-            ->shouldNotReceive('getPhpFpmName');
-
-        $this->packageManager
-            ->shouldNotReceive('installed');
-
-        $this->site
-            ->shouldNotReceive('customPhpVersion');
-
-        $this->site
-            ->shouldNotReceive('isolate');
-
-        $this->serviceManager
-            ->shouldNotReceive('restart');
-
-        $this->nginx
-            ->shouldNotReceive('restart');
-
-        $this->config
-            ->shouldNotReceive('get');
-
-        $this->config
-            ->shouldNotReceive('set');
-
-        $return = $this->phpFpm->isolateDirectory('site', '7.2', true);
-
-        $this->assertFalse($return);
-
-        /** @var BufferedOutput $output */
-        $output = Writer::output();
-
-        $this->assertStringContainsString('invalid-directory', $output->fetch());
-    }
-
-    /**
-     * @test
-     */
-    public function itWillThrowExceptionWhenInvalidVersionGiven(): void
-    {
-        Writer::fake();
-
-        $this->site
-            ->shouldReceive('getSiteUrl')
-            ->with('site')
-            ->once()
-            ->andReturn('site.test');
-
-        $this->packageManager
-            ->shouldNotReceive('getPhpFpmName');
-
-        $this->packageManager
-            ->shouldNotReceive('installed');
-
-        $this->site
-            ->shouldNotReceive('customPhpVersion');
-
-        $this->site
-            ->shouldNotReceive('isolate');
-
-        $this->serviceManager
-            ->shouldNotReceive('restart');
-
-        $this->nginx
-            ->shouldNotReceive('restart');
-
-        $this->config
-            ->shouldNotReceive('get');
-
-        $this->config
-            ->shouldNotReceive('set');
-
-        $return = $this->phpFpm->isolateDirectory('site', '5.6', true);
-
-        $this->assertFalse($return);
-
-        /** @var BufferedOutput $output */
-        $output = Writer::output();
-
-        $this->assertStringContainsString('Invalid version [5.6] used. Supported versions are', $output->fetch());
-    }
-
-    /**
-     * @test
-     */
-    public function itWillUnIsolateDirectory(): void
-    {
-        $this->site
-            ->shouldReceive('getSiteUrl')
-            ->with('site')
-            ->once()
-            ->andReturn('site.test');
-
-        $this->site
-            ->shouldReceive('customPhpVersion')
-            ->with('site.test')
-            ->once()
-            ->andReturnNull();
-
-        $this->site
-            ->shouldReceive('removeIsolation')
-            ->with('site.test')
-            ->once()
-            ->andReturnNull();
-
-        $this->nginx
-            ->shouldReceive('restart')
-            ->withNoArgs()
-            ->once();
-
-        $this->config
-            ->shouldReceive('get')
-            ->with('domain')
-            ->once()
-            ->andReturn('test');
-
-        $this->config
-            ->shouldReceive('get')
-            ->with('isolated_versions', [])
-            ->once()
-            ->andReturn(['site' => '/usr/bin/php7.2']);
-
-        $this->config
-            ->shouldReceive('set')
-            ->with('isolated_versions', [])
-            ->once();
-
-        $this->phpFpm->unIsolateDirectory('site');
-    }
-
-    /**
-     * @test
-     */
-    public function itWillListIsolatedDirectories(): void
-    {
-        $sites = collect([
-            'fpm-site.test',
-            'second.test',
-        ]);
-        $this->nginx
-            ->shouldReceive('configuredSites')
-            ->withNoArgs()
-            ->once()
-            ->andReturn($sites);
-
-        foreach ($sites->toArray() as $site) {
-            $this->filesystem
-                ->shouldReceive('get')
-                ->with(VALET_HOME_PATH.'/Nginx/'.$site)
-                ->once()
-                ->andReturn('nginx-content ISOLATED_PHP_VERSION');
-
-            $this->site
-                ->shouldReceive('customPhpVersion')
-                ->with($site)
-                ->once()
-                ->andReturn('7.2');
-        }
-
-        $output = $this->phpFpm->isolatedDirectories();
-
-        $this->assertSame(
-            [
-                [
-                    'url' => 'fpm-site.test',
-                    'version' => '7.2',
-                ],
-                [
-                    'url' => 'second.test',
-                    'version' => '7.2',
-                ],
-            ],
-            $output->toArray()
-        );
     }
 
     public function socketFileVersionProvider(): array
@@ -839,13 +573,13 @@ class PhpFpmTest extends TestCase
         swap(DevTools::class, $devTools);
 
         $devTools->shouldReceive('getBin')
-            ->with('php'.$version, ['/usr/local/bin/php'])
+            ->with('php' . $version, ['/usr/local/bin/php'])
             ->once()
-            ->andReturn('/usr/bin/php'.$version);
+            ->andReturn('/usr/bin/php' . $version);
 
         $binFile = $this->phpFpm->getPhpExecutablePath($version);
 
-        $this->assertSame('/usr/bin/php'.$version, $binFile);
+        $this->assertSame('/usr/bin/php' . $version, $binFile);
     }
 
     /**
@@ -856,7 +590,7 @@ class PhpFpmTest extends TestCase
     {
         $socketFile = $this->phpFpm->fpmSocketFile($version);
 
-        $this->assertSame(VALET_HOME_PATH.'/'.$expectedSocketFile, $socketFile);
+        $this->assertSame(VALET_HOME_PATH . '/' . $expectedSocketFile, $socketFile);
     }
 
     public function versionDataProvider(): array

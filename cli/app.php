@@ -15,18 +15,23 @@ use Valet\Facades\Ngrok;
 use Valet\Facades\PhpFpm;
 use Valet\Facades\Requirements;
 use Valet\Facades\Site;
+use Valet\Facades\SiteIsolate;
+use Valet\Facades\SiteLink;
+use Valet\Facades\SiteProxy;
+use Valet\Facades\SiteSecure;
 use Valet\Facades\Valet;
 use Valet\Facades\ValetRedis;
 
 /**
  * Load correct autoloader depending on install location.
  */
-if (file_exists(__DIR__.'/../vendor/autoload.php')) {
-    require_once __DIR__.'/../vendor/autoload.php';
-} elseif (file_exists(__DIR__.'/../../../autoload.php')) {
-    require_once __DIR__.'/../../../autoload.php';
+
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+} elseif (file_exists(__DIR__ . '/../../../autoload.php')) {
+    require_once __DIR__ . '/../../../autoload.php';
 } else {
-    require_once getenv('HOME').'/.composer/vendor/autoload.php';
+    require_once getenv('HOME') . '/.composer/vendor/autoload.php';
 }
 
 /**
@@ -49,7 +54,7 @@ Valet::migrateConfig();
 $app->command('install [--ignore-selinux]', function ($ignoreSELinux) {
     Writer::info('Installing valet services');
 
-    passthru(dirname(__FILE__).'/scripts/update.sh'); // Clean up cruft
+    passthru(dirname(__FILE__) . '/scripts/update.sh'); // Clean up cruft
     Requirements::setIgnoreSELinux($ignoreSELinux)->check();
     Configuration::install();
     Nginx::install();
@@ -264,7 +269,7 @@ if (is_dir(VALET_HOME_PATH)) {
      * Determine if this is the latest release of Valet.
      */
     $app->command('update', function () use ($version) {
-        $script = dirname(__FILE__).'/scripts/update.sh';
+        $script = dirname(__FILE__) . '/scripts/update.sh';
 
         if (Valet::onLatestVersion($version)) {
             Writer::info('You have the latest version of Valet Linux+');
@@ -274,9 +279,9 @@ if (is_dir(VALET_HOME_PATH)) {
             Writer::warn('Updating now...');
             $latestVersion = Valet::getLatestVersion();
             if ($latestVersion) {
-                passthru($script." update $latestVersion");
+                passthru($script . " update $latestVersion");
             } else {
-                passthru($script.' update');
+                passthru($script . ' update');
             }
         }
     })->descriptions('Update Valet Linux+ and clean up cruft');
@@ -286,7 +291,7 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('domain [domain]', function ($domain = null) {
         if ($domain === null) {
-            Writer::info(\sprintf('Your current Valet domain is [%s].', Configuration::get('domain')));
+            Writer::info(sprintf('Your current Valet domain is [%s].', Configuration::get('domain')));
 
             return;
         }
@@ -295,11 +300,11 @@ if (is_dir(VALET_HOME_PATH)) {
         $oldDomain = Configuration::get('domain');
 
         Configuration::set('domain', $domain);
-        Site::resecureForNewDomain($oldDomain, $domain);
+        SiteSecure::reSecureForNewDomain($oldDomain, $domain);
         PhpFpm::restart();
         Nginx::restart();
 
-        Writer::info('Your Valet domain has been updated to ['.$domain.'].');
+        Writer::info('Your Valet domain has been updated to [' . $domain . '].');
     })->descriptions('Get or set the domain used for Valet sites');
 
     /**
@@ -307,8 +312,8 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('port [port] [--https]', function ($port, $https) {
         if ($port === null) {
-            Writer::info('Current Nginx port (HTTP): '.Configuration::get('port', 80));
-            Writer::info('Current Nginx port (HTTPS): '.Configuration::get('https_port', 443));
+            Writer::info('Current Nginx port (HTTP): ' . Configuration::get('port', 80));
+            Writer::info('Current Nginx port (HTTPS): ' . Configuration::get('https_port', 443));
 
             return;
         }
@@ -322,7 +327,7 @@ if (is_dir(VALET_HOME_PATH)) {
             Configuration::set('port', $port);
         }
 
-        Site::regenerateSecuredSitesConfig();
+        SiteSecure::regenerateSecuredSitesConfig();
 
         Nginx::restart();
         PhpFpm::restart();
@@ -338,7 +343,7 @@ if (is_dir(VALET_HOME_PATH)) {
         $driver = ValetDriver::assign(getcwd(), basename(getcwd()), '/');
 
         if ($driver) {
-            Writer::info('This site is served by ['.get_class($driver).'].');
+            Writer::info('This site is served by [' . get_class($driver) . '].');
         } else {
             Writer::warn('Valet could not determine which driver to use for this site.');
         }
@@ -365,7 +370,7 @@ if (is_dir(VALET_HOME_PATH)) {
                 return [$path];
             }, $paths);
 
-            Writer::table(['PATHS'], $paths);
+            Writer::table(['Path'], $paths);
         } else {
             Writer::warn('No paths have been registered.');
         }
@@ -396,22 +401,22 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         if (!preg_match('~^https?://.*$~', $host)) {
-            Writer::error(\sprintf('"%s" is not a valid URL', $host));
+            Writer::error(sprintf('"%s" is not a valid URL', $host));
             return;
         }
 
         $tld = Configuration::get('domain');
 
-        if (!str_ends_with($domain, '.'.$tld)) {
-            $domain .= '.'.$tld;
+        if (!str_ends_with($domain, '.' . $tld)) {
+            $domain .= '.' . $tld;
         }
 
-        Site::proxyCreate($domain, $host, $secure);
+        SiteProxy::proxyCreate($domain, $host, $secure);
         Nginx::restart();
 
         $protocol = $secure ? 'https' : 'http';
 
-        Writer::info('Valet will now proxy ['.$protocol.'://'.$domain.'] traffic to ['.$host.'].');
+        Writer::info('Valet will now proxy [' . $protocol . '://' . $domain . '] traffic to [' . $host . '].');
     })->descriptions('Create an Nginx proxy site for the specified host. Useful for docker, node etc.', [
         '--secure' => 'Create a proxy with a trusted TLS certificate',
     ]);
@@ -426,21 +431,21 @@ if (is_dir(VALET_HOME_PATH)) {
         }
 
         $tld = Configuration::get('domain');
-        if (!str_ends_with($domain, '.'.$tld)) {
-            $domain .= '.'.$tld;
+        if (!str_ends_with($domain, '.' . $tld)) {
+            $domain .= '.' . $tld;
         }
 
-        Site::proxyDelete($domain);
+        SiteSecure::unsecure($domain);
         Nginx::restart();
 
-        Writer::info('Valet will no longer proxy ['.$domain.'].');
+        Writer::info('Valet will no longer proxy [' . $domain . '].');
     })->descriptions('Delete an Nginx proxy config.');
 
     /**
      * Display all the sites that are proxies.
      */
     $app->command('proxies', function () {
-        $proxies = Site::proxies();
+        $proxies = SiteProxy::proxies();
 
         Writer::table(['URL', 'SSL', 'Host'], $proxies->all());
     })->descriptions('Display all of the proxy sites');
@@ -450,9 +455,9 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('link [name]', function ($name) {
         $name = $name ?: basename(getcwd());
-        $linkPath = Site::link(getcwd(), $name);
+        $linkPath = SiteLink::link(getcwd(), $name);
 
-        Writer::info('A ['.$name.'] symbolic link has been created in ['.$linkPath.'].');
+        Writer::info('A [' . $name . '] symbolic link has been created in [' . $linkPath . '].');
     })->descriptions('Link the current working directory to Valet');
 
     /**
@@ -460,54 +465,54 @@ if (is_dir(VALET_HOME_PATH)) {
      */
     $app->command('unlink [name]', function ($name) {
         $name = $name ?: basename(getcwd());
-        Site::unlink($name);
+        SiteLink::unlink($name);
 
-        Writer::info('The ['.$name.'] symbolic link has been removed.');
+        Writer::info('The [' . $name . '] symbolic link has been removed.');
     })->descriptions('Remove the specified Valet link');
 
     /**
      * Display all the registered symbolic links.
      */
     $app->command('links', function () {
-        $links = Site::links();
+        $links = SiteLink::links();
 
-        Writer::table(['Site', 'SSL', 'URL', 'Path', 'PHP Version'], $links->all());
+        Writer::table(['URL', 'SSL', 'Path'], $links->all());
     })->descriptions('Display all of the registered Valet links');
 
     /**
      * Secure the given domain with a trusted TLS certificate.
      */
     $app->command('secure [domain]', function ($domain = null) {
-        $url = ($domain ?: Site::host(getcwd()));
+        $url = ($domain ?: basename(getcwd()));
         $url = Configuration::parseDomain($url);
 
-        Site::secure($url);
+        SiteSecure::secure($url);
         Nginx::restart();
 
-        Writer::info('The ['.$url.'] site has been secured with a fresh TLS certificate.');
+        Writer::info('The [' . $url . '] site has been secured with a fresh TLS certificate.');
     })->descriptions('Secure the given domain with a trusted TLS certificate');
 
     /**
      * Stop serving the given domain over HTTPS and remove the trusted TLS certificate.
      */
     $app->command('unsecure [domain]', function ($domain = null) {
-        $url = ($domain ?: Site::host(getcwd()));
+        $url = ($domain ?: basename(getcwd()));
         $url = Configuration::parseDomain($url);
 
-        Site::unsecure($url, true);
+        SiteSecure::unsecure($url, true);
         Nginx::restart();
 
-        Writer::info('The ['.$url.'] site will now serve traffic over HTTP.');
+        Writer::info('The [' . $url . '] site will now serve traffic over HTTP.');
     })->descriptions('Stop serving the given domain over HTTPS and remove the trusted TLS certificate');
 
     /**
      * Determine if the site is secured or not.
      */
     $app->command('secured [site]', function ($site) {
-        $site = $site ?: Site::host(getcwd());
+        $site = $site ?: basename(getcwd());
         $site = Configuration::parseDomain($site);
 
-        if (Site::secured()->contains($site)) {
+        if (SiteSecure::secured()->contains($site)) {
             Writer::info("$site is secured.");
             return;
         }
@@ -527,23 +532,23 @@ if (is_dir(VALET_HOME_PATH)) {
         $isValid = PhpFpm::validateVersion($preferredVersion);
         if (!$isValid) {
             Writer::error(
-                \sprintf(
+                sprintf(
                     "Invalid version [%s] used. Supported versions are: %s",
                     $preferredVersion,
                     implode(', ', \Valet\PhpFpm::SUPPORTED_PHP_VERSIONS)
                 )
             );
             Writer::info(
-                \sprintf(
+                sprintf(
                     'You can still use any version from [%s] list using `valet isolate` command',
-                    \implode(', ', \Valet\PhpFpm::ISOLATION_SUPPORTED_PHP_VERSIONS)
+                    implode(', ', \Valet\PhpFpm::ISOLATION_SUPPORTED_PHP_VERSIONS)
                 )
             );
             return;
         }
 
         PhpFpm::switchVersion($preferredVersion, $updateCli, $ignoreExt);
-        Writer::info(\sprintf('PHP version successfully changed to [%s]', $preferredVersion));
+        Writer::info(sprintf('PHP version successfully changed to [%s]', $preferredVersion));
     })->descriptions(
         sprintf(
             'Set the PHP version to use, enter "default" or leave empty to use version: %s',
@@ -572,7 +577,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
         $isCreated = Mysql::createDatabase($databaseName);
         if ($isCreated) {
-            Writer::info(\sprintf('Database [%s] created successfully', $databaseName));
+            Writer::info(sprintf('Database [%s] created successfully', $databaseName));
         }
     })->descriptions('Create new database in MySQL/MariaDB');
 
@@ -583,7 +588,7 @@ if (is_dir(VALET_HOME_PATH)) {
         $databaseName = $databaseName ?: basename((string)getcwd());
 
         if (!$yes) {
-            $confirm = Writer::confirm(\sprintf('Are you sure you want to delete [%s] database?', $databaseName));
+            $confirm = Writer::confirm(sprintf('Are you sure you want to delete [%s] database?', $databaseName));
             if (!$confirm) {
                 Writer::warn('Aborted');
 
@@ -603,7 +608,7 @@ if (is_dir(VALET_HOME_PATH)) {
         $databaseName = $databaseName ?: basename((string)getcwd());
 
         if (!$yes) {
-            $confirm = Writer::confirm(\sprintf('Are you sure you want to reset [%s] database?', $databaseName));
+            $confirm = Writer::confirm(sprintf('Are you sure you want to reset [%s] database?', $databaseName));
             if (!$confirm) {
                 Writer::warn('Aborted');
 
@@ -625,7 +630,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        Writer::info(\sprintf('Database [%s] reset successfully', $databaseName));
+        Writer::info(sprintf('Database [%s] reset successfully', $databaseName));
     })->descriptions('Clear all tables for given database in MySQL/MariaDB');
 
     /**
@@ -651,7 +656,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
         Mysql::importDatabase($dumpFile, $databaseName);
 
-        Writer::info(\sprintf('Database [%s] imported successfully', $databaseName));
+        Writer::info(sprintf('Database [%s] imported successfully', $databaseName));
     })->descriptions('Import dump file for selected database in MySQL/MariaDB');
 
     /**
@@ -663,7 +668,7 @@ if (is_dir(VALET_HOME_PATH)) {
 
         $data = Mysql::exportDatabase($databaseName, $sql);
 
-        Writer::info(\sprintf("Database [%s] exported into file %s", $data['database'], $data['filename']));
+        Writer::info(sprintf("Database [%s] exported into file %s", $data['database'], $data['filename']));
     })->descriptions('Export selected MySQL/MariaDB database');
 
     /**
@@ -722,7 +727,7 @@ if (is_dir(VALET_HOME_PATH)) {
             return;
         }
 
-        $isSuccess = PhpFpm::isolateDirectory($site, $phpVersion, $secure);
+        $isSuccess = SiteIsolate::isolateDirectory($site, $phpVersion, $secure);
 
         if ($isSuccess) {
             Writer::info(sprintf('The site [%s] is now using %s.', $site, $phpVersion));
@@ -741,7 +746,7 @@ if (is_dir(VALET_HOME_PATH)) {
             $site = basename((string)getcwd());
         }
 
-        PhpFpm::unIsolateDirectory($site);
+        SiteIsolate::unIsolateDirectory($site);
 
         Writer::info(sprintf('The site [%s] is now using the default PHP version.', $site));
     })->descriptions('Stop customizing the version of PHP used by Valet to serve the current working directory', [
@@ -752,18 +757,18 @@ if (is_dir(VALET_HOME_PATH)) {
      * List isolated sites.
      */
     $app->command('isolated', function () {
-        $sites = PhpFpm::isolatedDirectories();
+        $sites = SiteIsolate::isolatedDirectories();
 
-        Writer::table(['Path', 'PHP Version'], $sites->all());
+        Writer::table(['URL', 'SSL', 'PHP Version'], $sites->all());
     })->descriptions('List all sites using isolated versions of PHP.');
 
     /**
      * Get the PHP executable path for a site.
      */
     $app->command('which-php [site]', function ($site) {
-        $site = Site::host($site ?: (string)getcwd());
+        $site = basename($site ?: (string)getcwd());
         $domain = Configuration::parseDomain($site);
-        $phpVersion = Site::customPhpVersion($domain);
+        $phpVersion = SiteIsolate::isolatedPhpVersion($domain);
 
         if (!$phpVersion) {
             $phpVersion = Site::phpRcVersion($site ?: basename(getcwd()));
@@ -802,13 +807,13 @@ if (is_dir(VALET_HOME_PATH)) {
      * Open the current directory in the browser.
      */
     $app->command('open [domain]', function ($domain = null) {
-        $url = \sprintf(
+        $url = sprintf(
             'http://%s.%s/',
-            $domain ?: Site::host(getcwd()),
+            $domain ?: basename(getcwd()),
             Configuration::get('domain')
         );
 
-        passthru('xdg-open '.escapeshellarg($url));
+        passthru('xdg-open ' . escapeshellarg($url));
     })->descriptions('Open the site for the current (or specified) directory in your browser');
 
     /**

@@ -1,6 +1,4 @@
 Remain Items:
-- Add relevant test cases
-  -
 - Enable unit coverage report
 - Add Infection
 - Valet php extension install separately so that if not installed we can install it via valet install command. (Optional)
@@ -25,3 +23,5 @@ Done Items:
 - Optimise PHP Bash file to not relay on which-php command
   - It should read fallback version from ~/.config/valet/config.json file
   - It should read isolated version for directory from ~/.config/valet/config.json file
+- Add relevant test cases
+  -

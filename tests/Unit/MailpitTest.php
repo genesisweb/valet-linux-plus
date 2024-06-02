@@ -10,7 +10,8 @@ use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Filesystem;
 use Valet\Mailpit;
-use Valet\Site;
+use Valet\SiteProxy;
+use Valet\SiteSecure;
 use Valet\Tests\TestCase;
 
 use function Valet\swap;
@@ -22,7 +23,8 @@ class MailpitTest extends TestCase
     private CommandLine|MockObject $commandLine;
     private Filesystem|MockObject $filesystem;
     private Configuration|MockObject $config;
-    private Site|MockObject $site;
+    private SiteProxy|MockObject $siteProxy;
+    private SiteSecure|MockObject $siteSecure;
     private Mailpit $mailpit;
 
     public function setUp(): void
@@ -37,8 +39,11 @@ class MailpitTest extends TestCase
         $this->config = Mockery::mock(Configuration::class);
         swap(Configuration::class, $this->config);
 
-        $this->site = Mockery::mock(Site::class);
-        swap(Site::class, $this->site);
+        $this->siteProxy = Mockery::mock(SiteProxy::class);
+        swap(SiteProxy::class, $this->siteProxy);
+
+        $this->siteSecure = Mockery::mock(SiteSecure::class);
+        swap(SiteSecure::class, $this->siteSecure);
 
         $this->mailpit = new Mailpit(
             $this->packageManager,
@@ -74,7 +79,7 @@ class MailpitTest extends TestCase
         $this->filesystem
             ->shouldReceive('get')
             ->once()
-            ->with(VALET_ROOT_PATH.'/cli/stubs/init/mailpit')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/init/mailpit')
             ->andReturn('service file content');
 
         $this->filesystem
@@ -93,7 +98,7 @@ class MailpitTest extends TestCase
             ->with('domain')
             ->andReturn('test');
 
-        $this->site
+        $this->siteProxy
             ->shouldReceive('proxyCreate')
             ->once()
             ->with('mails.test', 'http://localhost:8025', true);
@@ -128,11 +133,11 @@ class MailpitTest extends TestCase
         $this->filesystem
             ->shouldReceive('exists')
             ->once()
-            ->with(VALET_HOME_PATH."/Nginx/mailhog.test")
+            ->with(VALET_HOME_PATH . "/Nginx/mailhog.test")
             ->andReturnTrue();
 
-        $this->site
-            ->shouldReceive('proxyDelete')
+        $this->siteSecure
+            ->shouldReceive('unsecure')
             ->once()
             ->with('mailhog.test');
 

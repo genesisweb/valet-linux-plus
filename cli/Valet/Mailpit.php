@@ -6,7 +6,8 @@ use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Facades\Configuration;
-use Valet\Facades\Site;
+use Valet\Facades\SiteProxy as SiteProxyFacade;
+use Valet\Facades\SiteSecure as SiteSecureFacade;
 
 class Mailpit
 {
@@ -62,8 +63,8 @@ class Mailpit
                     $this->files->remove('/opt/valet-linux/mailhog');
                 }
                 $domain = Configuration::get('domain');
-                if ($this->files->exists(VALET_HOME_PATH."/Nginx/mailhog.$domain")) {
-                    Site::proxyDelete("mailhog.$domain");
+                if ($this->files->exists(VALET_HOME_PATH . "/Nginx/mailhog.$domain")) {
+                    SiteSecureFacade::unsecure("mailhog.$domain");
                 }
             }
         } catch (\DomainException $e) {
@@ -128,12 +129,12 @@ class Mailpit
     private function createService(): void
     {
         $servicePath = '/etc/init.d/mailpit';
-        $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit.sh';
+        $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit.sh';
         $hasSystemd = $this->sm->isSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/mailpit.service';
-            $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit';
+            $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit';
         }
 
         $this->files->put(
@@ -157,7 +158,7 @@ class Mailpit
     {
         $domain = Configuration::get('domain');
 
-        Site::proxyCreate("mails.$domain", 'http://localhost:8025', true);
+        SiteProxyFacade::proxyCreate("mails.$domain", 'http://localhost:8025', true);
     }
 
     private function isAvailable(): bool

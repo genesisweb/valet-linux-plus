@@ -51,6 +51,6 @@ return $config
         'standardize_not_equals' => true,
         'trim_array_spaces' => true,
         'visibility_required' => ['elements' => ['const']],
-        'whitespace_after_comma_in_array' => true
+        'whitespace_after_comma_in_array' => true,
     ])
     ->setFinder($finder);

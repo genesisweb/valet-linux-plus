@@ -17,6 +17,9 @@ use Valet\Valet;
 
 use function Valet\swap;
 
+/**
+ * @covers \Valet\Valet
+ */
 class ValetTest extends TestCase
 {
     private CommandLine|MockObject $commandLine;
@@ -43,7 +46,7 @@ class ValetTest extends TestCase
     {
         $this->commandLine
             ->shouldReceive('run')
-            ->with('ln -snf '.realpath(VALET_ROOT_PATH.'/valet').' /usr/local/bin/valet')
+            ->with('ln -snf ' . realpath(VALET_ROOT_PATH . '/valet') . ' /usr/local/bin/valet')
             ->once();
 
         $this->valet->symlinkToUsersBin();
@@ -71,7 +74,7 @@ class ValetTest extends TestCase
 
         $this->commandLine
             ->shouldReceive('run')
-            ->with('ln -snf '.realpath(VALET_ROOT_PATH.'/php').' /usr/local/bin/php')
+            ->with('ln -snf ' . realpath(VALET_ROOT_PATH . '/php') . ' /usr/local/bin/php')
             ->once();
 
         $this->valet->symlinkPhpToUsersBin();
@@ -106,14 +109,14 @@ class ValetTest extends TestCase
     {
         $this->filesystem
             ->shouldReceive('isDir')
-            ->with(VALET_HOME_PATH.'/Extensions')
+            ->with(VALET_HOME_PATH . '/Extensions')
             ->once()
             ->andReturn(true);
 
         $dummyExtensions = ['ext-1.php', 'ext-2.php'];
         $this->filesystem
             ->shouldReceive('scandir')
-            ->with(VALET_HOME_PATH.'/Extensions')
+            ->with(VALET_HOME_PATH . '/Extensions')
             ->once()
             ->andReturn($dummyExtensions);
 
@@ -128,8 +131,8 @@ class ValetTest extends TestCase
         $extensions = $this->valet->extensions();
 
         $this->assertSame([
-            VALET_HOME_PATH.'/Extensions/ext-1.php',
-            VALET_HOME_PATH.'/Extensions/ext-2.php',
+            VALET_HOME_PATH . '/Extensions/ext-1.php',
+            VALET_HOME_PATH . '/Extensions/ext-2.php',
         ], $extensions);
     }
 

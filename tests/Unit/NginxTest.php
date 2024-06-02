@@ -11,7 +11,7 @@ use Valet\Contracts\ServiceManager;
 use Valet\Filesystem;
 use Valet\Nginx;
 use Valet\PhpFpm;
-use Valet\Site;
+use Valet\SiteSecure;
 use Valet\Tests\TestCase;
 
 use function Valet\swap;
@@ -23,7 +23,7 @@ class NginxTest extends TestCase
     private CommandLine|MockObject $commandLine;
     private Filesystem|MockObject $filesystem;
     private Configuration|MockObject $config;
-    private Site|MockObject $site;
+    private SiteSecure|MockObject $siteSecure;
     private Nginx $nginx;
 
     public function setUp(): void
@@ -35,7 +35,7 @@ class NginxTest extends TestCase
         $this->filesystem = Mockery::mock(Filesystem::class);
         $this->commandLine = Mockery::mock(CommandLine::class);
         $this->config = Mockery::mock(Configuration::class);
-        $this->site = Mockery::mock(Site::class);
+        $this->siteSecure = Mockery::mock(SiteSecure::class);
 
         $this->nginx = new Nginx(
             $this->packageManager,
@@ -43,7 +43,7 @@ class NginxTest extends TestCase
             $this->commandLine,
             $this->filesystem,
             $this->config,
-            $this->site
+            $this->siteSecure
         );
     }
 
@@ -101,7 +101,7 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/nginx.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/nginx.conf')
             ->once()
             ->andReturn('nginx.conf content');
 
@@ -123,7 +123,7 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/valet.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/valet.conf')
             ->once()
             ->andReturn('valet.conf content');
 
@@ -161,7 +161,7 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/fastcgi_params')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/fastcgi_params')
             ->once()
             ->andReturn('fastcgi_params content');
 
@@ -172,18 +172,18 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('isDir')
-            ->with(VALET_HOME_PATH.'/Nginx')
+            ->with(VALET_HOME_PATH . '/Nginx')
             ->once()
             ->andReturnFalse();
 
         $this->filesystem
             ->shouldReceive('mkdirAsUser')
-            ->with(VALET_HOME_PATH.'/Nginx')
+            ->with(VALET_HOME_PATH . '/Nginx')
             ->once();
 
         $this->filesystem
             ->shouldReceive('putAsUser')
-            ->with(VALET_HOME_PATH.'/Nginx/.keep', "\n")
+            ->with(VALET_HOME_PATH . '/Nginx/.keep', "\n")
             ->once();
 
         $this->config
@@ -192,8 +192,8 @@ class NginxTest extends TestCase
             ->once()
             ->andReturn('test');
 
-        $this->site
-            ->shouldReceive('resecureForNewDomain')
+        $this->siteSecure
+            ->shouldReceive('reSecureForNewDomain')
             ->with('test', 'test')
             ->once();
 
@@ -207,7 +207,7 @@ class NginxTest extends TestCase
     {
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/valet.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/valet.conf')
             ->once()
             ->andReturn('valet.conf content VALET_PORT');
 
@@ -309,7 +309,7 @@ class NginxTest extends TestCase
     {
         $this->filesystem
             ->shouldReceive('scandir')
-            ->with(VALET_HOME_PATH.'/Nginx')
+            ->with(VALET_HOME_PATH . '/Nginx')
             ->once()
             ->andReturn(['site1', 'site2', 'site3', '.hiddenSite']);
 
@@ -339,7 +339,7 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/valet.conf')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/valet.conf')
             ->once()
             ->andReturn('valet.conf content VALET_FPM_SOCKET_FILE VALET_PORT');
 
@@ -347,7 +347,7 @@ class NginxTest extends TestCase
             ->shouldReceive('putAsUser')
             ->with(
                 '/etc/nginx/sites-available/valet.conf',
-                \sprintf('valet.conf content %s 80', VALET_HOME_PATH.'/valet82.sock')
+                \sprintf('valet.conf content %s 80', VALET_HOME_PATH . '/valet82.sock')
             )
             ->once();
 
@@ -374,7 +374,7 @@ class NginxTest extends TestCase
 
         $this->filesystem
             ->shouldReceive('get')
-            ->with(VALET_ROOT_PATH.'/cli/stubs/fastcgi_params')
+            ->with(VALET_ROOT_PATH . '/cli/stubs/fastcgi_params')
             ->once()
             ->andReturn('fastcgi_params content');
 

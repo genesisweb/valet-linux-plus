@@ -39,86 +39,19 @@ class SiteTest extends TestCase
     /**
      * @test
      */
-    public function itWillGetHostForSelectedPath(): void
-    {
-        $this->filesystem
-            ->shouldReceive('scandir')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites')
-            ->andReturn([]);
-
-        $host = $this->site->host('/test/home/path');
-
-        $this->assertEquals('path', $host);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillGetHostFromSitesForSelectedPath(): void
-    {
-        $this->filesystem
-            ->shouldReceive('scandir')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites')
-            ->andReturn([
-                'path',
-                'path2',
-            ]);
-
-        $this->filesystem
-            ->shouldReceive('realpath')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites/path')
-            ->andReturn('/test/home/path');
-
-        $host = $this->site->host('/test/home/path');
-
-        $this->assertEquals('path', $host);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillLinkSiteSuccessfully(): void
+    public function itWillPruneLinks(): void
     {
         $this->filesystem
             ->shouldReceive('ensureDirExists')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites', user());
-
-        $this->config
-            ->shouldReceive('addPath')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites', true);
+            ->with(VALET_HOME_PATH . '/Sites', user())
+            ->once();
 
         $this->filesystem
-            ->shouldReceive('symlinkAsUser')
-            ->once()
-            ->with('/test/home/path', VALET_HOME_PATH . '/Sites/path');
+            ->shouldReceive('removeBrokenLinksAt')
+            ->with(VALET_HOME_PATH . '/Sites')
+            ->once();
 
-        $host = $this->site->link('/test/home/path', 'path');
-
-        $this->assertEquals(VALET_HOME_PATH . '/Sites/path', $host);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillUnlinkSite(): void
-    {
-        $this->filesystem
-            ->shouldReceive('exists')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites/path')
-            ->andReturnTrue();
-
-        $this->filesystem
-            ->shouldReceive('unlink')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites/path');
-
-        $this->site->unlink('path');
+        $this->site->pruneLinks();
 
         $this->assertTrue(true);
     }
@@ -126,101 +59,117 @@ class SiteTest extends TestCase
     /**
      * @test
      */
-    public function itWillNotUnlinkWhenSiteNotLinked(): void
+    public function itWillGetSiteUrl(): void
     {
-        $this->filesystem
-            ->shouldReceive('exists')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Sites/path')
-            ->andReturnFalse();
-
-        $this->filesystem
-            ->shouldNotReceive('unlink');
-
-        $this->site->unlink('path');
-
-        $this->assertTrue(true);
-    }
-
-    /**
-     * @test
-     */
-    public function itWillLoadLinks(): void
-    {
-        $this->filesystem
-            ->shouldReceive('ensureDirExists')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Certificates', user());
-
-        $this->filesystem
-            ->shouldReceive('scanDir')
-            ->once()
-            ->with(VALET_HOME_PATH . '/Certificates')
-            ->andReturn(['path.lcl.crt']);
-
         $this->config
             ->shouldReceive('get')
             ->once()
             ->with('domain')
             ->andReturn('test');
 
+        // servedSites
         $this->config
             ->shouldReceive('get')
             ->once()
-            ->with('port', 80)
-            ->andReturn(80);
+            ->with('paths', [])
+            ->andReturn(['path1']);
 
-        $this->config
-            ->shouldReceive('get')
-            ->once()
-            ->with('https_port', 443)
-            ->andReturn(443);
-
+        $dummySites = ['test', 'site2'];
         $this->filesystem
-            ->shouldReceive('scanDir')
+            ->shouldReceive('scandir')
+            ->once()
+            ->with('path1')
+            ->andReturn($dummySites);
+
+        foreach ($dummySites as $dummySite) {
+            $this->filesystem
+            ->shouldReceive('isDir')
+            ->once()
+            ->with('path1/' . $dummySite)
+            ->andReturnTrue();
+        }
+
+        $nginxSites = ['proxy1', 'proxy2'];
+        $this->filesystem
+            ->shouldReceive('scandir')
             ->once()
             ->with(VALET_HOME_PATH . '/Sites')
-            ->andReturn(['path']);
+            ->andReturn($nginxSites);
 
+        foreach ($nginxSites as $nginxSite) {
+            $this->filesystem
+                ->shouldReceive('realpath')
+                ->once()
+                ->with(VALET_HOME_PATH . '/Sites/' . $nginxSite)
+                ->andReturn('/real/path/' . $nginxSite);
+        }
+
+        $output = $this->site->getSiteUrl('test');
+        $this->assertSame('test.test', $output);
+    }
+
+    /**
+     * @test
+     */
+    public function itWillGetPhpRcVersion(): void
+    {
+        // servedSites
+        $this->config
+            ->shouldReceive('get')
+            ->once()
+            ->with('paths', [])
+            ->andReturn(['path1']);
+
+        $dummySites = ['test', 'site2'];
         $this->filesystem
-            ->shouldReceive('readLink')
+            ->shouldReceive('scandir')
             ->once()
-            ->with(VALET_HOME_PATH . '/Sites/path')
-            ->andReturn('/test/home/path');
+            ->with('path1')
+            ->andReturn($dummySites);
 
-        $phpFpm = Mockery::mock(PhpFpm::class);
-        $phpFpm->shouldReceive('getCurrentVersion')
-            ->withNoArgs()
+        foreach ($dummySites as $dummySite) {
+            $this->filesystem
+                ->shouldReceive('isDir')
+                ->once()
+                ->with('path1/' . $dummySite)
+                ->andReturnTrue();
+        }
+
+        $nginxSites = ['proxy1', 'proxy2'];
+        $this->filesystem
+            ->shouldReceive('scandir')
             ->once()
-            ->andReturn('8.2');
-        $phpFpm->shouldReceive('normalizePhpVersion')
-            ->with('8.2')
-            ->once()
-            ->andReturn('8.2');
-        swap(PhpFpm::class, $phpFpm);
+            ->with(VALET_HOME_PATH . '/Sites')
+            ->andReturn($nginxSites);
+
+        foreach ($nginxSites as $nginxSite) {
+            $this->filesystem
+                ->shouldReceive('realpath')
+                ->once()
+                ->with(VALET_HOME_PATH . '/Sites/' . $nginxSite)
+                ->andReturn('/real/path/' . $nginxSite);
+        }
 
         $this->filesystem
             ->shouldReceive('exists')
             ->once()
-            ->with(VALET_HOME_PATH . '/Nginx/path.test')
+            ->with('path1/test/.valetphprc')
             ->andReturnTrue();
 
         $this->filesystem
             ->shouldReceive('get')
             ->once()
-            ->with(VALET_HOME_PATH . '/Nginx/path.test')
-            ->andReturn('Nginx Conf');
+            ->with('path1/test/.valetphprc')
+            ->andReturn(' 8.2 ');
 
-        $links = $this->site->links();
+        $phpFpm = Mockery::mock(PhpFpm::class);
+        $phpFpm->shouldReceive('normalizePhpVersion')
+            ->once()
+            ->with('8.2')
+            ->andReturn('8.2');
+        swap(PhpFpm::class, $phpFpm);
 
-        $this->assertSame([
-            'path' => [
-                'site' => 'path',
-                'secured' => '',
-                'url' => 'http://path.test',
-                'path' => '/test/home/path',
-                'phpVersion' => '8.2',
-            ],
-        ], $links->toArray());
+        $version = $this->site->phpRcVersion('test');
+        $this->assertSame('8.2', $version);
     }
 }

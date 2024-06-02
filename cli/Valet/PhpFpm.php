@@ -92,7 +92,7 @@ class PhpFpm
             return;
         }
 
-        $fpmConfPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
+        $fpmConfPath = $this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME;
         if ($this->files->exists($fpmConfPath)) {
             $this->files->unlink($fpmConfPath);
             $this->stop($version);
@@ -159,73 +159,6 @@ class PhpFpm
     }
 
     /**
-     * Isolate a given directory to use a specific version of PHP.
-     * @throws VersionException
-     */
-    public function isolateDirectory(string $directory, string $version, bool $secure = false): bool
-    {
-        try {
-            $site = $this->site->getSiteUrl($directory);
-
-            $version = $this->normalizePhpVersion($version);
-            $this->validateIsolationVersion($version);
-
-            $fpmName = $this->pm->getPhpFpmName($version);
-            if (!$this->pm->installed($fpmName)) {
-                $this->install($version);
-            }
-
-            $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
-
-            $this->site->isolate($site, $version, $secure);
-
-            if ($oldCustomPhpVersion) {
-                $this->stopIfUnused($oldCustomPhpVersion);
-            }
-
-            $this->restart($version);
-            $this->nginx->restart();
-
-            $this->addBinFileToConfig($version, $directory);
-        } catch (\DomainException $exception) {
-            Writer::error($exception->getMessage());
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Remove PHP version isolation for a given directory.
-     */
-    public function unIsolateDirectory(string $directory): void
-    {
-        $site = $this->site->getSiteUrl($directory);
-
-        $oldCustomPhpVersion = $this->site->customPhpVersion($site); // Example output: "74"
-
-        $this->site->removeIsolation($site);
-        if ($oldCustomPhpVersion) {
-            $this->stopIfUnused($oldCustomPhpVersion);
-        }
-        $this->nginx->restart();
-
-        $this->removeBinFromConfig($directory);
-    }
-
-    /**
-     * List isolated directories with version.
-     */
-    public function isolatedDirectories(): Collection
-    {
-        return $this->nginx->configuredSites()->filter(function ($item) {
-            return strpos($this->files->get(VALET_HOME_PATH.'/Nginx/'.$item), ISOLATED_PHP_VERSION) !== false;
-        })->map(function ($item) {
-            return ['url' => $item, 'version' => $this->normalizePhpVersion($this->site->customPhpVersion($item))];
-        });
-    }
-
-    /**
      * Get FPM socket file name for a given PHP version.
      */
     public function socketFileName(string $version = null): string
@@ -276,18 +209,18 @@ class PhpFpm
 
         $version = $this->normalizePhpVersion($version);
 
-        return DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
+        return DevToolsFacade::getBin('php' . $version, ['/usr/local/bin/php']);
     }
 
     public function fpmSocketFile(string $version): string
     {
-        return VALET_HOME_PATH.'/'.$this->socketFileName($version);
+        return VALET_HOME_PATH . '/' . $this->socketFileName($version);
     }
 
     public function updateHomePath(string $oldHomePath, string $newHomePath): void
     {
         foreach (self::ISOLATION_SUPPORTED_PHP_VERSIONS as $version) {
-            $confPath = $this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME;
+            $confPath = $this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME;
             if ($this->files->exists($confPath)) {
                 $valetConf = $this->files->get($confPath);
                 $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
@@ -311,7 +244,7 @@ class PhpFpm
     /**
      * Stop a given PHP version, if that specific version isn't being used globally or by any sites.
      */
-    private function stopIfUnused(string $version): void
+    public function stopIfUnused(string $version): void
     {
         $version = $this->normalizePhpVersion($version);
 
@@ -336,11 +269,11 @@ class PhpFpm
     {
         //Action 1: Update all separate secured versions
         $this->nginx->configuredSites()->map(function ($file) use ($version) {
-            $content = $this->files->get(VALET_HOME_PATH.'/Nginx/'.$file);
+            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
             if (!$content) {
                 return;
             }
-            if (strpos($content, '# '.ISOLATED_PHP_VERSION) !== false) {
+            if (strpos($content, '# ' . ISOLATED_PHP_VERSION) !== false) {
                 return;
             }
             preg_match_all('/unix:(.*?.sock)/m', $content, $matchCount);
@@ -349,10 +282,10 @@ class PhpFpm
             }
             $content = preg_replace(
                 '/unix:(.*?.sock)/m',
-                'unix:'.VALET_HOME_PATH.'/'.$this->socketFileName($version),
+                'unix:' . VALET_HOME_PATH . '/' . $this->socketFileName($version),
                 $content
             );
-            $this->files->put(VALET_HOME_PATH.'/Nginx/'.$file, $content);
+            $this->files->put(VALET_HOME_PATH . '/Nginx/' . $file, $content);
         });
 
         //Action 2: Update NGINX valet.conf for php socket version.
@@ -374,14 +307,14 @@ class PhpFpm
      */
     private function installConfiguration(string $version): void
     {
-        $contents = $this->files->get(VALET_ROOT_PATH.'/cli/stubs/fpm.conf');
+        $contents = $this->files->get(VALET_ROOT_PATH . '/cli/stubs/fpm.conf');
         $contents = strArrayReplace([
             'VALET_USER'            => user(),
             'VALET_GROUP'           => group(),
             'VALET_FPM_SOCKET_FILE' => $this->fpmSocketFile($version),
         ], $contents);
 
-        $this->files->putAsUser($this->fpmConfigPath($version).'/'.self::FPM_CONFIG_FILE_NAME, $contents);
+        $this->files->putAsUser($this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME, $contents);
     }
 
     /**
@@ -397,7 +330,7 @@ class PhpFpm
         })->unique();
 
         $versions = $this->nginx->configuredSites()->map(function ($file) use ($fpmSockFiles) {
-            $content = $this->files->get(VALET_HOME_PATH.'/Nginx/'.$file);
+            $content = $this->files->get(VALET_HOME_PATH . '/Nginx/' . $file);
 
             // Get the normalized PHP version for this config file, if it's defined
             foreach ($fpmSockFiles as $sock) {
@@ -427,10 +360,10 @@ class PhpFpm
 
         /** @var string $confDir */
         return collect([
-            '/etc/php/'.$version.'/fpm/pool.d', // Ubuntu
-            '/etc/php'.$version.'/fpm/pool.d', // Ubuntu
-            '/etc/php'.$version.'/php-fpm.d', // Manjaro
-            '/etc/php'.$versionWithoutDot.'/php-fpm.d', // ArchLinux
+            '/etc/php/' . $version . '/fpm/pool.d', // Ubuntu
+            '/etc/php' . $version . '/fpm/pool.d', // Ubuntu
+            '/etc/php' . $version . '/php-fpm.d', // Manjaro
+            '/etc/php' . $versionWithoutDot . '/php-fpm.d', // ArchLinux
             '/etc/php7/fpm/php-fpm.d', // openSUSE PHP7
             '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
             '/etc/php8/fpm/php-fpm.d', // openSUSE PHP8
@@ -465,35 +398,6 @@ class PhpFpm
      */
     private function getDefaultVersion(): string
     {
-        return $this->normalizePhpVersion(PHP_MAJOR_VERSION. '.'.PHP_MINOR_VERSION);
-    }
-
-    private function addBinFileToConfig(string $version, string $directoryName): void
-    {
-        $directoryName = $this->removeTld($directoryName);
-        $binaryFile = DevToolsFacade::getBin('php'.$version, ['/usr/local/bin/php']);
-        $isolatedConfig = $this->config->get('isolated_versions', []);
-        $isolatedConfig[$directoryName] = $binaryFile;
-        $this->config->set('isolated_versions', $isolatedConfig);
-    }
-
-    private function removeBinFromConfig(string $directoryName): void
-    {
-        $directoryName = $this->removeTld($directoryName);
-        $isolatedConfig = $this->config->get('isolated_versions', []);
-        if (isset($isolatedConfig[$directoryName])) {
-            unset($isolatedConfig[$directoryName]);
-            $this->config->set('isolated_versions', $isolatedConfig);
-        }
-    }
-
-    private function removeTld(string $domainName): string
-    {
-        $tld = $this->config->get('domain');
-        if (str_ends_with($domainName, \sprintf('.%s', $tld))) {
-            $domainName = str_replace(\sprintf('.%s', $tld), '', $domainName);
-        }
-
-        return $domainName;
+        return $this->normalizePhpVersion(PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION);
     }
 }
