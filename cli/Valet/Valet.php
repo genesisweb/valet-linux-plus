@@ -198,7 +198,7 @@ class Valet
 
         $nginxConfig = $this->files->get(Nginx::NGINX_CONF);
         $nginxConfig = str_replace($oldHomePath, $newHomePath, $nginxConfig);
-        $this->files->put(Nginx::SITES_AVAILABLE_CONF, $nginxConfig);
+        $this->files->put(Nginx::NGINX_CONF, $nginxConfig);
     }
 
     private function getRunningFpmVersions(string $homePath): array
