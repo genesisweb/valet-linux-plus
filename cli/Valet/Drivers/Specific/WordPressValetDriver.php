@@ -28,6 +28,7 @@ class WordPressValetDriver extends BasicValetDriver
 
     /**
      * Redirect to uri with trailing slash.
+     * @param mixed $uri
      */
     private function forceTrailingSlash($uri): ?string
     {

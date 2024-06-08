@@ -2,12 +2,11 @@
 
 namespace Valet\ServiceManagers;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\CommandLine;
 use Valet\Contracts\ServiceManager;
 use Valet\Filesystem;
-use function Valet\info;
-use function Valet\warning;
 
 class Systemd implements ServiceManager
 {
@@ -31,42 +30,45 @@ class Systemd implements ServiceManager
 
     /**
      * Start the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function start($services): void
+    public function start(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Starting $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Starting');
             $this->cli->quietly('sudo systemctl start '.$this->getRealService($service));
         }
     }
 
     /**
      * Stop the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function stop($services): void
+    public function stop(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Stopping $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Stopping');
             $this->cli->quietly('sudo systemctl stop '.$this->getRealService($service));
         }
     }
 
     /**
      * Restart the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function restart($services): void
+    public function restart(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Restarting $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Restarting');
             $this->cli->quietly('sudo systemctl restart '.$this->getRealService($service));
         }
     }
@@ -80,9 +82,9 @@ class Systemd implements ServiceManager
         $running = strpos(trim($status), 'running');
 
         if ($running) {
-            info(ucfirst($service).' is running...');
+            Writer::info(ucfirst($service).' is running...');
         } else {
-            warning(ucfirst($service).' is stopped...');
+            Writer::warn(ucfirst($service).' is stopped...');
         }
     }
 
@@ -93,7 +95,7 @@ class Systemd implements ServiceManager
     {
         $service = $this->getRealService($service);
 
-        return strpos(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled') === false;
+        return !str_contains(trim($this->cli->run(\sprintf('systemctl is-enabled %s', $service))), 'enabled');
     }
 
     /**
@@ -106,12 +108,11 @@ class Systemd implements ServiceManager
 
             if ($this->disabled($service)) {
                 $this->cli->quietly('sudo systemctl enable '.$service);
-                info(ucfirst($service).' has been enabled');
             }
 
-            info(ucfirst($service).' was already enabled');
+            Writer::twoColumnDetail(ucfirst($service), 'Enabled');
         } catch (DomainException $e) {
-            warning(ucfirst($service).' unavailable.');
+            Writer::warn(ucfirst($service).' unavailable.');
         }
     }
 
@@ -125,12 +126,11 @@ class Systemd implements ServiceManager
 
             if (!$this->disabled($service)) {
                 $this->cli->quietly('sudo systemctl disable '.$service);
-                info(ucfirst($service).' has been disabled');
             }
 
-            info(ucfirst($service).' was already disabled');
+            Writer::twoColumnDetail(ucfirst($service), 'Disabled');
         } catch (DomainException $e) {
-            warning(ucfirst($service).' unavailable.');
+            Writer::warn(ucfirst($service).' unavailable.');
         }
     }
 
@@ -154,13 +154,13 @@ class Systemd implements ServiceManager
     }
 
     /**
-     * Install Valet DNS services.
+     * Remove Valet DNS services.
      */
     public function removeValetDns(): void
     {
         $servicePath = '/etc/systemd/system/valet-dns.service';
         if ($this->files->exists($servicePath)) {
-            info('Removing Valet DNS service...');
+            Writer::info('Removing Valet DNS service...');
             $this->disable('valet-dns');
             $this->stop('valet-dns');
             $this->files->remove($servicePath);
@@ -174,13 +174,13 @@ class Systemd implements ServiceManager
 
     /**
      * Determine real service name.
-     * TODO: Validate this function
+     * @throws DomainException
      */
     private function getRealService(string $service): string
     {
         return collect($service)->first(
             function ($service) {
-                return strpos($this->cli->run("systemctl status {$service} | grep Loaded"), 'Loaded: loaded');
+                return strpos($this->cli->run("systemctl status $service | grep Loaded"), 'Loaded: loaded');
             },
             function () {
                 throw new DomainException('Unable to determine service name.');

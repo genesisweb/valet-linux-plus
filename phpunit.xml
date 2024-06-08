@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         convertDeprecationsToExceptions="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         beStrictAboutTestsThatDoNotTestAnything="false"
+>
+    <coverage includeUncoveredFiles="true"
+              pathCoverage="true"
+              ignoreDeprecatedCodeUnits="true"
+              disableCodeCoverageIgnore="true">
+        <report>
+            <html outputDirectory="coverage/html" lowUpperBound="50" highLowerBound="90"/>
+            <xml outputDirectory="coverage/xml"/>
+        </report>
+        <include>
+            <directory suffix=".php">cli/Valet</directory>
+        </include>
+    </coverage>
+    <testsuites>
+        <testsuite name="Valet Test Suite">
+            <directory suffix="Test.php">./tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+    </php>
+</phpunit>

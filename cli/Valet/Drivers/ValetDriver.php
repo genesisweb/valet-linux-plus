@@ -52,10 +52,10 @@ abstract class ValetDriver
 
         foreach ($drivers as $driver) {
             if ($driver === 'LocalValetDriver') {
-                $driver = new $driver;
+                $driver = new $driver();
             } else {
                 $className = "Valet\Drivers\\{$driver}";
-                $driver = new $className;
+                $driver = new $className();
             }
 
             if ($driver->serves($sitePath, $siteName, $driver->mutateUri($uri))) {
@@ -72,7 +72,7 @@ abstract class ValetDriver
     public static function customSiteDriver(string $sitePath): ?string
     {
         if (!file_exists($sitePath.'/LocalValetDriver.php')) {
-            return null; // TODO: Validate this.
+            return null;
         }
 
         require_once $sitePath.'/LocalValetDriver.php';

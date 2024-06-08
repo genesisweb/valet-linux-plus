@@ -16,6 +16,7 @@ class CraftValetDriver extends ValetDriver
 
     /**
      * Determine the name of the directory where the front controller lives.
+     * @param mixed $sitePath
      */
     public function frontControllerDirectory($sitePath): string
     {

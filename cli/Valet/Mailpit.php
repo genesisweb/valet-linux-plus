@@ -5,9 +5,9 @@ namespace Valet;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use Valet\Facades\CommandLine;
 use Valet\Facades\Configuration;
-use Valet\Facades\Site;
+use Valet\Facades\SiteProxy as SiteProxyFacade;
+use Valet\Facades\SiteSecure as SiteSecureFacade;
 
 class Mailpit
 {
@@ -30,15 +30,10 @@ class Mailpit
     /**
      * @var string
      */
-    const SERVICE_NAME = 'mailpit';
+    public const SERVICE_NAME = 'mailpit';
 
     /**
      * Create a new Mailpit instance.
-     *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
      *
      * @return void
      */
@@ -61,22 +56,23 @@ class Mailpit
 
         $this->sm->start(self::SERVICE_NAME);
 
-        if (!$this->sm->disabled('Mailpit')) {
-            $this->sm->disable('Mailpit');
-            if ($this->files->exists('/opt/valet-linux/Mailpit')) {
-                $this->files->remove('/opt/valet-linux/Mailpit');
+        try {
+            if (!$this->sm->disabled('mailhog')) {
+                $this->sm->disable('mailhog');
+                if ($this->files->exists('/opt/valet-linux/mailhog')) {
+                    $this->files->remove('/opt/valet-linux/mailhog');
+                }
+                $domain = Configuration::get('domain');
+                if ($this->files->exists(VALET_HOME_PATH . "/Nginx/mailhog.$domain")) {
+                    SiteSecureFacade::unsecure("mailhog.$domain");
+                }
             }
-            $domain = Configuration::get('domain');
-            if ($this->files->exists(VALET_HOME_PATH."/Nginx/Mailpit.$domain")) {
-                Site::proxyDelete("Mailpit.$domain");
-            }
+        } catch (\DomainException $e) {
         }
     }
 
     /**
      * Start the Mailpit service.
-     *
-     * @return void
      */
     public function start(): void
     {
@@ -85,8 +81,6 @@ class Mailpit
 
     /**
      * Restart the Mailpit service.
-     *
-     * @return void
      */
     public function restart(): void
     {
@@ -95,8 +89,6 @@ class Mailpit
 
     /**
      * Stop the Mailpit service.
-     *
-     * @return void
      */
     public function stop(): void
     {
@@ -105,8 +97,6 @@ class Mailpit
 
     /**
      * Mailpit service status.
-     *
-     * @return void
      */
     public function status(): void
     {
@@ -115,8 +105,6 @@ class Mailpit
 
     /**
      * Prepare Mailpit for uninstall.
-     *
-     * @return void
      */
     public function uninstall(): void
     {
@@ -140,15 +128,13 @@ class Mailpit
      */
     private function createService(): void
     {
-        info('Installing Mailpit service...');
-
         $servicePath = '/etc/init.d/mailpit';
-        $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit.sh';
+        $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit.sh';
         $hasSystemd = $this->sm->isSystemd();
 
         if ($hasSystemd) {
             $servicePath = '/etc/systemd/system/mailpit.service';
-            $serviceFile = VALET_ROOT_PATH.'/cli/stubs/init/mailpit';
+            $serviceFile = VALET_ROOT_PATH . '/cli/stubs/init/mailpit';
         }
 
         $this->files->put(
@@ -172,12 +158,9 @@ class Mailpit
     {
         $domain = Configuration::get('domain');
 
-        Site::proxyCreate("mails.$domain", 'http://localhost:8025', true);
+        SiteProxyFacade::proxyCreate("mails.$domain", 'http://localhost:8025', true);
     }
 
-    /**
-     * @return bool
-     */
     private function isAvailable(): bool
     {
         try {

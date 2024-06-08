@@ -36,7 +36,6 @@ interface PackageManager
 
     /**
      * Get Php extension pattern from distro
-     *  TODO: This function is refactored, please update the usage.
      */
     public function getPhpExtensionPrefix(string $version): string;
 
@@ -44,4 +43,9 @@ interface PackageManager
      * Restart network manager in distro
      */
     public function restartNetworkManager(): void;
+
+    /**
+     * Get package name by service
+     */
+    public function packageName(string $name): string;
 }

@@ -2,12 +2,11 @@
 
 namespace Valet\ServiceManagers;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\CommandLine;
 use Valet\Contracts\ServiceManager;
 use Valet\Filesystem;
-use function Valet\info;
-use function Valet\warning;
 
 class LinuxService implements ServiceManager
 {
@@ -31,42 +30,45 @@ class LinuxService implements ServiceManager
 
     /**
      * Start the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function start($services): void
+    public function start(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Starting $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Starting');
             $this->cli->quietly('sudo service '.$this->getRealService($service).' start');
         }
     }
 
     /**
      * Stop the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function stop($services): void
+    public function stop(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Stopping $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Stopping');
             $this->cli->quietly('sudo service '.$this->getRealService($service).' stop');
         }
     }
 
     /**
      * Restart the given services.
-     * @param array|string $services Service name
+     * @param string|string[]|null $services Service name
      */
-    public function restart($services): void
+    public function restart(array|string|null $services): void
     {
+        /** @var string[] $services */
         $services = is_array($services) ? $services : func_get_args();
 
         foreach ($services as $service) {
-            info("Restarting $service...");
+            Writer::twoColumnDetail(ucfirst($service), 'Restarting');
             $this->cli->quietly('sudo service '.$this->getRealService($service).' restart');
         }
     }
@@ -76,7 +78,14 @@ class LinuxService implements ServiceManager
      */
     public function printStatus(string $service): void
     {
-        info($this->cli->run('service '.$this->getRealService($service)));
+        $status = $this->cli->run('service '.$this->getRealService($service). ' status');
+        $running = strpos(trim($status), 'running');
+
+        if ($running) {
+            Writer::info(ucfirst($service).' is running...');
+        } else {
+            Writer::warn(ucfirst($service).' is stopped...');
+        }
     }
 
     /**
@@ -85,8 +94,8 @@ class LinuxService implements ServiceManager
     public function disabled(string $service): bool
     {
         $service = $this->getRealService($service);
-
-        return strpos(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled') === false;
+        // TODO: Do not use systemctl and stop using linux service class if systemd is available on all minimum versions
+        return !str_contains(trim($this->cli->run("systemctl is-enabled {$service}")), 'enabled');
     }
 
     /**
@@ -98,26 +107,24 @@ class LinuxService implements ServiceManager
             $service = $this->getRealService($service);
             $this->cli->quietly("sudo chmod -x /etc/init.d/{$service}");
             $this->cli->quietly("sudo update-rc.d $service defaults");
+
+            Writer::twoColumnDetail(ucfirst($service), 'Disabled');
         } catch (DomainException $e) {
-            warning(ucfirst($service).' not available.');
+            Writer::warn(ucfirst($service).' not available.');
         }
     }
 
     /**
      * Enable services.
-     *
-     * @param mixed $services Service or services to enable
-     *
-     * @return void
      */
     public function enable(string $service): void
     {
         try {
             $service = $this->getRealService($service);
             $this->cli->quietly("sudo update-rc.d $service defaults");
-            info(ucfirst($service).' has been enabled');
+            Writer::twoColumnDetail(ucfirst($service), 'Enabled');
         } catch (DomainException $e) {
-            warning(ucfirst($service).' not available.');
+            Writer::warn(ucfirst($service).' unavailable.');
         }
     }
 
@@ -148,7 +155,7 @@ class LinuxService implements ServiceManager
         $servicePath = '/etc/init.d/valet-dns';
 
         if ($this->files->exists($servicePath)) {
-            info('Removing Valet DNS service...');
+            Writer::info('Removing Valet DNS service...');
             $this->disable('valet-dns');
             $this->stop('valet-dns');
             $this->files->remove($servicePath);

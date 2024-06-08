@@ -2,11 +2,11 @@
 
 namespace Valet\PackageManagers;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use function Valet\output;
 
 class PackageKit implements PackageManager
 {
@@ -19,22 +19,15 @@ class PackageKit implements PackageManager
      */
     public $serviceManager;
     /**
-     * @var string
-     */
-    public $redisPackageName = 'redis-server';
-    /**
-     * @var string
-     */
-    public $mysqlPackageName = 'mysql-server';
-    /**
-     * @var string
-     */
-    public $mariaDBPackageName = 'mariadb-server';
-
-    /**
      * @var array
      */
-    const PHP_FPM_PATTERN_BY_VERSION = [];
+    public const PHP_FPM_PATTERN_BY_VERSION = [];
+
+    private const PACKAGES = [
+        'redis' => 'redis-server',
+        'mysql' => 'mysql-server',
+        'mariadb' => 'mariadb-server',
+    ];
 
     /**
      * Create a new Apt instance.
@@ -78,10 +71,10 @@ class PackageKit implements PackageManager
      */
     public function installOrFail(string $package): void
     {
-        output('<info>['.$package.'] is not installed, installing it now via PackageKit</info>');
+        Writer::twoColumnDetail($package, 'Installing');
 
         $this->cli->run(trim('pkcon install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
-            output(\sprintf('%s: %s', $exitCode, $errorOutput));
+            Writer::error(\sprintf('%s: %s', $exitCode, $errorOutput));
 
             throw new DomainException('PackageKit was unable to install ['.$package.'].');
         });
@@ -144,5 +137,16 @@ class PackageKit implements PackageManager
             $this->serviceManager->enable('systemd-resolved');
             $this->serviceManager->restart('systemd-resolved');
         }
+    }
+
+    /**
+     * Get package name by service.
+     */
+    public function packageName(string $name): string
+    {
+        if (isset(self::PACKAGES[$name])) {
+            return self::PACKAGES[$name];
+        }
+        throw new \InvalidArgumentException(\sprintf('Package not found by %s', $name));
     }
 }

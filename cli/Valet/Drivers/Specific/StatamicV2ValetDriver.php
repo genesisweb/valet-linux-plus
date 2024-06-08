@@ -21,11 +21,14 @@ class StatamicV2ValetDriver extends ValetDriver
     {
         if (strpos($uri, '/site') === 0 && strpos($uri, '/site/themes') !== 0) {
             return false;
-        } elseif (strpos($uri, '/local') === 0 || strpos($uri, '/statamic') === 0) {
+        }
+        if (strpos($uri, '/local') === 0 || strpos($uri, '/statamic') === 0) {
             return false;
-        } elseif ($this->isActualFile($staticFilePath = $sitePath.$uri)) {
+        }
+        if ($this->isActualFile($staticFilePath = $sitePath.$uri)) {
             return $staticFilePath;
-        } elseif ($this->isActualFile($staticFilePath = $sitePath.'/public'.$uri)) {
+        }
+        if ($this->isActualFile($staticFilePath = $sitePath.'/public'.$uri)) {
             return $staticFilePath;
         }
 

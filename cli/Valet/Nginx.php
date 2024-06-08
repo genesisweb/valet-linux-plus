@@ -2,7 +2,7 @@
 
 namespace Valet;
 
-use Tightenco\Collect\Support\Collection;
+use Illuminate\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 use Valet\Facades\PhpFpm as PhpFpmFacade;
@@ -30,40 +30,33 @@ class Nginx
      */
     public $configuration;
     /**
-     * @var Site
+     * @var SiteSecure
      */
-    public $site;
+    public $siteSecure;
     /**
      * @var string
      */
-    const NGINX_CONF = '/etc/nginx/nginx.conf';
-    const SITES_AVAILABLE_CONF = '/etc/nginx/sites-available/valet.conf';
-    const SITES_ENABLED_CONF = '/etc/nginx/sites-enabled/valet.conf';
+    public const NGINX_CONF = '/etc/nginx/nginx.conf';
+    public const SITES_AVAILABLE_CONF = '/etc/nginx/sites-available/valet.conf';
+    public const SITES_ENABLED_CONF = '/etc/nginx/sites-enabled/valet.conf';
 
     /**
      * Create a new Nginx instance.
-     *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     * @param Filesystem     $files
-     * @param Configuration  $configuration
-     * @param Site           $site
      *
      * @return void
      */
     public function __construct(
         PackageManager $pm,
         ServiceManager $sm,
-        CommandLine    $cli,
-        Filesystem     $files,
-        Configuration  $configuration,
-        Site           $site
+        CommandLine $cli,
+        Filesystem $files,
+        Configuration $configuration,
+        SiteSecure $siteSecure
     ) {
         $this->cli = $cli;
         $this->pm = $pm;
         $this->sm = $sm;
-        $this->site = $site;
+        $this->siteSecure = $siteSecure;
         $this->files = $files;
         $this->configuration = $configuration;
     }
@@ -94,7 +87,7 @@ class Nginx
             'VALET_HOME_PATH'   => VALET_HOME_PATH,
             'VALET_SERVER_PATH' => VALET_SERVER_PATH,
             'VALET_PORT'        => $newPort,
-        ], $this->files->get(__DIR__.'/../stubs/valet.conf'));
+        ], $this->files->get(VALET_ROOT_PATH . '/cli/stubs/valet.conf'));
         $this->files->putAsUser(self::SITES_AVAILABLE_CONF, $valetConfig);
     }
 
@@ -143,9 +136,9 @@ class Nginx
      */
     public function configuredSites(): Collection
     {
-        return collect($this->files->scandir(VALET_HOME_PATH.'/Nginx'))
+        return collect($this->files->scandir(VALET_HOME_PATH . '/Nginx'))
             ->reject(function ($file) {
-                return starts_with($file, '.');
+                return str_starts_with($file, '.');
             });
     }
 
@@ -158,11 +151,11 @@ class Nginx
     {
         $valetConf = strArrayReplace([
             'VALET_HOME_PATH'       => VALET_HOME_PATH,
-            'VALET_FPM_SOCKET_FILE' => VALET_HOME_PATH.'/'.PhpFpmFacade::socketFileName($phpVersion),
+            'VALET_FPM_SOCKET_FILE' => VALET_HOME_PATH . '/' . PhpFpmFacade::socketFileName($phpVersion),
             'VALET_SERVER_PATH'     => VALET_SERVER_PATH,
             'VALET_STATIC_PREFIX'   => VALET_STATIC_PREFIX,
-            'VALET_PORT'            => $this->configuration->read()['port'],
-        ], $this->files->get(__DIR__.'/../stubs/valet.conf'));
+            'VALET_PORT'            => $this->configuration->get('port'),
+        ], $this->files->get(VALET_ROOT_PATH . '/cli/stubs/valet.conf'));
         $this->files->putAsUser(self::SITES_AVAILABLE_CONF, $valetConf);
 
         if ($this->files->exists('/etc/nginx/sites-enabled/default')) {
@@ -174,7 +167,7 @@ class Nginx
 
         $this->files->putAsUser(
             '/etc/nginx/fastcgi_params',
-            $this->files->get(__DIR__.'/../stubs/fastcgi_params')
+            $this->files->get(VALET_ROOT_PATH . '/cli/stubs/fastcgi_params')
         );
     }
 
@@ -183,9 +176,9 @@ class Nginx
      */
     private function rewriteSecureNginxFiles(): void
     {
-        $domain = $this->configuration->read()['domain'];
+        $domain = $this->configuration->get('domain');
 
-        $this->site->resecureForNewDomain($domain, $domain);
+        $this->siteSecure->reSecureForNewDomain($domain, $domain);
     }
 
     /**
@@ -207,7 +200,7 @@ class Nginx
      */
     private function installConfiguration(): void
     {
-        $contents = $this->files->get(__DIR__.'/../stubs/nginx.conf');
+        $contents = $this->files->get(VALET_ROOT_PATH . '/cli/stubs/nginx.conf');
         $nginxConfig = self::NGINX_CONF;
 
         $pidPath = 'pid /run/nginx.pid';
@@ -237,11 +230,11 @@ class Nginx
      */
     private function installNginxDirectory(): void
     {
-        if (!$this->files->isDir($nginxDirectory = VALET_HOME_PATH.'/Nginx')) {
+        if (!$this->files->isDir($nginxDirectory = VALET_HOME_PATH . '/Nginx')) {
             $this->files->mkdirAsUser($nginxDirectory);
         }
 
-        $this->files->putAsUser($nginxDirectory.'/.keep', "\n");
+        $this->files->putAsUser($nginxDirectory . '/.keep', "\n");
 
         $this->rewriteSecureNginxFiles();
     }

@@ -104,9 +104,9 @@ class Server
     public function siteNameFromHttpHost(string $httpHost): string
     {
         $siteName = basename(
-        // Filter host to support wildcard dns feature
+            // Filter host to support wildcard dns feature
             $this->allowWildcardDnsDomains($httpHost),
-            '.'.$this->config['tld']
+            '.'.$this->config['domain']
         );
 
         if (strpos($siteName, 'www.') === 0) {
@@ -204,11 +204,10 @@ class Server
 
     /**
      * Return the default site path for uncaught URLs, if it's set.
-     **/
+     */
     public function defaultSitePath(): ?string
     {
-        if (
-            isset($this->config['default'])
+        if (isset($this->config['default'])
             && is_string($this->config['default'])
             && is_dir($this->config['default'])
         ) {

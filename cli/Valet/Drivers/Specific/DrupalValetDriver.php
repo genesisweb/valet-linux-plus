@@ -72,6 +72,7 @@ class DrupalValetDriver extends ValetDriver
 
     /**
      * Add any matching subdirectory to the site path.
+     * @param mixed $sitePath
      */
     public function addSubdirectory($sitePath): string
     {

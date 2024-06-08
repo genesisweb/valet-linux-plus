@@ -2,56 +2,24 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use Exception;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
 
 class DnsMasq
 {
-    /**
-     * @var PackageManager
-     */
-    public $pm;
-    /**
-     * @var ServiceManager
-     */
-    public $sm;
-    /**
-     * @var CommandLine
-     */
-    public $cli;
-    /**
-     * @var Filesystem
-     */
-    public $files;
-    /**
-     * @var string
-     */
-    public $rclocal = '/etc/rc.local';
-    /**
-     * @var string
-     */
-    public $resolvconf = '/etc/resolv.conf';
-    /**
-     * @var string
-     */
-    public $dnsmasqconf = '/etc/dnsmasq.conf';
-    /**
-     * @var string
-     */
-    public $dnsmasqOpts = '/etc/dnsmasq.d/options';
-    /**
-     * @var string
-     */
-    public $resolvedConfigPath = '/etc/systemd/resolved.conf';
-    /**
-     * @var string
-     */
-    public $configPath = '/etc/dnsmasq.d/valet';
-    /**
-     * @var string
-     */
-    public $nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
+    public PackageManager $pm;
+    public ServiceManager $sm;
+    public CommandLine $cli;
+    public Filesystem $files;
+    public string $rclocal = '/etc/rc.local';
+    public string $resolvconf = '/etc/resolv.conf';
+    public string $dnsmasqconf = '/etc/dnsmasq.conf';
+    public string $dnsmasqOpts = '/etc/dnsmasq.d/options';
+    public string $resolvedConfigPath = '/etc/systemd/resolved.conf';
+    public string $configPath = '/etc/dnsmasq.d/valet';
+    public string $nmConfigPath = '/etc/NetworkManager/conf.d/valet.conf';
 
     /**
      * Create a new DnsMasq instance.
@@ -69,7 +37,7 @@ class DnsMasq
      *
      * @throws Exception
      */
-    public function install(string $domain = 'test'): void
+    public function install(string $domain): void
     {
         $this->dnsmasqSetup();
         $this->stopResolved();
@@ -115,7 +83,7 @@ class DnsMasq
         $this->files->unlink($this->nmConfigPath);
         $this->files->restore($this->resolvedConfigPath);
 
-        $this->lockResolvConf(false);
+        $this->lockResolvConf();
         $this->files->restore($this->rclocal);
 
         $this->cli->passthru('rm -f /etc/resolv.conf');
@@ -129,21 +97,19 @@ class DnsMasq
         $this->pm->restartNetworkManager();
         $this->sm->restart('dnsmasq');
 
-        info('Valet DNS changes have been rolled back');
+        Writer::info('Valet DNS changes have been rolled back');
     }
 
     /**
      * Install and configure DnsMasq.
      */
-    private function lockResolvConf(bool $lock = true): void
+    private function lockResolvConf(): void
     {
-        $arg = $lock ? '+i' : '-i';
-
         if (!$this->files->isLink($this->resolvconf)) {
             $this->cli->run(
-                "chattr {$arg} {$this->resolvconf}",
+                "chattr -i $this->resolvconf",
                 function ($code, $msg) {
-                    warning($msg);
+                    Writer::warn($msg);
                 }
             );
         }
@@ -202,14 +168,23 @@ class DnsMasq
 
         $this->files->uncommentLine('IGNORE_RESOLVCONF', '/etc/default/dnsmasq');
 
-        $this->lockResolvConf(false);
+        $this->lockResolvConf();
         $this->mergeDns();
 
         $this->files->unlink('/etc/dnsmasq.d/network-manager');
         $this->files->backup($this->dnsmasqconf);
 
-        $this->files->putAsUser($this->dnsmasqconf, $this->files->get(__DIR__.'/../stubs/dnsmasq.conf'));
-        $this->files->putAsUser($this->dnsmasqOpts, $this->files->get(__DIR__.'/../stubs/dnsmasq_options'));
-        $this->files->putAsUser($this->nmConfigPath, $this->files->get(__DIR__.'/../stubs/networkmanager.conf'));
+        $this->files->putAsUser(
+            $this->dnsmasqconf,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq.conf')
+        );
+        $this->files->putAsUser(
+            $this->dnsmasqOpts,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq_options')
+        );
+        $this->files->putAsUser(
+            $this->nmConfigPath,
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/networkmanager.conf')
+        );
     }
 }

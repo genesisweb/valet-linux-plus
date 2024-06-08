@@ -2,6 +2,7 @@
 
 namespace Valet;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
@@ -11,38 +12,27 @@ class DevTools
     /**
      * Sublime binary selector.\
      */
-    const VS_CODE = 'code';
+    public const VS_CODE = 'code';
+
     /**
      * Sublime binary selector.
      */
-    const SUBLIME = 'subl';
+    public const SUBLIME = 'subl';
 
     /**
      * PHPStorm binary selector.
      */
-    const PHP_STORM = 'phpstorm.sh';
+    public const PHP_STORM = 'phpstorm.sh';
 
     /**
      * Atom binary selector.
      */
-    const ATOM = 'atom';
+    public const ATOM = 'atom';
 
-    /**
-     * @var PackageManager
-     */
-    public $pm;
-    /**
-     * @var ServiceManager
-     */
-    public $sm;
-    /**
-     * @var CommandLine
-     */
-    public $cli;
-    /**
-     * @var Filesystem
-     */
-    public $files;
+    public PackageManager $pm;
+    public ServiceManager $sm;
+    public CommandLine $cli;
+    public Filesystem $files;
 
     /**
      * Create a new DevTools instance.
@@ -56,23 +46,41 @@ class DevTools
     }
 
     /**
-     * @return false|string
+     * @param string[] $ignoredServices
      */
-    public function getBin(string $service)
+    public function getBin(string $service, array $ignoredServices = []): false|string
     {
-        if (!($bin = $this->getService($service))) {
-            $bin = $this->getService($service, true);
+        $bin = $this->getService($service);
+
+        $bin = trim($bin, "\n");
+        if (count($ignoredServices) && in_array($bin, $ignoredServices)) {
+            $bin = null;
         }
+
+        if (!$bin) {
+            $bin = $this->getServiceByLocate("bin/$service");
+        }
+
+        if (!$bin) {
+            return false;
+        }
+
+        $bin = trim($bin, "\n");
+        /** @var string[] $bins */
         $bins = preg_split('/\n/', $bin);
         $servicePath = null;
         foreach ($bins as $bin) {
-            if (endsWith($bin, "bin/${service}")) {
+            if ((count($ignoredServices) && !in_array($bin, $ignoredServices))
+                || !count($ignoredServices)
+            ) {
                 $servicePath = $bin;
                 break;
             }
         }
-        if ($servicePath) {
-            return trim(preg_replace('/\s\s+/', ' ', $servicePath));
+        if ($servicePath !== null) {
+            /** @var string $servicePath */
+            $servicePath = preg_replace('/\s\s+/', ' ', $servicePath);
+            return trim($servicePath);
         }
 
         return false;
@@ -80,10 +88,10 @@ class DevTools
 
     public function run(string $folder, string $service): void
     {
-        if ($this->ensureInstalled($service)) {
-            $this->runService($service, $folder);
+        if ($bin = $this->ensureInstalled($service)) {
+            $this->runService($bin, $folder);
         } else {
-            warning("$service not available");
+            Writer::warn("$service not available");
         }
     }
 
@@ -98,13 +106,11 @@ class DevTools
     /**
      * @return false|string
      */
-    private function getService(string $service, bool $locate = false)
+    private function getService(string $service)
     {
         try {
-            $locator = $locate ? 'locate' : 'which';
-
             return $this->cli->run(
-                "$locator $service",
+                "which $service",
                 function () {
                     throw new DomainException('Service not available');
                 }
@@ -114,14 +120,25 @@ class DevTools
         }
     }
 
-    private function runService(string $service, ?string $folder = null): void
+    /**
+     * @return false|string
+     */
+    private function getServiceByLocate(string $service)
     {
-        $bin = $this->getBin($service);
-
         try {
-            $this->cli->quietly("$bin $folder");
+            return $this->cli->run(
+                "locate --regex $service$",
+                function () {
+                    throw new DomainException('Service not available');
+                }
+            );
         } catch (DomainException $e) {
-            warning("Error while opening [$folder] with $service");
+            return false;
         }
+    }
+
+    private function runService(string $bin, ?string $folder = null): void
+    {
+        $this->cli->quietly("$bin $folder");
     }
 }

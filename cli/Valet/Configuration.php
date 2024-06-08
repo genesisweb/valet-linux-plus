@@ -6,7 +6,7 @@ use Exception;
 
 class Configuration
 {
-    public $files;
+    public Filesystem $files;
 
     /**
      * Create a new Valet configuration class instance.
@@ -44,80 +44,6 @@ class Configuration
     }
 
     /**
-     * Create the Valet configuration directory.
-     */
-    public function createConfigurationDirectory(): void
-    {
-        $this->files->ensureDirExists(VALET_HOME_PATH, user());
-    }
-
-    /**
-     * Create the Valet drivers directory.
-     */
-    public function createDriversDirectory(): void
-    {
-        if ($this->files->isDir($driversDirectory = VALET_HOME_PATH.'/Drivers')) {
-            return;
-        }
-
-        $this->files->mkdirAsUser($driversDirectory);
-
-        $this->files->putAsUser(
-            $driversDirectory.'/SampleValetDriver.php',
-            $this->files->get(__DIR__.'/../stubs/SampleValetDriver.php')
-        );
-    }
-
-    /**
-     * Create the Valet sites directory.
-     */
-    public function createSitesDirectory(): void
-    {
-        $this->files->ensureDirExists(VALET_HOME_PATH.'/Sites', user());
-    }
-
-    /**
-     * Create the directory for the Valet extensions.
-     */
-    public function createExtensionsDirectory(): void
-    {
-        $this->files->ensureDirExists(VALET_HOME_PATH.'/Extensions', user());
-    }
-
-    /**
-     * Create the directory for Nginx logs.
-     */
-    public function createLogDirectory(): void
-    {
-        $this->files->ensureDirExists(VALET_HOME_PATH.'/Log', user());
-
-        $this->files->touch(VALET_HOME_PATH.'/Log/nginx-error.log');
-    }
-
-    /**
-     * Create the directory for SSL certificates.
-     */
-    public function createCertificatesDirectory(): void
-    {
-        $this->files->ensureDirExists(VALET_HOME_PATH.'/Certificates', user());
-    }
-
-    /**
-     * Write the base, initial configuration for Valet.
-     */
-    public function writeBaseConfiguration(): void
-    {
-        if (!$this->files->exists($this->path())) {
-            $this->write([
-                'domain'                => 'test',
-                'paths'                 => [],
-                'port'                  => '80',
-                'installed_php_version' => PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION,
-            ]);
-        }
-    }
-
-    /**
      * Add the given path to the configuration.
      */
     public function addPath(string $path, bool $prepend = false): void
@@ -127,14 +53,6 @@ class Configuration
 
             $config['paths'] = collect($config['paths'])->{$method}($path)->unique()->all();
         }));
-    }
-
-    /**
-     * Prepend the given path to the configuration.
-     */
-    public function prependPath(string $path): void
-    {
-        $this->addPath($path, true);
     }
 
     /**
@@ -166,14 +84,6 @@ class Configuration
     }
 
     /**
-     * Read the configuration file as JSON.
-     */
-    public function read(): array
-    {
-        return json_decode($this->files->get($this->path()), true);
-    }
-
-    /**
      * Get a configuration value.
      * @param mixed $default
      * @return mixed
@@ -195,13 +105,22 @@ class Configuration
         return $this->updateKey($key, $value);
     }
 
+    public function parseDomain(string $siteName): string
+    {
+        $domain = $this->get('domain');
+        if (str_ends_with($siteName, ".$domain") !== true) {
+            return \sprintf('%s.%s', $siteName, $domain);
+        }
+        return $siteName;
+    }
+
     /**
      * Update a specific key in the configuration file.
      *
      * @param mixed $value
      * @return array
      */
-    public function updateKey(string $key, $value)
+    private function updateKey(string $key, $value)
     {
         return tap($this->read(), function (&$config) use ($key, $value) {
             $config[$key] = $value;
@@ -212,7 +131,7 @@ class Configuration
     /**
      * Write the given configuration to disk.
      */
-    public function write(array $config): void
+    private function write(array $config): void
     {
         $this->files->putAsUser(
             $this->path(),
@@ -224,9 +143,90 @@ class Configuration
     }
 
     /**
+     * Read the configuration file as JSON.
+     */
+    private function read(): array
+    {
+        return json_decode($this->files->get($this->path()), true);
+    }
+
+    /**
+     * Create the Valet configuration directory.
+     */
+    private function createConfigurationDirectory(): void
+    {
+        $this->files->ensureDirExists(VALET_HOME_PATH, user());
+    }
+
+    /**
+     * Create the Valet drivers directory.
+     */
+    private function createDriversDirectory(): void
+    {
+        if ($this->files->isDir($driversDirectory = VALET_HOME_PATH.'/Drivers')) {
+            return;
+        }
+
+        $this->files->mkdirAsUser($driversDirectory);
+
+        $this->files->putAsUser(
+            $driversDirectory.'/SampleValetDriver.php',
+            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/SampleValetDriver.php')
+        );
+    }
+
+    /**
+     * Create the Valet sites directory.
+     */
+    private function createSitesDirectory(): void
+    {
+        $this->files->ensureDirExists(VALET_HOME_PATH.'/Sites', user());
+    }
+
+    /**
+     * Create the directory for the Valet extensions.
+     */
+    private function createExtensionsDirectory(): void
+    {
+        $this->files->ensureDirExists(VALET_HOME_PATH.'/Extensions', user());
+    }
+
+    /**
+     * Create the directory for Nginx logs.
+     */
+    private function createLogDirectory(): void
+    {
+        $this->files->ensureDirExists(VALET_HOME_PATH.'/Log', user());
+
+        $this->files->touch(VALET_HOME_PATH.'/Log/nginx-error.log');
+    }
+
+    /**
+     * Create the directory for SSL certificates.
+     */
+    private function createCertificatesDirectory(): void
+    {
+        $this->files->ensureDirExists(VALET_HOME_PATH.'/Certificates', user());
+    }
+
+    /**
+     * Write the base, initial configuration for Valet.
+     */
+    private function writeBaseConfiguration(): void
+    {
+        if (!$this->files->exists($this->path())) {
+            $this->write([
+                'domain'                => 'test',
+                'paths'                 => [],
+                'port'                  => '80',
+            ]);
+        }
+    }
+
+    /**
      * Get the configuration file path.
      */
-    public function path(): string
+    private function path(): string
     {
         return VALET_HOME_PATH.'/config.json';
     }
