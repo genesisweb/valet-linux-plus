@@ -152,6 +152,10 @@ class Valet
             }
         }
 
+        if ($this->files->exists($oldHomePath . '/valet.sock')) {
+            PhpFpmFacade::stop();
+        }
+
         // Copy directory
         $this->files->copyDirectory($oldHomePath, $newHomePath);
 

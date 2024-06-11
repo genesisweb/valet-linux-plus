@@ -21,7 +21,9 @@ class Dnf implements PackageManager
     /**
      * @var array
      */
-    public const PHP_FPM_PATTERN_BY_VERSION = [];
+    public const PHP_FPM_PATTERN_BY_VERSION = [
+        '8.3' => 'php-fpm',
+    ];
 
     private const PACKAGES = [
         'redis' => 'redis',
