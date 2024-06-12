@@ -3,10 +3,8 @@
 namespace Valet;
 
 use ConsoleComponents\Writer;
-use Illuminate\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Contracts\ServiceManager;
-use Valet\Exceptions\VersionException;
 use Valet\Facades\DevTools as DevToolsFacade;
 
 class PhpFpm

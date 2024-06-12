@@ -5,7 +5,6 @@ namespace Valet\Tests\Unit;
 use ConsoleComponents\Writer;
 use Mockery;
 use PHPUnit\Framework\MockObject\MockObject;
-use Symfony\Component\Console\Output\BufferedOutput;
 use Valet\CommandLine;
 use Valet\Configuration;
 use Valet\Contracts\PackageManager;
