@@ -14,26 +14,6 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Taylor Otwell",
-            "email": "taylorotwell@gmail.com"
-        },
-        {
-            "name": "Adam Wathan",
-            "email": "adam.wathan@gmail.com"
-        },
-        {
-            "name": "Carlos Priego",
-            "email": "carlos.enrique.priego@gmail.com"
-        },
-        {
-            "name": "Leonardo Nodari",
-            "email": "nodarileonardo@gmail.com"
-        },
-        {
-            "name": "Joaquín Marcher",
-            "email": "joaquin@marcher.com.uy"
-        },
-        {
             "name": "Uttam Rabadiya",
             "email": "mail@uttam.dev"
         },
@@ -45,7 +25,6 @@
     "autoload": {
         "files": [
             "cli/includes/compatibility.php",
-            "cli/includes/facades.php",
             "cli/includes/helpers.php"
         ],
         "psr-4": {
@@ -58,18 +37,27 @@
         }
     },
     "require": {
+        "ext-pdo": "*",
         "ext-posix": "*",
         "ext-json": "*",
-        "php": "^7.1|^7.2|^7.3|^8.0|^8.1|^8.2|^8.3",
-        "illuminate/container": "~5.1|^6.0|^7.0|^8.0|^9.0|^10.0",
-        "mnapoli/silly": "~1.1",
-        "symfony/process": "^3.0|^4.0|^5.0|^6.0",
-        "nategood/httpful": "~0.2",
-        "tightenco/collect": "^5.3|^6.0|^7.0|^8.0"
+        "ext-mbstring": "*",
+        "ext-xml": "*",
+        "php": "^8.2|^8.3",
+        "illuminate/container": "^11.0",
+        "mnapoli/silly": "^1.9",
+        "symfony/process": "^7.0",
+        "nategood/httpful": "^0.3",
+        "illuminate/collections": "^11.4",
+        "uttamrabadiya/console-components": "^1.0.1"
     },
     "require-dev": {
         "mockery/mockery": "^1.2.3",
-        "phpunit/phpunit": "~5.5|^9.0"
+        "phpunit/phpunit": "~5.5|^9.0",
+        "phpstan/phpstan": "^1.4",
+        "squizlabs/php_codesniffer": "^3.9",
+        "friendsofphp/php-cs-fixer": "^3.3",
+        "symfony/var-dumper": "^7.0",
+        "ext-zip": "*"
     },
     "scripts": {
         "post-install-cmd": [

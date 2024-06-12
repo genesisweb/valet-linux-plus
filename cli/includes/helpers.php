@@ -1,145 +1,58 @@
 <?php
 
+namespace Valet;
+
+use Exception;
 use Illuminate\Container\Container;
-use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Contracts\Container\BindingResolutionException;
 
 /**
- * Define the ~/.valet path as a constant.
+ * Define constants.
  */
+if (! defined('VALET_HOME_PATH')) {
+    if (testing()) {
+        define('VALET_HOME_PATH', __DIR__.'/../../tests/config/valet');
+        define('OLD_VALET_HOME_PATH', __DIR__.'/../../tests/old-config/valet');
+
+    } else {
+        define('VALET_HOME_PATH', $_SERVER['HOME'].'/.config/valet');
+        define('OLD_VALET_HOME_PATH', $_SERVER['HOME'].'/.valet');
+    }
+}
+
+if (! defined('VALET_STATIC_PREFIX')) {
+    define('VALET_STATIC_PREFIX', '41c270e4-5535-4daa-b23e-c269744c2f45');
+}
 define('VALET_LOOPBACK', '127.0.0.1');
-define('VALET_HOME_PATH', $_SERVER['HOME'].'/.valet');
 define('VALET_ROOT_PATH', realpath(__DIR__.'/../../'));
-define('VALET_BIN_PATH', realpath(__DIR__.'/../../bin/'));
 define('VALET_SERVER_PATH', realpath(__DIR__.'/../../server.php'));
-define('VALET_STATIC_PREFIX', '41c270e4-5535-4daa-b23e-c269744c2f45');
 define('ISOLATED_PHP_VERSION', 'ISOLATED_PHP_VERSION');
 
 /**
- * Output the given text to the console.
- *
- * @param string $output
- *
- * @return void
+ * Return whether the app is in the testing environment.
  */
-function info($output)
+function testing(): bool
 {
-    output('<info>'.$output.'</info>');
-}
-
-/**
- * Output the given text to the console.
- *
- * @param string $output
- *
- * @return void
- */
-function warning($output)
-{
-    output('<fg=red>'.$output.'</>');
-}
-
-/**
- * Output a table to the console.
- *
- * @param array $headers
- * @param array $rows
- *
- * @return void
- */
-function table(array $headers = [], array $rows = [])
-{
-    $table = new Table(new ConsoleOutput());
-
-    $table->setHeaders($headers)->setRows($rows);
-
-    $table->render();
-}
-
-/**
- * Output the given text to the console.
- *
- * @param string $output
- *
- * @return void
- */
-function output($output)
-{
-    if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing') {
-        return;
-    }
-    if (is_null($output)) {
-        $output = '';
-    }
-
-    (new ConsoleOutput())->writeln($output);
+    return strpos($_SERVER['SCRIPT_NAME'], 'phpunit') !== false;
 }
 
 if (!function_exists('resolve')) {
     /**
      * Resolve the given class from the container.
-     *
-     * @param string $class
-     *
      * @return mixed
+     * @throws BindingResolutionException
      */
-    function resolve($class)
+    function resolve(string $class)
     {
         return Container::getInstance()->make($class);
     }
 }
 
-if (!function_exists('ends_with')) {
-    /**
-     * Determine if a given string ends with a given substring.
-     *
-     * @param string       $haystack
-     * @param string|array $needles
-     *
-     * @return bool
-     */
-    function ends_with($haystack, $needles)
-    {
-        foreach ((array) $needles as $needle) {
-            if (substr($haystack, -strlen($needle)) === (string) $needle) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-}
-
-if (!function_exists('starts_with')) {
-    /**
-     * Determine if a given string starts with a given substring.
-     *
-     * @param string          $haystack
-     * @param string|string[] $needles
-     *
-     * @return bool
-     */
-    function starts_with($haystack, $needles)
-    {
-        foreach ((array) $needles as $needle) {
-            if ((string) $needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-}
-
 /**
  * Swap the given class implementation in the container.
- *
- * @param string $class
  * @param mixed  $instance
- *
- * @return void
  */
-function swap($class, $instance)
+function swap(string $class, $instance): void
 {
     Container::getInstance()->instance($class, $instance);
 }
@@ -147,16 +60,10 @@ function swap($class, $instance)
 if (!function_exists('retry')) {
     /**
      * Retry the given function N times.
-     *
-     * @param int      $retries
-     * @param callable $fn
-     * @param int      $sleep
-     *
      * @throws Exception
-     *
      * @return mixed
      */
-    function retry($retries, $fn, $sleep = 0)
+    function retry(int $retries, callable $fn, int $sleep = 0)
     {
         beginning:
         try {
@@ -180,10 +87,7 @@ if (!function_exists('retry')) {
 if (!function_exists('tap')) {
     /**
      * Tap the given value.
-     *
      * @param mixed    $value
-     * @param callable $callback
-     *
      * @return mixed
      */
     function tap($value, callable $callback)
@@ -197,7 +101,7 @@ if (!function_exists('tap')) {
 /**
  * Get the user.
  */
-function user()
+function user(): string
 {
     if (!isset($_SERVER['SUDO_USER'])) {
         return $_SERVER['USER'];
@@ -208,6 +112,7 @@ function user()
 
 /**
  * Get the user's group.
+ * @return string|false
  */
 function group()
 {
@@ -220,13 +125,8 @@ function group()
 
 /**
  * Search and replace using associative array.
- *
- * @param array  $searchAndReplace
- * @param string $subject
- *
- * @return string
  */
-function str_array_replace($searchAndReplace, $subject)
+function strArrayReplace(array $searchAndReplace, string $subject): string
 {
     return str_replace(array_keys($searchAndReplace), array_values($searchAndReplace), $subject);
 }

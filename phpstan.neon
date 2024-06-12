@@ -1,0 +1,7 @@
+parameters:
+	level: 9
+	paths:
+		- cli
+		- tests
+	ignoreErrors:
+		- '#Method .*? with no value type specified in iterable type array#'

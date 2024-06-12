@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: uttam
- * Date: 31/10/19
- * Time: 5:16 PM.
- */
 
 namespace Valet;
 
@@ -32,10 +26,6 @@ class ValetRedis
     /**
      * Create a new PHP FPM class instance.
      *
-     * @param PackageManager $pm
-     * @param ServiceManager $sm
-     * @param CommandLine    $cli
-     *
      * @return void
      */
     public function __construct(PackageManager $pm, ServiceManager $sm, CommandLine $cli)
@@ -47,51 +37,42 @@ class ValetRedis
 
     /**
      * Install Redis Server.
-     *
-     * @return void
      */
-    public function install()
+    public function install(): void
     {
-        $this->pm->ensureInstalled($this->pm->redisPackageName);
-        $this->sm->enable($this->pm->redisPackageName);
+        $packageName = $this->pm->packageName('redis');
+        $this->pm->ensureInstalled($packageName);
+        $this->sm->enable($packageName);
     }
 
     /**
      * Returns true if Redis is installed or not.
-     *
-     * @return bool
      */
-    public function installed()
+    public function installed(): bool
     {
-        return $this->pm->installed($this->pm->redisPackageName);
+        return $this->pm->installed($this->pm->packageName('redis'));
     }
 
     /**
      * Restart the service.
-     *
-     * @return void
      */
-    public function restart()
+    public function restart(): void
     {
-        $this->sm->restart($this->pm->redisPackageName);
+        $this->sm->restart($this->pm->packageName('redis'));
     }
 
     /**
      * Stop the service.
-     *
-     * @return void
      */
-    public function stop()
+    public function stop(): void
     {
-        $this->sm->stop($this->pm->redisPackageName);
+        $this->sm->stop($this->pm->packageName('redis'));
     }
 
     /**
      * Prepare for uninstall.
-     *
-     * @return void
      */
-    public function uninstall()
+    public function uninstall(): void
     {
         $this->stop();
     }

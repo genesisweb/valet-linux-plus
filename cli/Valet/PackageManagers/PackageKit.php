@@ -2,39 +2,46 @@
 
 namespace Valet\PackageManagers;
 
+use ConsoleComponents\Writer;
 use DomainException;
 use Valet\CommandLine;
 use Valet\Contracts\PackageManager;
+use Valet\Contracts\ServiceManager;
 
 class PackageKit implements PackageManager
 {
+    /**
+     * @var CommandLine
+     */
     public $cli;
-    public $redisPackageName = 'redis-server';
-    public $mysqlPackageName = 'mysql-server';
-    public $mariaDBPackageName = 'mariadb-server';
+    /**
+     * @var ServiceManager
+     */
+    public $serviceManager;
+    /**
+     * @var array
+     */
+    public const PHP_FPM_PATTERN_BY_VERSION = [];
 
-    const PHP_FPM_PATTERN_BY_VERSION = [];
+    private const PACKAGES = [
+        'redis' => 'redis-server',
+        'mysql' => 'mysql-server',
+        'mariadb' => 'mariadb-server',
+    ];
 
     /**
-     * Create a new PackageKit instance.
-     *
-     * @param CommandLine $cli
-     *
-     * @return void
+     * Create a new Apt instance.
      */
-    public function __construct(CommandLine $cli)
+    public function __construct(CommandLine $cli, ServiceManager $serviceManager)
     {
         $this->cli = $cli;
+        $this->serviceManager = $serviceManager;
     }
 
     /**
      * Get array of installed packages.
-     *
-     * @param string $package
-     *
-     * @return array
      */
-    public function packages($package)
+    public function packages(string $package): array
     {
         $query = "pkcon search {$package} | grep '^In' | sed 's/\s\+/ /g' | cut -d' ' -f2 | sed 's/-[0-9].*//'";
 
@@ -43,24 +50,16 @@ class PackageKit implements PackageManager
 
     /**
      * Determine if the given package is installed.
-     *
-     * @param string $package
-     *
-     * @return bool
      */
-    public function installed($package)
+    public function installed(string $package): bool
     {
         return in_array($package, $this->packages($package));
     }
 
     /**
      * Ensure that the given package is installed.
-     *
-     * @param string $package
-     *
-     * @return void
      */
-    public function ensureInstalled($package)
+    public function ensureInstalled(string $package): void
     {
         if (!$this->installed($package)) {
             $this->installOrFail($package);
@@ -69,17 +68,13 @@ class PackageKit implements PackageManager
 
     /**
      * Install the given package and throw an exception on failure.
-     *
-     * @param string $package
-     *
-     * @return void
      */
-    public function installOrFail($package)
+    public function installOrFail(string $package): void
     {
-        output('<info>['.$package.'] is not installed, installing it now via PackageKit</info>');
+        Writer::twoColumnDetail($package, 'Installing');
 
         $this->cli->run(trim('pkcon install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
-            output($errorOutput);
+            Writer::error(\sprintf('%s: %s', $exitCode, $errorOutput));
 
             throw new DomainException('PackageKit was unable to install ['.$package.'].');
         });
@@ -87,38 +82,19 @@ class PackageKit implements PackageManager
 
     /**
      * Configure package manager on valet install.
-     *
-     * @return void
      */
-    public function setup()
+    public function setup(): void
     {
         // Nothing to do
     }
 
     /**
-     * Restart dnsmasq in Ubuntu.
-     */
-    public function nmRestart($sm)
-    {
-        $sm->restart(['network-manager']);
-
-        $version = trim($this->cli->run('cat /etc/*release | grep DISTRIB_RELEASE | cut -d\= -f2'));
-
-        if ($version === '17.04') {
-            $sm->enable('systemd-resolved');
-            $sm->restart('systemd-resolved');
-        }
-    }
-
-    /**
      * Determine if package manager is available on the system.
-     *
-     * @return bool
      */
-    public function isAvailable()
+    public function isAvailable(): bool
     {
         try {
-            $output = $this->cli->run('which pkcon', function ($exitCode, $output) {
+            $output = $this->cli->run('which pkcon', function () {
                 throw new DomainException('PackageKit not available');
             });
 
@@ -130,10 +106,8 @@ class PackageKit implements PackageManager
 
     /**
      * Determine php fpm package name.
-     *
-     * @return string
      */
-    public function getPhpFpmName($version)
+    public function getPhpFpmName(string $version): string
     {
         $pattern = !empty(self::PHP_FPM_PATTERN_BY_VERSION[$version])
             ? self::PHP_FPM_PATTERN_BY_VERSION[$version] : 'php{VERSION}-fpm';
@@ -143,11 +117,36 @@ class PackageKit implements PackageManager
 
     /**
      * Determine php extension pattern.
-     *
-     * @return string
      */
-    public function getPhpExtensionPattern($version)
+    public function getPhpExtensionPrefix(string $version): string
     {
-        return 'php{VERSION}';
+        $pattern = 'php{VERSION}-';
+        return str_replace('{VERSION}', $version, $pattern);
+    }
+
+    /**
+     * Restart dnsmasq in Ubuntu.
+     */
+    public function restartNetworkManager(): void
+    {
+        $this->serviceManager->restart(['network-manager']);
+
+        $version = trim($this->cli->run('cat /etc/*release | grep DISTRIB_RELEASE | cut -d\= -f2'));
+
+        if ($version === '17.04') {
+            $this->serviceManager->enable('systemd-resolved');
+            $this->serviceManager->restart('systemd-resolved');
+        }
+    }
+
+    /**
+     * Get package name by service.
+     */
+    public function packageName(string $name): string
+    {
+        if (isset(self::PACKAGES[$name])) {
+            return self::PACKAGES[$name];
+        }
+        throw new \InvalidArgumentException(\sprintf('Package not found by %s', $name));
     }
 }
