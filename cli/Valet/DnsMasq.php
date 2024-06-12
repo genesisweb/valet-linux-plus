@@ -139,7 +139,7 @@ class DnsMasq
     {
         $this->files->putAsUser(
             $this->configPath,
-            'address=/.'.$domain.'/127.0.0.1'.PHP_EOL.'server=1.1.1.1'.PHP_EOL.'server=8.8.8.8'.PHP_EOL
+            'address=/.' . $domain . '/127.0.0.1' . PHP_EOL . 'server=1.1.1.1' . PHP_EOL . 'server=8.8.8.8' . PHP_EOL
         );
     }
 
@@ -176,15 +176,15 @@ class DnsMasq
 
         $this->files->putAsUser(
             $this->dnsmasqconf,
-            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq.conf')
+            $this->files->get(VALET_ROOT_PATH . '/cli/stubs/dnsmasq.conf')
         );
         $this->files->putAsUser(
             $this->dnsmasqOpts,
-            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/dnsmasq_options')
+            $this->files->get(VALET_ROOT_PATH . '/cli/stubs/dnsmasq_options')
         );
         $this->files->putAsUser(
             $this->nmConfigPath,
-            $this->files->get(VALET_ROOT_PATH.'/cli/stubs/networkmanager.conf')
+            $this->files->get(VALET_ROOT_PATH . '/cli/stubs/networkmanager.conf')
         );
     }
 }

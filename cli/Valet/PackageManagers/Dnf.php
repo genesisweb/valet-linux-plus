@@ -69,10 +69,10 @@ class Dnf implements PackageManager
     {
         Writer::twoColumnDetail($package, 'Installing');
 
-        $this->cli->run(trim('dnf install -y '.$package), function ($exitCode, $errorOutput) use ($package) {
+        $this->cli->run(trim('dnf install -y ' . $package), function ($exitCode, $errorOutput) use ($package) {
             Writer::error(\sprintf('%s: %s', $exitCode, $errorOutput));
 
-            throw new DomainException('Dnf was unable to install ['.$package.'].');
+            throw new DomainException('Dnf was unable to install [' . $package . '].');
         });
     }
 
