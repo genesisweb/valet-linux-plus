@@ -7,8 +7,8 @@ use DomainException;
 use Illuminate\Support\Collection;
 use Valet\Contracts\PackageManager;
 use Valet\Facades\DevTools as DevToolsFacade;
-use Valet\Facades\PhpFpm as PhpFpmFacade;
 use Valet\Facades\Nginx as NginxFacade;
+use Valet\Facades\PhpFpm as PhpFpmFacade;
 use Valet\Traits\Paths;
 
 class SiteIsolate
