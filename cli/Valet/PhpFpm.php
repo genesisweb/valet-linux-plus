@@ -218,11 +218,14 @@ class PhpFpm
     public function updateHomePath(string $oldHomePath, string $newHomePath): void
     {
         foreach (self::ISOLATION_SUPPORTED_PHP_VERSIONS as $version) {
-            $confPath = $this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME;
-            if ($this->files->exists($confPath)) {
-                $valetConf = $this->files->get($confPath);
-                $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
-                $this->files->put($confPath, $valetConf);
+            try {
+                $confPath = $this->fpmConfigPath($version) . '/' . self::FPM_CONFIG_FILE_NAME;
+                if ($this->files->exists($confPath)) {
+                    $valetConf = $this->files->get($confPath);
+                    $valetConf = str_replace($oldHomePath, $newHomePath, $valetConf);
+                    $this->files->put($confPath, $valetConf);
+                }
+            } catch (\DomainException $domainException) {
             }
         }
     }
@@ -350,6 +353,7 @@ class PhpFpm
 
     /**
      * Get the path to the FPM configuration file for the current PHP version.
+     * @throws \DomainException
      */
     private function fpmConfigPath(string $version = null): string
     {

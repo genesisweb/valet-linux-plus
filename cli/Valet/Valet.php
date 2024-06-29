@@ -162,6 +162,12 @@ class Valet
         // Replace $oldHomePath to $newHomePath in Certificates, Valet.conf file
         $this->updateNginxConfFiles();
 
+        // Fix SampleValetDriver
+        $this->files->putAsUser(
+            $newHomePath . '/Drivers/SampleValetDriver.php',
+            $this->files->get(VALET_ROOT_PATH . '/cli/stubs/SampleValetDriver.php')
+        );
+
         // Update phpfpm's socket file path in config
         PhpFpmFacade::updateHomePath($oldHomePath, $newHomePath);
 

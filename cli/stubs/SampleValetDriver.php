@@ -24,7 +24,7 @@ class SampleValetDriver extends ValetDriver
      */
     public function isStaticFile(string $sitePath, string $siteName, string $uri)
     {
-        if (file_exists($staticFilePath = $sitePath.'/public/'.$uri)) {
+        if (file_exists($staticFilePath = $sitePath . '/public/' . $uri)) {
             return $staticFilePath;
         }
 
@@ -36,6 +36,6 @@ class SampleValetDriver extends ValetDriver
      */
     public function frontControllerPath(string $sitePath, string $siteName, string $uri): string
     {
-        return $sitePath.'/public/index.php';
+        return $sitePath . '/public/index.php';
     }
 }
