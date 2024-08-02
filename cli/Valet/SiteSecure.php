@@ -14,7 +14,7 @@ class SiteSecure
     private CommandLine $cli;
     private Configuration $config;
 
-    private string $caCertificatePath = '/usr/local/share/ca-certificates/';
+    private string $caCertificatePath = '/usr/share/ca-certificates/';
     private string $caCertificatePem = 'ValetLinuxCASelfSigned.pem';
     private string $caCertificateKey = 'ValetLinuxCASelfSigned.key';
     private string $caCertificateSrl = 'ValetLinuxCASelfSigned.srl';
